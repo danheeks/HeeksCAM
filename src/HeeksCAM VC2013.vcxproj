@@ -1,0 +1,618 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Unicode Release with debug|Win32">
+      <Configuration>Unicode Release with debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode Release|Win32">
+      <Configuration>Unicode Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>HeeksCAM</ProjectName>
+    <ProjectGuid>{E244CDEE-8967-419F-BFD7-8EA39267A547}</ProjectGuid>
+    <RootNamespace>HeeksCAM</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+    <OutDir>$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+    <OutDir>$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\vc_msw/HeeksCAM.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>.\;$(CASROOT)\inc;$(WXWIN30)\include;$(WXWIN30);$(WXWIN30)\lib\vc_dll\mswu;$(WXWIN)\include\msvc;$(PYTHON3_INCLUDE);$(BOOST57_PYTHON_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;WNT;_CRT_SECURE_NO_WARNINGS;WXUSINGDLL;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL=0;USE_GENERIC_TREECTRL;__BOOST_PYTHON_NO_LIB__;BOOST_PYTHON_STATIC_LIB=1;BOOST_LIB_DIAGNOSTIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>false</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\vc_msw\HeeksCAM.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\vc_msw\</AssemblerListingLocation>
+      <ObjectFileName>.\vc_msw\</ObjectFileName>
+      <ProgramDataBaseFileName>vc_msw\HeeksCAM.pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>__WXMSW__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+      <AdditionalIncludeDirectories>.\..\..\lib\vc_lib\msw;.\..\..\include;.;.\..\..\samples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;TKVrml.lib;TKStl.lib;TKBRep.lib;TKIGES.lib;TKShHealing.lib;TKSTEP.lib;TKSTEP209.lib;TKSTEPAttr.lib;TKSTEPBase.lib;TKXSBase.lib;TKShapeSchema.lib;FWOSPlugin.lib;PTKernel.lib;TKBool.lib;TKCAF.lib;TKCDF.lib;TKDraw.lib;TKernel.lib;TKFeat.lib;TKFillet.lib;TKG2d.lib;TKG3d.lib;TKGeomAlgo.lib;TKGeomBase.lib;TKHLR.lib;TKMath.lib;TKOffset.lib;TKPCAF.lib;TKPrim.lib;TKPShape.lib;TKService.lib;TKTopAlgo.lib;TKV2d.lib;TKV3d.lib;TKMesh.lib;TKAdvTools.lib;TKBO.lib;TKXDESTEP.lib;TKXCAF.lib;TKXCAFSchema.lib;TKDCAF.lib;TKLCAF.lib;TKPLCAF.lib;wxmsw30u_core.lib;wxmsw30u_aui.lib;wxmsw30u_gl.lib;wxbase30u.lib;wxmsw30u_ribbon.lib;$(PYTHON3_32BIT_LIB);%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>..\HeeksCAM.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>$(WXWIN30)\lib\vc_dll;$(CASROOT)\win32\vc8\lib;$(BOOST57_PYTHON_PATH)\lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\vc_msw/HeeksCAM.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\vc_msw/HeeksCAM.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>.\;$(CASROOT)\inc;$(WXWIN)\include;$(WXWIN);$(WXWIN)\lib\vc_dll\mswu;$(WXWIN)\include\msvc;$(LIBAREA_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;WNT;_CRT_SECURE_NO_WARNINGS;WXUSINGDLL;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL=0;_SECURE_ATL =0;USE_GENERIC_TREECTRL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>false</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\vc_msw\HeeksCAM.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\vc_msw\</AssemblerListingLocation>
+      <ObjectFileName>.\vc_msw\</ObjectFileName>
+      <ProgramDataBaseFileName>vc_msw\HeeksCAM.pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat />
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>__WXMSW__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+      <AdditionalIncludeDirectories>.\..\..\lib\vc_lib\msw;.\..\..\include;.;.\..\..\samples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;TKVrml.lib;TKStl.lib;TKBRep.lib;TKIGES.lib;TKShHealing.lib;TKSTEP.lib;TKSTEP209.lib;TKSTEPAttr.lib;TKSTEPBase.lib;TKXSBase.lib;TKShapeSchema.lib;FWOSPlugin.lib;PTKernel.lib;TKBool.lib;TKCAF.lib;TKCDF.lib;TKDraw.lib;TKernel.lib;TKFeat.lib;TKFillet.lib;TKG2d.lib;TKG3d.lib;TKGeomAlgo.lib;TKGeomBase.lib;TKHLR.lib;TKMath.lib;TKOffset.lib;TKPCAF.lib;TKPrim.lib;TKPShape.lib;TKService.lib;TKTopAlgo.lib;TKV2d.lib;TKV3d.lib;TKMesh.lib;TKAdvTools.lib;TKBO.lib;TKXDESTEP.lib;TKXCAF.lib;TKXCAFSchema.lib;TKDCAF.lib;TKLCAF.lib;TKPLCAF.lib;wxmsw28u_core.lib;wxmsw28u_aui.lib;wxmsw28u_gl.lib;wxbase28u.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>..\HeeksCAM.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_dll;$(CASROOT)\win32\vc8\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\vc_msw/HeeksCAM.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Arc.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Area.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="AreaClipper.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="AreaOrderer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="AreaPocket.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Circle.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="clipper.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="CNCPoint.cpp" />
+    <ClCompile Include="CTool.cpp" />
+    <ClCompile Include="CToolDlg.cpp" />
+    <ClCompile Include="Curve.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Construction.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DepthOp.cpp" />
+    <ClCompile Include="DepthOpDlg.cpp" />
+    <ClCompile Include="Drilling.cpp" />
+    <ClCompile Include="DrillingDlg.cpp" />
+    <ClCompile Include="DropCutter.cpp" />
+    <ClCompile Include="Finite.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="HeeksCNC.cpp" />
+    <ClCompile Include="kurve.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Matrix.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NCCode.cpp" />
+    <ClCompile Include="offset.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Geom.cpp" />
+    <ClCompile Include="AboutBox.cpp" />
+    <ClCompile Include="advprops.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="AutoSave.cpp" />
+    <ClCompile Include="BezierCurve.cpp" />
+    <ClCompile Include="Cone.cpp" />
+    <ClCompile Include="ConversionTools.cpp" />
+    <ClCompile Include="CoordinateSystem.cpp" />
+    <ClCompile Include="Cuboid.cpp" />
+    <ClCompile Include="CuboidDlg.cpp" />
+    <ClCompile Include="Cylinder.cpp" />
+    <ClCompile Include="DigitizedPoint.cpp" />
+    <ClCompile Include="DigitizeMode.cpp" />
+    <ClCompile Include="DimensionDrawing.cpp" />
+    <ClCompile Include="DoubleInput.cpp" />
+    <ClCompile Include="Drawing.cpp" />
+    <ClCompile Include="dxf.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Edge.cpp" />
+    <ClCompile Include="EndedObject.cpp" />
+    <ClCompile Include="ExitMainLoop.cpp" />
+    <ClCompile Include="Face.cpp" />
+    <ClCompile Include="FaceTools.cpp" />
+    <ClCompile Include="glfont2.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="GLList.cpp" />
+    <ClCompile Include="GraphicsCanvas.cpp" />
+    <ClCompile Include="Grid.cpp" />
+    <ClCompile Include="Gripper.cpp" />
+    <ClCompile Include="GripperSelTransform.cpp" />
+    <ClCompile Include="Group.cpp" />
+    <ClCompile Include="HAngularDimension.cpp" />
+    <ClCompile Include="HArc.cpp" />
+    <ClCompile Include="HArea.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="HCircle.cpp" />
+    <ClCompile Include="HDialogs.cpp" />
+    <ClCompile Include="HDimension.cpp" />
+    <ClCompile Include="HDxf.cpp" />
+    <ClCompile Include="HeeksCAD.cpp" />
+    <ClCompile Include="HeeksColor.cpp" />
+    <ClCompile Include="HeeksFrame.cpp" />
+    <ClCompile Include="HeeksObj.cpp" />
+    <ClCompile Include="HeeksObjDlg.cpp" />
+    <ClCompile Include="HeeksPrintout.cpp" />
+    <ClCompile Include="HeeksRibbon.cpp" />
+    <ClCompile Include="HEllipse.cpp" />
+    <ClCompile Include="HGear.cpp" />
+    <ClCompile Include="HILine.cpp" />
+    <ClCompile Include="HImage.cpp" />
+    <ClCompile Include="History.cpp" />
+    <ClCompile Include="HLine.cpp" />
+    <ClCompile Include="HPoint.cpp" />
+    <ClCompile Include="HSpline.cpp" />
+    <ClCompile Include="HText.cpp" />
+    <ClCompile Include="HXml.cpp" />
+    <ClCompile Include="IdNamedObj.cpp" />
+    <ClCompile Include="IdNamedObjList.cpp" />
+    <ClCompile Include="Input.cpp" />
+    <ClCompile Include="InputModeCanvas.cpp" />
+    <ClCompile Include="LeftAndRight.cpp" />
+    <ClCompile Include="LineArcDrawing.cpp" />
+    <ClCompile Include="Loop.cpp" />
+    <ClCompile Include="MagDragWindow.cpp" />
+    <ClCompile Include="manager.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="MarkedList.cpp" />
+    <ClCompile Include="MarkedObject.cpp" />
+    <ClCompile Include="NiceTextCtrl.cpp" />
+    <ClCompile Include="ObjList.cpp" />
+    <ClCompile Include="ObjPropsCanvas.cpp" />
+    <ClCompile Include="odcombo.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Op.cpp" />
+    <ClCompile Include="OpDlg.cpp" />
+    <ClCompile Include="Operations.cpp" />
+    <ClCompile Include="OptionsCanvas.cpp" />
+    <ClCompile Include="OrientationModifier.cpp" />
+    <ClCompile Include="OutputCanvas.cpp" />
+    <ClCompile Include="Pattern.cpp" />
+    <ClCompile Include="PatternDlg.cpp" />
+    <ClCompile Include="Patterns.cpp" />
+    <ClCompile Include="PictureFrame.cpp" />
+    <ClCompile Include="Plugins.cpp" />
+    <ClCompile Include="Pocket.cpp" />
+    <ClCompile Include="PocketDlg.cpp" />
+    <ClCompile Include="PointDrawing.cpp" />
+    <ClCompile Include="PointOrWindow.cpp" />
+    <ClCompile Include="Profile.cpp" />
+    <ClCompile Include="ProfileDlg.cpp" />
+    <ClCompile Include="Program.cpp" />
+    <ClCompile Include="ProgramCanvas.cpp" />
+    <ClCompile Include="ProgramDlg.cpp" />
+    <ClCompile Include="PropertiesCanvas.cpp" />
+    <ClCompile Include="PropertyChange.cpp" />
+    <ClCompile Include="PropertyCheck.cpp" />
+    <ClCompile Include="PropertyChoice.cpp" />
+    <ClCompile Include="PropertyColor.cpp" />
+    <ClCompile Include="PropertyDouble.cpp" />
+    <ClCompile Include="PropertyFile.cpp" />
+    <ClCompile Include="PropertyInt.cpp" />
+    <ClCompile Include="PropertyLength.cpp" />
+    <ClCompile Include="PropertyList.cpp" />
+    <ClCompile Include="PropertyString.cpp" />
+    <ClCompile Include="PropertyTrsf.cpp" />
+    <ClCompile Include="PropertyVertex.cpp" />
+    <ClCompile Include="propgrid.cpp" />
+    <ClCompile Include="props.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PythonInterface.cpp" />
+    <ClCompile Include="PythonString.cpp" />
+    <ClCompile Include="PythonStuff.cpp" />
+    <ClCompile Include="RegularShapesDrawing.cpp" />
+    <ClCompile Include="RemoveOrAddTool.cpp" />
+    <ClCompile Include="Reselect.cpp" />
+    <ClCompile Include="RuledSurface.cpp" />
+    <ClCompile Include="Ruler.cpp" />
+    <ClCompile Include="ScriptOp.cpp" />
+    <ClCompile Include="ScriptOpDlg.cpp" />
+    <ClCompile Include="Sectioning.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="SelectMode.cpp" />
+    <ClCompile Include="Shape.cpp" />
+    <ClCompile Include="ShapeData.cpp" />
+    <ClCompile Include="ShapeTools.cpp" />
+    <ClCompile Include="Simulate.cpp" />
+    <ClCompile Include="Sketch.cpp" />
+    <ClCompile Include="SketchOp.cpp" />
+    <ClCompile Include="SketchOpDlg.cpp" />
+    <ClCompile Include="Solid.cpp" />
+    <ClCompile Include="SolidsDlg.cpp" />
+    <ClCompile Include="SolidTools.cpp" />
+    <ClCompile Include="SpeedOp.cpp" />
+    <ClCompile Include="SpeedOpDlg.cpp" />
+    <ClCompile Include="Sphere.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="StlSolid.cpp" />
+    <ClCompile Include="Stock.cpp" />
+    <ClCompile Include="StockDlg.cpp" />
+    <ClCompile Include="Stocks.cpp" />
+    <ClCompile Include="strconv.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="StretchTool.cpp" />
+    <ClCompile Include="Surface.cpp" />
+    <ClCompile Include="SurfaceDlg.cpp" />
+    <ClCompile Include="Surfaces.cpp" />
+    <ClCompile Include="svg.cpp" />
+    <ClCompile Include="Tag.cpp" />
+    <ClCompile Include="Tags.cpp" />
+    <ClCompile Include="tinystr.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="tinyxml.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="tinyxmlerror.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="tinyxmlparser.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="ToolImage.cpp" />
+    <ClCompile Include="ToolList.cpp" />
+    <ClCompile Include="Tools.cpp" />
+    <ClCompile Include="TransformTool.cpp" />
+    <ClCompile Include="TransformTools.cpp" />
+    <ClCompile Include="TreeCanvas.cpp" />
+    <ClCompile Include="Vertex.cpp" />
+    <ClCompile Include="ViewPanning.cpp" />
+    <ClCompile Include="ViewPoint.cpp" />
+    <ClCompile Include="ViewRotating.cpp" />
+    <ClCompile Include="ViewZooming.cpp" />
+    <ClCompile Include="Window.cpp" />
+    <ClCompile Include="Wire.cpp" />
+    <ClCompile Include="wxImageLoader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Arc.h" />
+    <ClInclude Include="Area.h" />
+    <ClInclude Include="AreaOrderer.h" />
+    <ClInclude Include="Circle.h" />
+    <ClInclude Include="clipper.hpp" />
+    <ClInclude Include="CNCPoint.h" />
+    <ClInclude Include="CTool.h" />
+    <ClInclude Include="CToolDlg.h" />
+    <ClInclude Include="Curve.h" />
+    <ClInclude Include="DepthOp.h" />
+    <ClInclude Include="DepthOpDlg.h" />
+    <ClInclude Include="Drilling.h" />
+    <ClInclude Include="DrillingDlg.h" />
+    <ClInclude Include="DropCutter.h" />
+    <ClInclude Include="geometry.h" />
+    <ClInclude Include="GTri.h" />
+    <ClInclude Include="NCCode.h" />
+    <ClInclude Include="Op.h" />
+    <ClInclude Include="OpDlg.h" />
+    <ClInclude Include="Operations.h" />
+    <ClInclude Include="OutputCanvas.h" />
+    <ClInclude Include="Pattern.h" />
+    <ClInclude Include="PatternDlg.h" />
+    <ClInclude Include="Patterns.h" />
+    <ClInclude Include="Pocket.h" />
+    <ClInclude Include="PocketDlg.h" />
+    <ClInclude Include="Point.h" />
+    <ClInclude Include="Geom.h" />
+    <ClInclude Include="AboutBox.h" />
+    <ClInclude Include="advprops.h" />
+    <ClInclude Include="AutoSave.h" />
+    <ClInclude Include="BezierCurve.h" />
+    <ClInclude Include="Box.h" />
+    <ClInclude Include="Cone.h" />
+    <ClInclude Include="ConversionTools.h" />
+    <ClInclude Include="CoordinateSystem.h" />
+    <ClInclude Include="Cuboid.h" />
+    <ClInclude Include="CuboidDlg.h" />
+    <ClInclude Include="Cylinder.h" />
+    <ClInclude Include="DigitizedPoint.h" />
+    <ClInclude Include="DigitizeMode.h" />
+    <ClInclude Include="DimensionDrawing.h" />
+    <ClInclude Include="DoubleInput.h" />
+    <ClInclude Include="Drawing.h" />
+    <ClInclude Include="dxf.h" />
+    <ClInclude Include="Edge.h" />
+    <ClInclude Include="EndedObject.h" />
+    <ClInclude Include="Face.h" />
+    <ClInclude Include="FaceTools.h" />
+    <ClInclude Include="glfont2.h" />
+    <ClInclude Include="GLList.h" />
+    <ClInclude Include="GraphicsCanvas.h" />
+    <ClInclude Include="Grid.h" />
+    <ClInclude Include="Gripper.h" />
+    <ClInclude Include="GripperSelTransform.h" />
+    <ClInclude Include="Group.h" />
+    <ClInclude Include="HAngularDimension.h" />
+    <ClInclude Include="HArc.h" />
+    <ClInclude Include="HArea.h" />
+    <ClInclude Include="HCircle.h" />
+    <ClInclude Include="HDialogs.h" />
+    <ClInclude Include="HDimension.h" />
+    <ClInclude Include="HDxf.h" />
+    <ClInclude Include="HeeksCAD.h" />
+    <ClInclude Include="HeeksColor.h" />
+    <ClInclude Include="HeeksConfig.h" />
+    <ClInclude Include="HeeksFrame.h" />
+    <ClInclude Include="HeeksObj.h" />
+    <ClInclude Include="HeeksObjDlg.h" />
+    <ClInclude Include="HeeksPrintout.h" />
+    <ClInclude Include="HeeksRibbon.h" />
+    <ClInclude Include="HEllipse.h" />
+    <ClInclude Include="HGear.h" />
+    <ClInclude Include="HILine.h" />
+    <ClInclude Include="HImage.h" />
+    <ClInclude Include="History.h" />
+    <ClInclude Include="HLine.h" />
+    <ClInclude Include="HPoint.h" />
+    <ClInclude Include="HSpline.h" />
+    <ClInclude Include="HText.h" />
+    <ClInclude Include="HXml.h" />
+    <ClInclude Include="IdNamedObj.h" />
+    <ClInclude Include="IdNamedObjList.h" />
+    <ClInclude Include="Index.h" />
+    <ClInclude Include="InputMode.h" />
+    <ClInclude Include="InputModeCanvas.h" />
+    <ClInclude Include="Intersector.h" />
+    <ClInclude Include="LeftAndRight.h" />
+    <ClInclude Include="LineArcDrawing.h" />
+    <ClInclude Include="Loop.h" />
+    <ClInclude Include="MagDragWindow.h" />
+    <ClInclude Include="manager.h" />
+    <ClInclude Include="MarkedList.h" />
+    <ClInclude Include="MarkedObject.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="NiceTextCtrl.h" />
+    <ClInclude Include="ObjList.h" />
+    <ClInclude Include="ObjPropsCanvas.h" />
+    <ClInclude Include="Observer.h" />
+    <ClInclude Include="odcombo.h" />
+    <ClInclude Include="OptionsCanvas.h" />
+    <ClInclude Include="OrientationModifier.h" />
+    <ClInclude Include="PictureFrame.h" />
+    <ClInclude Include="Plugins.h" />
+    <ClInclude Include="PointDrawing.h" />
+    <ClInclude Include="PointOrWindow.h" />
+    <ClInclude Include="Profile.h" />
+    <ClInclude Include="ProfileDlg.h" />
+    <ClInclude Include="Program.h" />
+    <ClInclude Include="ProgramCanvas.h" />
+    <ClInclude Include="ProgramDlg.h" />
+    <ClInclude Include="propdev.h" />
+    <ClInclude Include="PropertiesCanvas.h" />
+    <ClInclude Include="Property.h" />
+    <ClInclude Include="PropertyChange.h" />
+    <ClInclude Include="PropertyCheck.h" />
+    <ClInclude Include="PropertyChoice.h" />
+    <ClInclude Include="PropertyColor.h" />
+    <ClInclude Include="PropertyDouble.h" />
+    <ClInclude Include="PropertyFile.h" />
+    <ClInclude Include="PropertyInt.h" />
+    <ClInclude Include="PropertyLength.h" />
+    <ClInclude Include="PropertyList.h" />
+    <ClInclude Include="PropertyString.h" />
+    <ClInclude Include="PropertyTrsf.h" />
+    <ClInclude Include="PropertyVertex.h" />
+    <ClInclude Include="propgrid.h" />
+    <ClInclude Include="PythonInterface.h" />
+    <ClInclude Include="PythonString.h" />
+    <ClInclude Include="PythonStuff.h" />
+    <ClInclude Include="RegularShapesDrawing.h" />
+    <ClInclude Include="RemoveOrAddTool.h" />
+    <ClInclude Include="Reselect.h" />
+    <ClInclude Include="RuledSurface.h" />
+    <ClInclude Include="Ruler.h" />
+    <ClInclude Include="ScriptOp.h" />
+    <ClInclude Include="ScriptOpDlg.h" />
+    <ClInclude Include="Sectioning.h" />
+    <ClInclude Include="SelectMode.h" />
+    <ClInclude Include="Shape.h" />
+    <ClInclude Include="ShapeData.h" />
+    <ClInclude Include="ShapeTools.h" />
+    <ClInclude Include="Simulate.h" />
+    <ClInclude Include="Sketch.h" />
+    <ClInclude Include="SketchOp.h" />
+    <ClInclude Include="SketchOpDlg.h" />
+    <ClInclude Include="Solid.h" />
+    <ClInclude Include="SolidsDlg.h" />
+    <ClInclude Include="SolidTools.h" />
+    <ClInclude Include="SpeedOp.h" />
+    <ClInclude Include="SpeedOpDlg.h" />
+    <ClInclude Include="Sphere.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StlSolid.h" />
+    <ClInclude Include="Stock.h" />
+    <ClInclude Include="StockDlg.h" />
+    <ClInclude Include="Stocks.h" />
+    <ClInclude Include="strconv.h" />
+    <ClInclude Include="StretchTool.h" />
+    <ClInclude Include="Surface.h" />
+    <ClInclude Include="SurfaceDlg.h" />
+    <ClInclude Include="Surfaces.h" />
+    <ClInclude Include="svg.h" />
+    <ClInclude Include="Tag.h" />
+    <ClInclude Include="Tags.h" />
+    <ClInclude Include="tinystr.h" />
+    <ClInclude Include="tinyxml.h" />
+    <ClInclude Include="Tool.h" />
+    <ClInclude Include="ToolImage.h" />
+    <ClInclude Include="ToolList.h" />
+    <ClInclude Include="Tools.h" />
+    <ClInclude Include="TransformTool.h" />
+    <ClInclude Include="TransformTools.h" />
+    <ClInclude Include="TreeCanvas.h" />
+    <ClInclude Include="Vertex.h" />
+    <ClInclude Include="ViewPanning.h" />
+    <ClInclude Include="ViewPoint.h" />
+    <ClInclude Include="ViewRotating.h" />
+    <ClInclude Include="ViewZooming.h" />
+    <ClInclude Include="Window.h" />
+    <ClInclude Include="Wire.h" />
+    <ClInclude Include="wxImageLoader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="HeeksCAM.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

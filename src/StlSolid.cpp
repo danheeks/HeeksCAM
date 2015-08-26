@@ -5,6 +5,7 @@
 #include "StlSolid.h"
 #include "PropertyInt.h"
 #include "MarkedObject.h"
+#include "Picking.h"
 
 using namespace std;
 
@@ -231,7 +232,7 @@ void CStlSolid::glCommands(bool select, bool marked, bool no_color){
 			for (std::list<CStlTri>::iterator It = m_list.begin(); It != m_list.end(); It++, i++)
 			{
 				CStlTri &t = *It;
-				glPushName(i);
+				//SetPickingColor(i);
 				if (wxGetApp().m_stl_solid_random_colors)
 				{
 					HeeksColor col(rand() >> 7, rand() >> 7, rand() >> 7);
@@ -259,9 +260,7 @@ void CStlSolid::glCommands(bool select, bool marked, bool no_color){
 				catch (...)
 				{
 				}
-				glPopName();
 			}
-
 
 			glEndList();
 		}
@@ -518,9 +517,9 @@ void CStlSolid::AddTriangle(float* t)
 
 void CStlSolid::SetClickMarkPoint(MarkedObject* marked_object, const double* ray_start, const double* ray_direction)
 {
-	// set picked curve
+	// set picked triangle
 	if (marked_object->GetNumCustomNames() > 0)
 	{
-		m_clicked_triangle = marked_object->GetCustomNames()[0];
+ 		m_clicked_triangle = marked_object->GetCustomNames()[0];
 	}
 }

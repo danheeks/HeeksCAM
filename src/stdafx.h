@@ -22,6 +22,25 @@
 #pragma warning(  default : 4244 )        // Issue warning 4244
 #endif
 
+// Check windows
+#if _WIN32 || _WIN64
+#if _WIN64
+#define ENVIRONMENT64
+#else
+#define ENVIRONMENT32
+#endif
+#endif
+
+// Check GCC
+#if __GNUC__
+#if __x86_64__ || __ppc64__
+#define ENVIRONMENT64
+#else
+#define ENVIRONMENT32
+#endif
+#endif
+
+
 #ifdef WIN32
 #include "windows.h"
 #endif
@@ -94,6 +113,7 @@
 #include <BRepFilletAPI_MakeFillet2d.hxx>
 #include <BRepGProp.hxx>
 #include <BRepMesh.hxx>
+#include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepOffsetAPI_DraftAngle.hxx>
 #include <BRepOffsetAPI_MakeEvolved.hxx>
 #include <BRepOffsetAPI_MakeOffset.hxx>
@@ -159,6 +179,7 @@
 #include <Precision.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <Standard_ErrorHandler.hxx>
+#include <Standard_Version.hxx>
 #include <StdPrs_ToolShadedShape.hxx>
 #include <STEPControl_Controller.hxx>
 #include <STEPControl_Reader.hxx>

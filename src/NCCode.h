@@ -125,7 +125,7 @@ public:
 	const ColouredPath &operator=(const ColouredPath& c);
 
 	void Clear();
-	void glCommands();
+	void glCommands(bool no_color);
 	void GetBox(CBox &box);
 	void WriteXML(TiXmlNode *root);
 	void ReadFromXMLElement(TiXmlElement* pElem);
@@ -177,6 +177,7 @@ public:
 
 	std::list<CNCCodeBlock*> m_blocks;
 	int m_gl_list;
+	int m_select_gl_list;
 	CBox m_box;
 	bool m_user_edited; // set, if the user has edited the nc code
 	static PathObject* prev_po;

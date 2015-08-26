@@ -5,6 +5,7 @@
 #include "ObjList.h"
 #include "../src/MarkedList.h"
 #include "tinyxml.h"
+#include "Picking.h"
 #include <algorithm>
 
 
@@ -97,9 +98,8 @@ void ObjList::glCommands(bool select, bool marked, bool no_color)
 		HeeksObj* object = *It;
 		if(object->OnVisibleLayer() && object->m_visible)
 		{
-			if(select)glPushName(object->GetIndex());
-			(*It)->glCommands(select, marked || wxGetApp().m_marked_list->ObjectMarked(object), no_color);
-			if(select)glPopName();
+			if (select)SetPickingColor(object->GetIndex());
+			(*It)->glCommands(select, marked || wxGetApp().m_marked_list->ObjectMarked(object), select | no_color);
 		}
 	}
 }

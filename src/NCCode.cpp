@@ -18,6 +18,7 @@
 #include "HeeksConfig.h"
 #include "CTool.h"
 #include "Program.h"
+#include "Picking.h"
 
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Solid.hxx>
@@ -331,9 +332,9 @@ void ColouredPath::Clear()
 	m_points.clear();
 }
 
-void ColouredPath::glCommands()
+void ColouredPath::glCommands(bool no_color)
 {
-	CNCCode::Color(m_color_type).glColor();
+	if(!no_color)CNCCode::Color(m_color_type).glColor();
 	glBegin(GL_LINE_STRIP);
 	for(std::list< PathObject* >::iterator It = m_points.begin(); It != m_points.end(); It++)
 	{
@@ -448,7 +449,7 @@ void CNCCodeBlock::glCommands(bool select, bool marked, bool no_color)
 	for(std::list<ColouredPath>::iterator It = m_line_strips.begin(); It != m_line_strips.end(); It++)
 	{
 		ColouredPath& line_strip = *It;
-		line_strip.glCommands();
+		line_strip.glCommands(no_color);
 	}
 
 	if(marked)glLineWidth(1);
@@ -674,7 +675,7 @@ void CNCCode::GetOptions(std::list<Property *> *list)
 	list->push_back(nc_options);
 }
 
-CNCCode::CNCCode():m_highlighted_block(NULL), m_gl_list(0), m_user_edited(false)
+CNCCode::CNCCode() :m_highlighted_block(NULL), m_gl_list(0), m_select_gl_list(0), m_user_edited(false)
 {
 	HeeksConfig config;
 	config.Read(_T("CNCCode_ArcInterpolationCount"), &CNCCode::s_arc_interpolation_count, 20);
@@ -713,13 +714,14 @@ void CNCCode::Clear()
 
 void CNCCode::glCommands(bool select, bool marked, bool no_color)
 {
-	if(m_gl_list)
+	int* plist = select ? &m_select_gl_list : &m_gl_list;
+	if (*plist)
 	{
-		glCallList(m_gl_list);
+		glCallList(*plist);
 	}
 	else{
-		m_gl_list = glGenLists(1);
-		glNewList(m_gl_list, GL_COMPILE_AND_EXECUTE);
+		*plist = glGenLists(1);
+		glNewList(*plist, GL_COMPILE_AND_EXECUTE);
 
 		// render all the blocks
 		CNCCode::prev_po = NULL;
@@ -727,9 +729,8 @@ void CNCCode::glCommands(bool select, bool marked, bool no_color)
 		for(std::list<CNCCodeBlock*>::iterator It = m_blocks.begin(); It != m_blocks.end(); It++)
 		{
 			CNCCodeBlock* block = *It;
-			glPushName(block->GetIndex());
-			block->glCommands(true, block == m_highlighted_block, false);
-			glPopName();
+			SetPickingColor(block->GetIndex());
+			block->glCommands(select, block == m_highlighted_block, no_color);
 		}
 
 		glEndList();
@@ -840,6 +841,7 @@ HeeksObj* CNCCode::ReadFromXMLElement(TiXmlElement* element)
 		{
 			HeeksObj* object = CNCCodeBlock::ReadFromXMLElement(pElem);
 			new_object->m_blocks.push_back((CNCCodeBlock*)object);
+			object->m_owner = new_object;
 		}
 	}
 
@@ -861,6 +863,11 @@ void CNCCode::DestroyGLLists(void)
 	{
 		glDeleteLists(m_gl_list, 1);
 		m_gl_list = 0;
+	}
+	if (m_select_gl_list)
+	{
+		glDeleteLists(m_select_gl_list, 1);
+		m_select_gl_list = 0;
 	}
 }
 

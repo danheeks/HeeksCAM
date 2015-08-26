@@ -4,7 +4,6 @@
 
 #include "stdafx.h"
 #include "Program.h"
-#include "PythonStuff.h"
 #include "tinyxml.h"
 #include "ProgramCanvas.h"
 #include "NCCode.h"
@@ -34,6 +33,7 @@
 #include "Surface.h"
 #include "Stock.h"
 #include "ProgramDlg.h"
+#include "Picking.h"
 
 #include <wx/stdpaths.h>
 #include <wx/filename.h>
@@ -108,9 +108,8 @@ void CProgram::glCommands(bool select, bool marked, bool no_color)
 		if (no_color){
 			glGetIntegerv(GL_CURRENT_COLOR, color);
 		}
-		if (select)glPushName(m_nc_code->GetIndex());
+		if (select)SetPickingColor(m_nc_code->GetIndex());
 		m_nc_code->glCommands(select, marked, no_color);
-		if (select)glPopName();
 		if (no_color)
 		{
 			glColor3i(color[0], color[1], color[2]);

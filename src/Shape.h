@@ -13,6 +13,7 @@ class CShape:public IdNamedObjList{
 protected:
 	int m_face_gl_list;
 	int m_edge_gl_list;
+	int m_select_edge_gl_list;
 	CBox m_box;
 	TopoDS_Shape m_shape;
 	wxLongLong m_creation_time;

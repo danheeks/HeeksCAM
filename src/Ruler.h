@@ -26,6 +26,7 @@ class HRuler: public HeeksObj{
 	//
 
 	int m_gl_list;
+	int m_select_gl_list;
 
 	void GetFourCorners(gp_Pnt *point);
 	void CalculateMarks(std::list<RulerMark> &marks);

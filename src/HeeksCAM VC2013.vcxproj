@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Unicode Release with debug|Win32">
-      <Configuration>Unicode Release with debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Unicode Release|Win32">
       <Configuration>Unicode Release</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode Release|x64">
+      <Configuration>Unicode Release</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -16,13 +16,13 @@
     <RootNamespace>HeeksCAM</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v120</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v120</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
@@ -31,11 +31,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
@@ -48,9 +48,7 @@
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-    <OutDir>$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
@@ -66,7 +64,7 @@
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>.\;$(CASROOT)\inc;$(WXWIN30)\include;$(WXWIN30);$(WXWIN30)\lib\vc_dll\mswu;$(WXWIN)\include\msvc;$(PYTHON3_INCLUDE);$(BOOST57_PYTHON_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;$(CASROOT)\inc;$(WXWIN30)\include;$(WXWIN30);$(WXWIN30)\lib\vc_dll\mswu;$(WXWIN)\include\msvc;$(PYTHON3_32BIT_INCLUDE);$(BOOST57_PYTHON_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;WNT;_CRT_SECURE_NO_WARNINGS;WXUSINGDLL;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL=0;USE_GENERIC_TREECTRL;__BOOST_PYTHON_NO_LIB__;BOOST_PYTHON_STATIC_LIB=1;BOOST_LIB_DIAGNOSTIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -100,21 +98,21 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
     <Midl>
       <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <TargetEnvironment>Win32</TargetEnvironment>
       <TypeLibraryName>.\vc_msw/HeeksCAM.tlb</TypeLibraryName>
-      <HeaderFileName />
+      <HeaderFileName>
+      </HeaderFileName>
     </Midl>
     <ClCompile>
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>.\;$(CASROOT)\inc;$(WXWIN)\include;$(WXWIN);$(WXWIN)\lib\vc_dll\mswu;$(WXWIN)\include\msvc;$(LIBAREA_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;WNT;_CRT_SECURE_NO_WARNINGS;WXUSINGDLL;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL=0;_SECURE_ATL =0;USE_GENERIC_TREECTRL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;$(CASROOT69)\inc;$(WXWIN30)\include;$(WXWIN30);$(WXWIN30)\lib\vc_dll\mswu;$(WXWIN)\include\msvc;$(PYTHON3_INCLUDE);$(BOOST57_PYTHON_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;WNT;_CRT_SECURE_NO_WARNINGS;WXUSINGDLL;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL=0;USE_GENERIC_TREECTRL;__BOOST_PYTHON_NO_LIB__;BOOST_PYTHON_STATIC_LIB=1;BOOST_LIB_DIAGNOSTIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -126,7 +124,7 @@
       <ProgramDataBaseFileName>vc_msw\HeeksCAM.pdb</ProgramDataBaseFileName>
       <WarningLevel>Level4</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <DebugInformationFormat />
+      <DebugInformationFormat>None</DebugInformationFormat>
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <ResourceCompile>
@@ -135,74 +133,88 @@
       <AdditionalIncludeDirectories>.\..\..\lib\vc_lib\msw;.\..\..\include;.;.\..\..\samples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;TKVrml.lib;TKStl.lib;TKBRep.lib;TKIGES.lib;TKShHealing.lib;TKSTEP.lib;TKSTEP209.lib;TKSTEPAttr.lib;TKSTEPBase.lib;TKXSBase.lib;TKShapeSchema.lib;FWOSPlugin.lib;PTKernel.lib;TKBool.lib;TKCAF.lib;TKCDF.lib;TKDraw.lib;TKernel.lib;TKFeat.lib;TKFillet.lib;TKG2d.lib;TKG3d.lib;TKGeomAlgo.lib;TKGeomBase.lib;TKHLR.lib;TKMath.lib;TKOffset.lib;TKPCAF.lib;TKPrim.lib;TKPShape.lib;TKService.lib;TKTopAlgo.lib;TKV2d.lib;TKV3d.lib;TKMesh.lib;TKAdvTools.lib;TKBO.lib;TKXDESTEP.lib;TKXCAF.lib;TKXCAFSchema.lib;TKDCAF.lib;TKLCAF.lib;TKPLCAF.lib;wxmsw28u_core.lib;wxmsw28u_aui.lib;wxmsw28u_gl.lib;wxbase28u.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>..\HeeksCAM.exe</OutputFile>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;TKVrml.lib;TKStl.lib;TKBRep.lib;TKIGES.lib;TKShHealing.lib;TKSTEP.lib;TKSTEP209.lib;TKSTEPAttr.lib;TKSTEPBase.lib;TKXSBase.lib;TKShapeSchema.lib;FWOSPlugin.lib;PTKernel.lib;TKBool.lib;TKCAF.lib;TKCDF.lib;TKDraw.lib;TKernel.lib;TKFeat.lib;TKFillet.lib;TKG2d.lib;TKG3d.lib;TKGeomAlgo.lib;TKGeomBase.lib;TKHLR.lib;TKMath.lib;TKOffset.lib;TKPCAF.lib;TKPrim.lib;TKPShape.lib;TKService.lib;TKTopAlgo.lib;TKV3d.lib;TKMesh.lib;TKBO.lib;TKXDESTEP.lib;TKXCAF.lib;TKXCAFSchema.lib;TKDCAF.lib;TKLCAF.lib;TKPLCAF.lib;wxmsw30u_core.lib;wxmsw30u_aui.lib;wxmsw30u_gl.lib;wxbase30u.lib;wxmsw30u_ribbon.lib;$(PYTHON3_LIB);%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>..\x64\HeeksCAM.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_dll;$(CASROOT)\win32\vc8\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(WXWIN30)\lib\vc_dll;$(CASROOT69)\win64\vc12\lib;$(BOOST57_PYTHON_PATH)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <ProgramDatabaseFile>.\vc_msw/HeeksCAM.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DataExecutionPrevention />
-      <TargetMachine>MachineX86</TargetMachine>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Arc.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Area.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="AreaClipper.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="AreaOrderer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="AreaPocket.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Circle.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="clipper.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="CNCPoint.cpp" />
     <ClCompile Include="CTool.cpp" />
     <ClCompile Include="CToolDlg.cpp" />
     <ClCompile Include="Curve.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Construction.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="DepthOp.cpp" />
     <ClCompile Include="DepthOpDlg.cpp" />
     <ClCompile Include="Drilling.cpp" />
     <ClCompile Include="DrillingDlg.cpp" />
     <ClCompile Include="DropCutter.cpp" />
+    <ClCompile Include="ExtrudedObj.cpp" />
     <ClCompile Include="Finite.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="HeeksCNC.cpp" />
     <ClCompile Include="kurve.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Matrix.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NCCode.cpp" />
     <ClCompile Include="offset.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Geom.cpp" />
     <ClCompile Include="AboutBox.cpp" />
     <ClCompile Include="advprops.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="AutoSave.cpp" />
@@ -219,9 +231,9 @@
     <ClCompile Include="DoubleInput.cpp" />
     <ClCompile Include="Drawing.cpp" />
     <ClCompile Include="dxf.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Edge.cpp" />
@@ -230,9 +242,9 @@
     <ClCompile Include="Face.cpp" />
     <ClCompile Include="FaceTools.cpp" />
     <ClCompile Include="glfont2.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="GLList.cpp" />
@@ -244,9 +256,9 @@
     <ClCompile Include="HAngularDimension.cpp" />
     <ClCompile Include="HArc.cpp" />
     <ClCompile Include="HArea.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="HCircle.cpp" />
@@ -279,9 +291,9 @@
     <ClCompile Include="Loop.cpp" />
     <ClCompile Include="MagDragWindow.cpp" />
     <ClCompile Include="manager.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MarkedList.cpp" />
@@ -290,9 +302,9 @@
     <ClCompile Include="ObjList.cpp" />
     <ClCompile Include="ObjPropsCanvas.cpp" />
     <ClCompile Include="odcombo.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Op.cpp" />
@@ -304,10 +316,15 @@
     <ClCompile Include="Pattern.cpp" />
     <ClCompile Include="PatternDlg.cpp" />
     <ClCompile Include="Patterns.cpp" />
+    <ClCompile Include="Picking.cpp" />
     <ClCompile Include="PictureFrame.cpp" />
     <ClCompile Include="Plugins.cpp" />
     <ClCompile Include="Pocket.cpp" />
     <ClCompile Include="PocketDlg.cpp" />
+    <ClCompile Include="Point.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="PointDrawing.cpp" />
     <ClCompile Include="PointOrWindow.cpp" />
     <ClCompile Include="Profile.cpp" />
@@ -330,14 +347,13 @@
     <ClCompile Include="PropertyVertex.cpp" />
     <ClCompile Include="propgrid.cpp" />
     <ClCompile Include="props.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PythonInterface.cpp" />
     <ClCompile Include="PythonString.cpp" />
-    <ClCompile Include="PythonStuff.cpp" />
     <ClCompile Include="RegularShapesDrawing.cpp" />
     <ClCompile Include="RemoveOrAddTool.cpp" />
     <ClCompile Include="Reselect.cpp" />
@@ -346,9 +362,9 @@
     <ClCompile Include="ScriptOp.cpp" />
     <ClCompile Include="ScriptOpDlg.cpp" />
     <ClCompile Include="Sectioning.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SelectMode.cpp" />
@@ -366,17 +382,17 @@
     <ClCompile Include="SpeedOpDlg.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="StlSolid.cpp" />
     <ClCompile Include="Stock.cpp" />
     <ClCompile Include="StockDlg.cpp" />
     <ClCompile Include="Stocks.cpp" />
     <ClCompile Include="strconv.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="StretchTool.cpp" />
@@ -387,27 +403,27 @@
     <ClCompile Include="Tag.cpp" />
     <ClCompile Include="Tags.cpp" />
     <ClCompile Include="tinystr.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tinyxml.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tinyxmlerror.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tinyxmlparser.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release with debug|Win32'">
-      </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ToolImage.cpp" />
@@ -424,6 +440,7 @@
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="Wire.cpp" />
     <ClCompile Include="wxImageLoader.cpp" />
+    <ClCompile Include="XYZBoxes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Arc.h" />
@@ -440,6 +457,7 @@
     <ClInclude Include="Drilling.h" />
     <ClInclude Include="DrillingDlg.h" />
     <ClInclude Include="DropCutter.h" />
+    <ClInclude Include="ExtrudedObj.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="GTri.h" />
     <ClInclude Include="NCCode.h" />
@@ -450,6 +468,7 @@
     <ClInclude Include="Pattern.h" />
     <ClInclude Include="PatternDlg.h" />
     <ClInclude Include="Patterns.h" />
+    <ClInclude Include="Picking.h" />
     <ClInclude Include="Pocket.h" />
     <ClInclude Include="PocketDlg.h" />
     <ClInclude Include="Point.h" />
@@ -555,7 +574,6 @@
     <ClInclude Include="propgrid.h" />
     <ClInclude Include="PythonInterface.h" />
     <ClInclude Include="PythonString.h" />
-    <ClInclude Include="PythonStuff.h" />
     <ClInclude Include="RegularShapesDrawing.h" />
     <ClInclude Include="RemoveOrAddTool.h" />
     <ClInclude Include="Reselect.h" />
@@ -608,6 +626,7 @@
     <ClInclude Include="Window.h" />
     <ClInclude Include="Wire.h" />
     <ClInclude Include="wxImageLoader.h" />
+    <ClInclude Include="XYZBoxes.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="HeeksCAM.rc" />

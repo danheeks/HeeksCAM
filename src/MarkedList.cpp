@@ -16,6 +16,7 @@
 #include "ConversionTools.h"
 #include "SolidTools.h"
 #include "MenuSeparator.h"
+#include "Picking.h"
 using namespace std;
 
 MarkedList::MarkedList(){
@@ -91,9 +92,8 @@ void MarkedList::update_move_grips(){
 void MarkedList::render_move_grips(bool select, bool no_color){
 	std::list<Gripper*>::iterator It;
 	for(It = move_grips.begin(); It != move_grips.end(); It++){
-		if(select)glPushName((*It)->GetIndex());
+		if (select)SetPickingColor((*It)->GetIndex());
 		(*It)->glCommands(select, false, no_color);
-		if(select)glPopName();
 	}
 }
 
@@ -112,88 +112,126 @@ void MarkedList::GrippersGLCommands(bool select, bool no_color){
 }
 
 void MarkedList::ObjectsInWindow( wxRect window, MarkedObject* marked_object, bool single_picking){
-	int buffer_length = 16384;
-	GLuint *data = (GLuint *)malloc( buffer_length * sizeof(GLuint) );
-	if(data == NULL)return;
+	// render everything with unique colors
+
+	wxGetApp().m_frame->m_graphics->SetCurrent();
+
+	glDrawBuffer(GL_BACK);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glDisable(GL_BLEND);
+	glDisable(GL_LINE_SMOOTH);
+	wxGetApp().m_frame->m_graphics->SetViewport();
+	wxGetApp().m_frame->m_graphics->m_view_point.SetProjection(true);
+	wxGetApp().m_frame->m_graphics->m_view_point.SetModelview();
+
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_DEPTH_TEST);
+	glLineWidth(1);
+	glDepthMask(1);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glShadeModel(GL_FLAT);
+	wxGetApp().m_frame->m_graphics->m_view_point.SetPolygonOffset();
+
+	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+	glEnable(GL_COLOR_MATERIAL);
+
+	wxGetApp().glCommands(true, false, true);
+
+	GrippersGLCommands(true, true);
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDisable(GL_COLOR_MATERIAL);
+
+	if (window.width < 0)
+	{
+		window.x += window.width;
+		window.width = abs(window.width);
+	}
+	if (window.height < 0)
+	{
+		window.y += window.height;
+		window.height = abs(window.height);
+	}
+
+	unsigned int pixel_size = 4 * window.width * window.height;
+	unsigned char* pixels = (unsigned char*)malloc(pixel_size);
+	memset((void*)pixels, 0, pixel_size);
+	glReadPixels(window.x, window.y, window.width, window.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
 	int half_window_width = 0;
 	wxPoint window_centre;
-	if(single_picking){
-		half_window_width = (window.width)/2;
-		window_centre.x = window.x + window.width/2;
-		window_centre.y = window.y + window.height/2;
+	if (single_picking){
+		half_window_width = (window.width) / 2;
+		window_centre.x = window.x + window.width / 2;
+		window_centre.y = window.y + window.height / 2;
 	}
 	int window_mode = 0;
-	while(1){
-		if(single_picking){
-			int window_size = half_window_width;
-			if(window_mode == 0)window_size = 0;
-			if(window_mode == 1)window_size = half_window_width/2;
+	while (1){
+		if (single_picking){
+			int window_size = half_window_width-1;
+			if (window_mode == 0)window_size = 0;
+			if (window_mode == 1)window_size = half_window_width / 2;
 			window.x = window_centre.x - window_size;
 			window.y = window_centre.y - window_size;
-			window.width = window_size * 2;
-			window.height = window_size * 2;
+			window.width = 1 + window_size * 2;
+			window.height = 1 + window_size * 2;
 		}
-	    GLint num_hits = -1;
-		while(num_hits < 0){
-			glSelectBuffer(buffer_length, data);
-			glRenderMode(GL_SELECT);
-			glInitNames();
-			wxGetApp().m_current_viewport->SetViewport();
-			wxGetApp().m_current_viewport->m_view_point.SetPickProjection(window);
-			wxGetApp().m_current_viewport->m_view_point.SetModelview();
-			wxGetApp().glCommands(true, false, false);
-			GrippersGLCommands(true, false);
-			glFlush();
-			num_hits = glRenderMode(GL_RENDER);
-			if(num_hits<0){
-				free(data);
-				buffer_length *= 10;
-				data = (GLuint *)malloc( buffer_length * sizeof(GLuint) );
-				if(data == NULL)return;
-			}
-		}
-		int pos = 0;
-		bool added = false;
-		for(unsigned i=0; i<(unsigned int)num_hits; i++)
+
+		std::set<unsigned int> color_list;
+
+		for (unsigned int i = 0; i < pixel_size; i += 4)
 		{
-			unsigned int names = data[pos];
-			if(names == 0)break;
-			pos++;
-			unsigned int min_depth = data[pos];
-			pos+=2;
+			unsigned int color = pixels[i] | (pixels[i + 1] << 8) | (pixels[i + 2] << 16);
+			if (color != 0)
+				color_list.insert(color);
+		}
+
+		bool added = false;
+		for (std::set<unsigned int>::iterator It = color_list.begin(); It != color_list.end(); It++)
+		{
+			unsigned int name = *It;
 			MarkedObject* current_found_object = marked_object;
 			bool ignore_coords_only_found = false;
-			for(unsigned int j=0; j<names; j++, pos++){
-				HeeksObj *object = m_name_index.find(data[pos]);
-				bool custom_names = object->UsesCustomSubNames();
-				if(!ignore_coords_only_found && current_found_object != NULL){
+				HeeksObj *object = m_name_index.find(name);
 
+				std::list<HeeksObj*> owner_list;
+				while (object && (object != &(wxGetApp())))
+				{
+					owner_list.push_front(object);
+					object = object->m_owner;
+				}
 
-					if(ignore_coords_only && wxGetApp().m_digitizing->OnlyCoords(object)){
-						ignore_coords_only_found = true;
-					}
-					else{
-						if((object->GetType() == GripperType) || ((object->GetMarkingMask() & m_filter) && (object->GetMarkingMask() != 0))){
-							int window_size = window.width;
-							current_found_object = current_found_object->Add(object, min_depth, window_size, custom_names ? (names - 1 - j) : 0, custom_names ? (&data[pos+1]):NULL);
-							added = true;
+				for (std::list<HeeksObj*>::iterator It = owner_list.begin(); It != owner_list.end(); It++)
+				{
+					object = *It;
+
+					//bool custom_names = object->UsesCustomSubNames();
+					if (!ignore_coords_only_found && current_found_object != NULL){
+						if (ignore_coords_only && wxGetApp().m_digitizing->OnlyCoords(object)){
+							ignore_coords_only_found = true;
+						}
+						else{
+							if ((object->GetType() == GripperType) || ((object->GetMarkingMask() & m_filter) && (object->GetMarkingMask() != 0))){
+								int window_size = window.width;
+								current_found_object = current_found_object->Add(object, 0, window_size, 0, NULL);
+								added = true;
+							}
 						}
 					}
-
 				}
-				if(custom_names)
-				{
-					pos+=(names-j);
-					break;
-				}
-			}
+		//	}
 		}
 		window_mode++;
-		if(!single_picking)break;
-		if(window_mode > 2)break;
+		if (!single_picking)break;
+		if (window_mode > 2)break;
 	}
 
-	free(data);
+	free(pixels);
 }
 
 void MarkedList::Add(std::list<HeeksObj *> &list, bool call_OnChanged){

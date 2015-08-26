@@ -95,7 +95,6 @@
 #include "RemoveOrAddTool.h"
 #include "Observer.h"
 #include "ToolImage.h"
-#include "PythonStuff.h"
 #include "Program.h"
 #include "ProgramCanvas.h"
 #include "OutputCanvas.h"
@@ -118,6 +117,7 @@
 #include "Surfaces.h"
 #include "Stock.h"
 #include "Stocks.h"
+#include "Picking.h"
 
 #include <sstream>
 
@@ -256,6 +256,7 @@ HeeksCADapp::HeeksCADapp(): ObjList()
 	m_icon_texture_number = 0;
 	m_extrude_to_solid = true;
 	m_revolve_angle = 360.0;
+	m_window = NULL;
 	m_stl_save_as_binary = true;
 	m_mouse_move_highlighting = true;
 	m_highlight_color = HeeksColor(128, 255, 0);
@@ -279,7 +280,9 @@ HeeksCADapp::HeeksCADapp(): ObjList()
 	m_draw_cutter_radius = true;
 	m_program = NULL;
 	m_run_program_on_new_line = false;
+#ifdef HAVE_TOOLBARS
 	m_machiningBar = NULL;
+#endif
 	m_icon_texture_number = 0;
 	m_machining_hidden = false;
 	m_settings_restored = false;
@@ -1312,7 +1315,7 @@ static void WriteDXFEntity(HeeksObj* object, CDxfWrite& dxf_file, const wxString
 			double s[3], e[3];
 			extract(l->A, s);
 			extract(l->B, e);
-			dxf_file.WriteLine(s, e, Ttc(layer_name.c_str()));
+			dxf_file.WriteLine(s, e, Ttc(layer_name.c_str()), l->m_thickness, l->m_extrusion_vector);
 		}
 		break;
 	case PointType:
@@ -1331,7 +1334,7 @@ static void WriteDXFEntity(HeeksObj* object, CDxfWrite& dxf_file, const wxString
 			extract(a->B, e);
 			extract(a->C, c);
 			bool dir = a->m_axis.Direction().Z() > 0;
-			dxf_file.WriteArc(s, e, c, dir, Ttc(layer_name.c_str()));
+			dxf_file.WriteArc(s, e, c, dir, Ttc(layer_name.c_str()), a->m_thickness, a->m_extrusion_vector);
 		}
 		break;
       case EllipseType:
@@ -1343,7 +1346,7 @@ static void WriteDXFEntity(HeeksObj* object, CDxfWrite& dxf_file, const wxString
 			double maj_r = e->m_majr;
 			double min_r = e->m_minr;
 			double rot = e->GetRotation();
-			dxf_file.WriteEllipse(c, maj_r, min_r, rot, 0, 2 * M_PI, dir, Ttc(layer_name.c_str()));
+			dxf_file.WriteEllipse(c, maj_r, min_r, rot, 0, 2 * M_PI, dir, Ttc(layer_name.c_str()), 0.0);
                 }
 		break;
         case CircleType:
@@ -1352,7 +1355,7 @@ static void WriteDXFEntity(HeeksObj* object, CDxfWrite& dxf_file, const wxString
 			double c[3];
 			extract(cir->m_axis.Location(), c);
 			double radius = cir->m_radius;
-			dxf_file.WriteCircle(c, radius, Ttc(layer_name.c_str()));
+			dxf_file.WriteCircle(c, radius, Ttc(layer_name.c_str()), cir->m_thickness, cir->m_extrusion_vector);
                 }
 		break;
 	default:
@@ -2104,25 +2107,13 @@ void HeeksCADapp::OnInputModeHelpTextChanged()
 void HeeksCADapp::glCommands(bool select, bool marked, bool no_color)
 {
 	// this is called when select is true
-
-	std::list<HeeksObj*>::iterator It;
-	for(It=m_objects.begin(); It!=m_objects.end() ;It++)
-	{
-		HeeksObj* object = *It;
-		if(object->OnVisibleLayer() && object->m_visible)
-		{
-			if(select)glPushName(object->GetIndex());
-			object->glCommands(select, marked || m_marked_list->ObjectMarked(object), no_color);
-			if(select)glPopName();
-		}
-	}
+	ObjList::glCommands(select, marked, no_color);
 
 	// draw the ruler
 	if(m_show_ruler)
 	{
-		if(select)glPushName(m_ruler->GetIndex());
-		m_ruler->glCommands(select, false, false);
-		if(select)glPopName();
+		if (select)SetPickingColor(m_ruler->GetIndex());
+		m_ruler->glCommands(select, false, no_color);
 	}
 }
 
@@ -2822,7 +2813,9 @@ void on_grid(bool onoff, HeeksObj* object)
 {
 	wxGetApp().draw_to_grid = onoff;
 #ifndef USING_RIBBON
+#ifdef HAVE_TOOLBARS
 	wxGetApp().m_frame->m_snap_button->m_bitmap = wxBitmap(ToolImage(wxGetApp().draw_to_grid ? _T("snap") : _T("snapgray")));
+#endif
 #endif
 	wxGetApp().Repaint();
 }
@@ -2970,28 +2963,36 @@ void on_set_ctrl_does_rotate(bool value, HeeksObj* object)
 void on_intersection(bool onoff, HeeksObj* object){
 	wxGetApp().digitize_inters = onoff;
 #ifndef USING_RIBBON
+#ifdef HAVE_TOOLBARS
 	wxGetApp().m_frame->m_inters_button->m_bitmap = wxBitmap(ToolImage(wxGetApp().digitize_inters ? _T("inters") : _T("intersgray")));
+#endif
 #endif
 }
 
 void on_centre(bool onoff, HeeksObj* object){
 	wxGetApp().digitize_centre = onoff;
 #ifndef USING_RIBBON
+#ifdef HAVE_TOOLBARS
 	wxGetApp().m_frame->m_centre_button->m_bitmap = wxBitmap(ToolImage(wxGetApp().digitize_centre ? _T("centre") : _T("centregray")));
+#endif
 #endif
 }
 
 void on_end_of(bool onoff, HeeksObj* object){
 	wxGetApp().digitize_end = onoff;
 #ifndef USING_RIBBON
+#ifdef HAVE_TOOLBARS
 	wxGetApp().m_frame->m_endof_button->m_bitmap = wxBitmap(ToolImage(wxGetApp().digitize_end ? _T("endof") : _T("endofgray")));
+#endif
 #endif
 }
 
 void on_mid_point(bool onoff, HeeksObj* object){
 	wxGetApp().digitize_midpoint = onoff;
 #ifndef USING_RIBBON
+#ifdef HAVE_TOOLBARS
 	wxGetApp().m_frame->m_midpoint_button->m_bitmap = wxBitmap(ToolImage(wxGetApp().digitize_midpoint ? _T("midpoint") : _T("midpointgray")));
+#endif
 #endif
 }
 
@@ -3159,6 +3160,13 @@ void on_edit_layer_name_suffixes_to_discard(const wxChar* value, HeeksObj* objec
 	config.Write(_T("LayerNameSuffixesToDiscard"), HeeksDxfRead::m_layer_name_suffixes_to_discard);
 }
 
+void on_add_uninstanced_blocks(bool value, HeeksObj* object)
+{
+	HeeksDxfRead::m_add_uninstanced_blocks = value;
+
+	HeeksConfig config;
+	config.Write(_T("DxfAddUninstancedBlocks"), HeeksDxfRead::m_add_uninstanced_blocks);
+}
 
 void on_stl_facet_tolerance(double value, HeeksObj* object){
 	wxGetApp().m_stl_facet_tolerance = value;
@@ -3491,6 +3499,7 @@ void HeeksCADapp::GetOptions(std::list<Property *> *list)
 	dxf_options->m_list.push_back(new PropertyCheck(_("ignore errors where possible"), HeeksDxfRead::m_ignore_errors, NULL, on_sel_dxf_read_errors));
 	dxf_options->m_list.push_back(new PropertyCheck(_("read points"), HeeksDxfRead::m_read_points, NULL, on_dxf_read_points));
 	dxf_options->m_list.push_back( new PropertyString(_("Layer Name Suffixes To Discard"), HeeksDxfRead::m_layer_name_suffixes_to_discard, this, on_edit_layer_name_suffixes_to_discard));
+	dxf_options->m_list.push_back(new PropertyCheck(_("add uninstanced blocks"), HeeksDxfRead::m_add_uninstanced_blocks, NULL, on_add_uninstanced_blocks));
 
 	file_options->m_list.push_back(dxf_options);
 	PropertyList* stl_options = new PropertyList(_("STL"));
@@ -4948,6 +4957,9 @@ void HeeksCADapp::AddRibbonPanels(wxRibbonBar* ribbon, wxRibbonPage* main_page)
 #endif
 
 
+#ifdef HAVE_TOOLBARS
+
+
 static CFlyOutList* toolbar_flyout = NULL;
 
 void HeeksCADapp::StartToolBarFlyout(const wxString& title_and_bitmap)
@@ -4973,3 +4985,5 @@ void HeeksCADapp::EndToolBarFlyout(wxToolBar* toolbar)
 		toolbar_flyout = NULL;
 	}
 }
+
+#endif

@@ -20,6 +20,7 @@ bool HeeksDxfRead::m_make_as_sketch = false;
 bool HeeksDxfRead::m_ignore_errors = false;
 bool HeeksDxfRead::m_read_points = false;
 wxString HeeksDxfRead::m_layer_name_suffixes_to_discard = _T("_DOT,_DOTSMALL,_DOTBLANK,_OBLIQUE,_CLOSEDBLANK");
+bool HeeksDxfRead::m_add_uninstanced_blocks = false;
 
 HeeksDxfRead::HeeksDxfRead(const wxChar* filepath, bool undoable) : CDxfRead(Ttc(filepath)), m_undoable(undoable)
 {
@@ -29,6 +30,7 @@ HeeksDxfRead::HeeksDxfRead(const wxChar* filepath, bool undoable) : CDxfRead(Ttc
 	config.Read(_T("IgnoreDxfReadErrors"), &m_ignore_errors);
 	config.Read(_T("DxfReadPoints"), &m_read_points);
 	config.Read(_T("LayerNameSuffixesToDiscard"), m_layer_name_suffixes_to_discard);
+	config.Read(_T("DxfAddUninstancedBlocks"), &m_add_uninstanced_blocks);
 
 	m_current_block = NULL;
 	extract(gp_Trsf(), m_ucs_matrix);
@@ -101,6 +103,11 @@ void HeeksDxfRead::OnReadEndBlock()
 void HeeksDxfRead::OnReadLine(const double* s, const double* e, bool hidden)
 {
 	HLine* new_object = new HLine(make_point(s), make_point(e), hidden ? (&hidden_color) : ActiveColorPtr(m_aci));
+	if (m_thickness != 0.0)
+	{
+		new_object->m_thickness = m_thickness;
+		for (int i = 0; i < 3; i++)new_object->m_extrusion_vector[i] = m_extrusion_vector[i];
+	}
 	AddObject(new_object);
 }
 
@@ -122,6 +129,11 @@ void HeeksDxfRead::OnReadArc(const double* s, const double* e, const double* c, 
 	gp_Pnt pc = make_point(c);
 	gp_Circ circle(gp_Ax2(pc, up), p1.Distance(pc));
 	HArc* new_object = new HArc(p0, p1, circle, hidden ? (&hidden_color) : ActiveColorPtr(m_aci));
+	if (m_thickness != 0.0)
+	{
+		new_object->m_thickness = m_thickness;
+		for (int i = 0; i < 3; i++)new_object->m_extrusion_vector[i] = m_extrusion_vector[i];
+	}
 	AddObject(new_object);
 }
 
@@ -134,6 +146,11 @@ void HeeksDxfRead::OnReadCircle(const double* s, const double* c, bool dir, bool
 	gp_Pnt pc = make_point(c);
 	gp_Circ circle(gp_Ax2(pc, up), p0.Distance(pc));
 	HCircle* new_object = new HCircle(circle, hidden ? (&hidden_color) : ActiveColorPtr(m_aci));
+	if (m_thickness != 0.0)
+	{
+		new_object->m_thickness = m_thickness;
+		for (int i = 0; i < 3; i++)new_object->m_extrusion_vector[i] = m_extrusion_vector[i];
+	}
 	AddObject(new_object);
 }
 
@@ -447,15 +464,19 @@ void HeeksDxfRead::AddObject(HeeksObj *object)
 void HeeksDxfRead::AddGraphics()
 {
 	// add one insert of any blocks which haven't been added at all
-	for(Blocks_t::const_iterator It = m_blocks.begin(); It != m_blocks.end(); It++)
+	m_current_block = NULL;
+	if (HeeksDxfRead::m_add_uninstanced_blocks)
 	{
-		if(inserted_blocks.find(It->first) == inserted_blocks.end())
+		for (Blocks_t::const_iterator It = m_blocks.begin(); It != m_blocks.end(); It++)
 		{
-			CSketch* block = It->second;
-			if(block->GetNumChildren() > 0)
+			if (inserted_blocks.find(It->first) == inserted_blocks.end())
 			{
-				CSketch* block_copy = new CSketch(*(It->second));
-				AddObject(block_copy);
+				CSketch* block = It->second;
+				if (block->GetNumChildren() > 0)
+				{
+					CSketch* block_copy = new CSketch(*(It->second));
+					AddObject(block_copy);
+				}
 			}
 		}
 	}

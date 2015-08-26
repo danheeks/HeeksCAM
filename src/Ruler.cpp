@@ -79,7 +79,7 @@ void RulerMark::glCommands(double units)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 }
 
-HRuler::HRuler(): m_gl_list(0)
+HRuler::HRuler() : m_gl_list(0), m_select_gl_list(0)
 {
 	m_use_view_units = true;
 	m_units = 1.0;
@@ -176,18 +176,19 @@ void HRuler::glCommands(bool select, bool marked, bool no_color)
 	glPushMatrix();
 	glMultMatrixd(m);
 
-	if(m_gl_list)
+	int* plist = select ? &m_select_gl_list : &m_gl_list;
+	if (*plist)
 	{
-		glCallList(m_gl_list);
+		glCallList(*plist);
 	}
 	else{
-		m_gl_list = glGenLists(1);
-		glNewList(m_gl_list, GL_COMPILE_AND_EXECUTE);
+		*plist = glGenLists(1);
+		glNewList(*plist, GL_COMPILE_AND_EXECUTE);
 
 		// draw a filled white rectangle
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(1.0, 0.0);
-		glColor4ub(255, 255, 255, 120); // white
+		if(!no_color)glColor4ub(255, 255, 255, 120); // white
 		wxGetApp().EnableBlend();
 		glDepthMask(0);
 		gp_Pnt point[4];
@@ -203,24 +204,27 @@ void HRuler::glCommands(bool select, bool marked, bool no_color)
 		wxGetApp().DisableBlend();
 		glDepthMask(1);
 
-		// draw a black rectangle border
-		glColor4ub(0, 0, 0, 255); // black
-
-		glBegin(GL_LINE_STRIP);
-		glVertex3d(point[0].X(), point[0].Y(), point[0].Z());
-		glVertex3d(point[1].X(), point[1].Y(), point[1].Z());
-		glVertex3d(point[2].X(), point[2].Y(), point[2].Z());
-		glVertex3d(point[3].X(), point[3].Y(), point[3].Z());
-		glVertex3d(point[0].X(), point[0].Y(), point[0].Z());
-		glEnd();
-
-		// draw the marks ( with their numbers )
-		std::list<RulerMark> marks;
-		CalculateMarks(marks);
-		for(std::list<RulerMark>::iterator It = marks.begin(); It != marks.end(); It++)
+		if (!no_color)
 		{
-			RulerMark& mark = *It;
-			mark.glCommands(GetUnits());
+			// draw a black rectangle border
+			glColor4ub(0, 0, 0, 255); // black
+
+			glBegin(GL_LINE_STRIP);
+			glVertex3d(point[0].X(), point[0].Y(), point[0].Z());
+			glVertex3d(point[1].X(), point[1].Y(), point[1].Z());
+			glVertex3d(point[2].X(), point[2].Y(), point[2].Z());
+			glVertex3d(point[3].X(), point[3].Y(), point[3].Z());
+			glVertex3d(point[0].X(), point[0].Y(), point[0].Z());
+			glEnd();
+
+			// draw the marks ( with their numbers )
+			std::list<RulerMark> marks;
+			CalculateMarks(marks);
+			for (std::list<RulerMark>::iterator It = marks.begin(); It != marks.end(); It++)
+			{
+				RulerMark& mark = *It;
+				mark.glCommands(GetUnits());
+			}
 		}
 		glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -236,6 +240,11 @@ void HRuler::KillGLLists()
 	{
 		glDeleteLists(m_gl_list, 1);
 		m_gl_list = 0;
+	}
+	if (m_select_gl_list)
+	{
+		glDeleteLists(m_select_gl_list, 1);
+		m_select_gl_list = 0;
 	}
 }
 
@@ -383,7 +392,11 @@ void HRuler::ReadFromConfig(HeeksConfig& config)
 	config.Read(_T("RulerTrsf32"), &m32, 0.0);
 	config.Read(_T("RulerTrsf33"), &m33, 1.0);
 	config.Read(_T("RulerTrsf34"), &m34, 0.0);
+#if OCC_VERSION_HEX >= 0x060900
+	m_trsf.SetValues(m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34);
+#else
 	m_trsf.SetValues(m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, 0.0001, 0.00000001);
+#endif
 
 	config.Read(_T("RulerUseViewUnits"), &m_use_view_units);
 	config.Read(_T("RulerUnits"), &m_units);

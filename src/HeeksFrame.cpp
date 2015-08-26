@@ -54,7 +54,9 @@ EVT_CLOSE(CHeeksFrame::OnClose)
 EVT_MENU( Menu_View_ResetLayout, CHeeksFrame::OnResetLayout )
 EVT_MENU_RANGE(	ID_RECENT_FIRST, ID_RECENT_FIRST + MAX_RECENT_FILES, CHeeksFrame::OnRecentFile)
 #ifndef USING_RIBBON
-EVT_MENU( Menu_View_SetToolBarsToLeft, CHeeksFrame::OnSetToolBarsToLeft )
+#ifdef HAVE_TOOLBARS
+EVT_MENU(Menu_View_SetToolBarsToLeft, CHeeksFrame::OnSetToolBarsToLeft)
+#endif
 EVT_MENU_RANGE(ID_FIRST_EXTERNAL_BUTTON, ID_FIRST_POP_UP_MENU_TOOL + 1000, CHeeksFrame::OnExternalButton)
 //wx__DECLARE_EVT2(wxEVT_COMMAND_BUTTON_CLICKED, ID_FIRST_EXTERNAL_BUTTON, ID_FIRST_POP_UP_MENU_TOOL + 1000, wxCommandEventHandler(CHeeksFrame::OnExternalButton))
 EVT_UPDATE_UI_RANGE(ID_FIRST_EXTERNAL_BUTTON, ID_FIRST_POP_UP_MENU_TOOL + 1000, CHeeksFrame::OnUpdateExternalButton)
@@ -123,16 +125,20 @@ CHeeksFrame::CHeeksFrame( const wxString& title, const wxPoint& pos, const wxSiz
 
 	wxString exe_folder = wxGetApp().GetExeFolder();
 
+#ifdef HAVE_TOOLBARS
 	m_main_toolbar_removed = false;
 	m_geometry_toolbar_removed = false;
 	m_solid_toolbar_removed = false;
 	m_viewing_toolbar_removed = false;
+#endif
 
 #ifdef USING_RIBBON
 	m_ribbon = new HeeksRibbon(this);
 	m_aui_manager->AddPane(m_ribbon, wxAuiPaneInfo().ToolbarPane().Gripper(false).Name(_T("Ribbon")).Movable(false).MinSize(wxSize(-1, 85)).Top());
 #else
+#ifdef HAVE_TOOLBARS
 	AddToolBars();
+#endif
 #endif
 
 	// Center
@@ -164,7 +170,9 @@ CHeeksFrame::CHeeksFrame( const wxString& title, const wxPoint& pos, const wxSiz
 #ifndef USING_RIBBON
 	m_menuWindow->AppendSeparator();
 	m_menuWindow->Append( Menu_View_ResetLayout, _( "Reset Layout" ) );
+#ifdef HAVE_TOOLBARS
 	m_menuWindow->Append( Menu_View_SetToolBarsToLeft, _( "Set toolbars to left" ) );
+#endif
 #endif
 
 	//Read layout
@@ -347,6 +355,8 @@ void OnUpdateViewInput( wxUpdateUIEvent& event )
 	event.Check(wxGetApp().m_frame->m_aui_manager->GetPane(wxGetApp().m_frame->m_input_canvas).IsShown());
 }
 
+#ifdef HAVE_TOOLBARS
+
 void OnViewToolBar( wxCommandEvent& event )
 {
 	wxAuiPaneInfo& pane_info = wxGetApp().m_frame->m_aui_manager->GetPane(wxGetApp().m_frame->m_toolBar);
@@ -416,6 +426,7 @@ void OnUpdateViewTransformBar( wxUpdateUIEvent& event )
 {
 	event.Check(wxGetApp().m_frame->m_aui_manager->GetPane(wxGetApp().m_frame->m_transformBar).IsShown());
 }
+#endif
 
 void CHeeksFrame::OnResetLayout( wxCommandEvent& event )
 {
@@ -424,12 +435,14 @@ void CHeeksFrame::OnResetLayout( wxCommandEvent& event )
 	m_aui_manager->Update();
 }
 
+#ifdef HAVE_TOOLBARS
 void CHeeksFrame::OnSetToolBarsToLeft( wxCommandEvent& event )
 {
 	OnChangeBitmapSize();
 	SetToolBarsToLeft();
 	m_aui_manager->Update();
 }
+#endif
 
 void OnViewProperties( wxCommandEvent& event )
 {
@@ -657,37 +670,23 @@ void OnOpenButton( wxCommandEvent& event )
 	wxGetApp().OnOpenButton();
 }
 
-void OnImportButton( wxCommandEvent& event )
+void OnImportButton(wxCommandEvent& event)
 {
-
+	HeeksConfig config;
 	wxString default_directory = wxEmptyString;
+	config.Read(_T("ImportDirectory"), &default_directory, _T(""));
 
-	if (wxGetApp().m_recent_files.size() > 0)
+	wxFileDialog dialog(wxGetApp().m_frame, _("Import file"), default_directory, wxEmptyString, wxGetApp().GetKnownFilesWildCardString(true, true));
+	dialog.CentreOnParent();
+
+	if (dialog.ShowModal() == wxID_OK)
 	{
-		#ifdef WIN32
-			wxString delimiter(_T("\\"));
-		#else
-			wxString delimiter(_T("/"));
-		#endif // WIN32
-
-		default_directory = *(wxGetApp().m_recent_files.begin());
-		int last_directory_delimiter = default_directory.Find(delimiter[0],true);
-		if (last_directory_delimiter > 0)
-		{
-			default_directory.Remove(last_directory_delimiter);
-		}
-	}
-
-    wxFileDialog dialog(wxGetApp().m_frame, _("Import file"), default_directory, wxEmptyString, wxGetApp().GetKnownFilesWildCardString(true, true));
-    dialog.CentreOnParent();
-
-    if (dialog.ShowModal() == wxID_OK)
-    {
-		if(wxGetApp().OpenFile(dialog.GetPath().c_str(), true))
+		if (wxGetApp().OpenFile(dialog.GetPath().c_str(), true))
 		{
 			wxGetApp().m_frame->m_graphics->OnMagExtents(true, true, 25);
+			config.Write(_T("ImportDirectory"), dialog.GetDirectory());
 		}
-    }
+	}
 }
 
 void OnSaveButton( wxCommandEvent& event )
@@ -1169,13 +1168,6 @@ int CHeeksFrame::AddMenuItem(wxMenu* menu, const wxString& text, const wxBitmap&
 	return id_to_use;
 }
 
-wxToolBarToolBase* CHeeksFrame::AddToolBarTool(wxToolBar* toolbar, const wxString& title, const wxBitmap& bitmap, const wxString& caption, void(*onButtonFunction)(wxCommandEvent&), void(*onUpdateButtonFunction)(wxUpdateUIEvent&))
-{
-	int id_to_use = MakeNextIDForTool(onButtonFunction, onUpdateButtonFunction);
-
-	return toolbar->AddTool(id_to_use, title, bitmap, caption);
-}
-
 static std::map<int, Tool*> tool_map_for_OnTool;
 
 static void OnTool(wxCommandEvent& event)
@@ -1197,6 +1189,15 @@ void CHeeksFrame::AddToolBarTool(wxToolBar* toolbar, Tool* tool)
 		if(button_added)tool_map_for_OnTool.insert( std::pair<int, Tool*> ( button_added->GetId(), tool ) );
 	}
 }
+
+wxToolBarToolBase* CHeeksFrame::AddToolBarTool(wxToolBar* toolbar, const wxString& title, const wxBitmap& bitmap, const wxString& caption, void(*onButtonFunction)(wxCommandEvent&), void(*onUpdateButtonFunction)(wxUpdateUIEvent&))
+{
+	int id_to_use = MakeNextIDForTool(onButtonFunction, onUpdateButtonFunction);
+
+	return toolbar->AddTool(id_to_use, title, bitmap, caption);
+}
+
+#ifdef HAVE_TOOLBARS
 
 class CFlyOutButton;
 class ToolBarPopup;
@@ -1413,7 +1414,6 @@ CFlyOutButton::~CFlyOutButton()
 		}
 	}
 
-
 static void OnEndofButton( wxCommandEvent& event )
 {
 	wxGetApp().digitize_end = !wxGetApp().digitize_end;
@@ -1479,6 +1479,8 @@ void CHeeksFrame::AddToolBarFlyout(wxToolBar* toolbar, const CFlyOutList& flyout
 		,disappears_on_click);
 	toolbar->AddControl(button);
 }
+
+#endif
 
 // a class just so I can get at the protected m_tools of wxToolBar
 class ToolBarForGettingToolsFrom: public wxToolBar
@@ -1602,7 +1604,8 @@ void OnPageSetup(wxCommandEvent& WXUNUSED(event))
 
 void CHeeksFrame::OnChangeBitmapSize()
 {
-	if(!m_main_toolbar_removed)m_aui_manager->DetachPane(m_toolBar);
+#ifdef HAVE_TOOLBARS
+	if (!m_main_toolbar_removed)m_aui_manager->DetachPane(m_toolBar);
 	if(!m_geometry_toolbar_removed)m_aui_manager->DetachPane(m_geometryBar);
 	if(!m_solid_toolbar_removed)m_aui_manager->DetachPane(m_solidBar);
 	if(!m_viewing_toolbar_removed)m_aui_manager->DetachPane(m_viewingBar);
@@ -1634,15 +1637,18 @@ void CHeeksFrame::OnChangeBitmapSize()
 	AddToolBars();
 #endif
 
+#endif
+
 	if(m_input_canvas)m_input_canvas->AddToolBar();
 	RefreshInputCanvas();
 	if(m_properties)m_properties->AddToolBar();
 	RefreshProperties();
 }
 
+#ifdef HAVE_TOOLBARS
 void CHeeksFrame::SetToolBarsSize()
 {
-	if(!m_main_toolbar_removed)m_toolBar->SetToolBitmapSize(wxSize(ToolImage::GetBitmapSize(), ToolImage::GetBitmapSize()));
+	if (!m_main_toolbar_removed)m_toolBar->SetToolBitmapSize(wxSize(ToolImage::GetBitmapSize(), ToolImage::GetBitmapSize()));
 	if(!m_geometry_toolbar_removed)m_geometryBar->SetToolBitmapSize(wxSize(ToolImage::GetBitmapSize(), ToolImage::GetBitmapSize()));
 	if(!m_solid_toolbar_removed)m_solidBar->SetToolBitmapSize(wxSize(ToolImage::GetBitmapSize(), ToolImage::GetBitmapSize()));
 	if(!m_viewing_toolbar_removed)m_viewingBar->SetToolBitmapSize(wxSize(ToolImage::GetBitmapSize(), ToolImage::GetBitmapSize()));
@@ -1653,6 +1659,7 @@ void CHeeksFrame::SetToolBarsSize()
 		toolbar->SetToolBitmapSize(wxSize(ToolImage::GetBitmapSize(), ToolImage::GetBitmapSize()));
 	}
 }
+#endif
 
 #ifndef USING_RIBBON
 
@@ -1698,7 +1705,9 @@ void CHeeksFrame::MakeMenus()
 	// Geometry Menu
 	wxMenu *geometry_menu = new wxMenu;
 	AddMenuItem(geometry_menu, _("Draw a sketch"), ToolImage(_T("lines")), OnLinesButton);
-	//AddMenuItem(geometry_menu, _("Draw Circles"), ToolImage(_T("circles")), OnCirclesButton);
+	AddMenuItem(geometry_menu, _("Draw circles through 3 points"), ToolImage(_T("circ3p")), OnCircles3pButton);
+	AddMenuItem(geometry_menu, _("Draw circles, centre and point"), ToolImage(_T("circ2p")), OnCircles2pButton);
+	AddMenuItem(geometry_menu, _("Draw circles, centre and radius"), ToolImage(_T("circpr")), OnCirclesprButton);
 	AddMenuItem(geometry_menu, _("Draw Ellipses"), ToolImage(_T("circles")), OnEllipseButton);
 	AddMenuItem(geometry_menu, _("Draw Infinite Lines"), ToolImage(_T("iline")), OnILineButton);
 	AddMenuItem(geometry_menu, _("Draw Points"), ToolImage(_T("point")), OnPointsButton);
@@ -1776,12 +1785,14 @@ void CHeeksFrame::MakeMenus()
 	m_options_menu_id = AddMenuItem(m_menuWindow, _("Options"), wxBitmap(), OnViewOptions, OnUpdateViewOptions, NULL, true);
 	m_input_menu_id = AddMenuItem(m_menuWindow, _("Input"), wxBitmap(), OnViewInput, OnUpdateViewInput, NULL, true);
 	m_properties_menu_id = AddMenuItem(m_menuWindow, _("Properties"), wxBitmap(), OnViewProperties, OnUpdateViewProperties, NULL, true);
+#ifdef HAVE_TOOLBARS
 	m_menuWindow->AppendSeparator();
 	m_main_toolbar_menu_id = AddMenuItem(m_menuWindow, _("Tool Bar"), wxBitmap(), OnViewToolBar, OnUpdateViewToolBar, NULL, true);
 	m_solids_toolbar_menu_id = AddMenuItem(m_menuWindow, _("Solids Tool Bar"), wxBitmap(), OnViewSolidBar, OnUpdateViewSolidBar, NULL, true);
 	m_geometry_toolbar_menu_id = AddMenuItem(m_menuWindow, _("Geometry Tool Bar"), wxBitmap(), OnViewGeometryBar, OnUpdateViewGeometryBar, NULL, true);
 	m_viewing_toolbar_menu_id = AddMenuItem(m_menuWindow, _("Viewing Tool Bar"), wxBitmap(), OnViewViewingBar, OnUpdateViewViewingBar, NULL, true);
 	m_transform_toolbar_menu_id = AddMenuItem(m_menuWindow, _("Transformations Tool Bar"), wxBitmap(), OnViewTransformBar, OnUpdateViewTransformBar, NULL, true);
+#endif
 
 	// Help Menu
 	m_menuHelp = new wxMenu;
@@ -1801,6 +1812,8 @@ void CHeeksFrame::MakeMenus()
 
 	SetMenuBar( m_menuBar );
 }
+
+#ifdef HAVE_TOOLBARS
 
 void CHeeksFrame::AddToolBar(wxToolBarBase* tb, const wxString& name, const wxString& caption)
 {
@@ -1992,6 +2005,7 @@ void CHeeksFrame::AddToolBars()
 	}
 }
 #endif
+#endif
 
 void CHeeksFrame::LoadPerspective(const wxString& str)
 {
@@ -2003,6 +2017,8 @@ void CHeeksFrame::LoadPerspective(const wxString& str)
 	m_aui_manager->GetPane(m_options).Caption(_("Options"));
 	m_aui_manager->GetPane(m_input_canvas).Caption(_("Input"));
 	m_aui_manager->GetPane(m_properties).Caption(_("Properties"));
+#ifdef HAVE_TOOLBARS
+
 	m_aui_manager->GetPane(m_toolBar).Caption(_("General Tools"));
 	m_aui_manager->GetPane(m_geometryBar).Caption(_("Geometry Tools"));
 	m_aui_manager->GetPane(m_solidBar).Caption(_("Solid Tools"));
@@ -2011,7 +2027,10 @@ void CHeeksFrame::LoadPerspective(const wxString& str)
 #ifndef USING_RIBBON
 	SetToolBarsSize();
 #endif
+#endif
 }
+
+#ifdef HAVE_TOOLBARS
 
 void CHeeksFrame::SetToolBarsToLeft()
 {
@@ -2040,3 +2059,4 @@ const CFlyOutItem* CFlyOutList::GetMainItem()const
 	// get the item to show on toolbar
 	return m_list.front();
 }
+#endif

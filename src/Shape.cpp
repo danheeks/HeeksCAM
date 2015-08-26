@@ -29,7 +29,8 @@ bool CShape::m_solids_found = false;
 
 CShape::CShape()
 :m_face_gl_list(0),
- m_edge_gl_list(0),
+m_edge_gl_list(0),
+m_select_edge_gl_list(0),
  m_opacity(1.0),
  m_volume_found(false),
  m_color(0, 0, 0),
@@ -42,6 +43,7 @@ CShape::CShape(const TopoDS_Shape &shape, const wxChar* title, const HeeksColor&
 :IdNamedObjList(title),
  m_face_gl_list(0),
  m_edge_gl_list(0),
+ m_select_edge_gl_list(0),
  m_shape(shape),
  m_opacity(opacity),
  m_volume_found(false),
@@ -54,6 +56,7 @@ CShape::CShape(const TopoDS_Shape &shape, const wxChar* title, const HeeksColor&
 CShape::CShape(const CShape& s)
 :m_face_gl_list(0),
  m_edge_gl_list(0),
+ m_select_edge_gl_list(0),
  m_volume_found(false),
  m_picked_face(NULL)
 {
@@ -129,6 +132,12 @@ void CShape::KillGLLists()
 		m_edge_gl_list = 0;
 	}
 
+	if (m_select_edge_gl_list)
+	{
+		glDeleteLists(m_select_edge_gl_list, 1);
+		m_select_edge_gl_list = 0;
+	}
+
 	m_box = CBox();
 
 	if(m_faces)
@@ -167,7 +176,7 @@ void CShape::CallMesh()
 {
 	double pixels_per_mm = wxGetApp().GetPixelScale();
 	BRepTools::Clean(m_shape);
-	BRepMesh::Mesh(m_shape, 1/pixels_per_mm);
+	BRepMesh_IncrementalMesh(m_shape, 1 / pixels_per_mm);
 }
 
 void CShape::glCommands(bool select, bool marked, bool no_color)
@@ -214,7 +223,9 @@ void CShape::glCommands(bool select, bool marked, bool no_color)
 		}
 	}
 
-	if(draw_edges && !m_edge_gl_list)
+	int *p_edge_gl_list = select ? &m_select_edge_gl_list : &m_edge_gl_list;
+
+	if (draw_edges && !*p_edge_gl_list)
 	{
 		if(!mesh_called)
 		{
@@ -223,14 +234,14 @@ void CShape::glCommands(bool select, bool marked, bool no_color)
 		}
 
 		// make the display list
-		m_edge_gl_list = glGenLists(1);
-		glNewList(m_edge_gl_list, GL_COMPILE);
+		*p_edge_gl_list = glGenLists(1);
+		glNewList(*p_edge_gl_list, GL_COMPILE);
 
 		// render all the edges
-		m_edges->glCommands(true, marked, no_color);
+		m_edges->glCommands(select, marked, no_color);
 
 		// render all the vertices
-		m_vertices->glCommands(true, false, false);
+		if (select)m_vertices->glCommands(true, false, false);
 
 		glEndList();
 	}
@@ -238,11 +249,11 @@ void CShape::glCommands(bool select, bool marked, bool no_color)
 	if(draw_faces && m_face_gl_list)
 	{
 		// draw the face display list
-		glEnable(GL_LIGHTING);
-		glShadeModel(GL_SMOOTH);
+		if(!select)glEnable(GL_LIGHTING);
+		if (!select)glShadeModel(GL_SMOOTH);
 		glCallList(m_face_gl_list);
-		glDisable(GL_LIGHTING);
-		glShadeModel(GL_FLAT);
+		if (!select)glDisable(GL_LIGHTING);
+		if (!select)glShadeModel(GL_FLAT);
 	}
 
 	{
@@ -251,10 +262,10 @@ void CShape::glCommands(bool select, bool marked, bool no_color)
 		glDepthMask(1);
 	}
 
-	if(draw_edges && m_edge_gl_list)
+	if (draw_edges && *p_edge_gl_list)
 	{
 		// draw the edge display list
-		glCallList(m_edge_gl_list);
+		glCallList(*p_edge_gl_list);
 	}
 }
 
@@ -264,7 +275,7 @@ void CShape::GetBox(CBox &box)
 	{
 		if(m_faces == NULL)create_faces_and_edges();
 		BRepTools::Clean(m_shape);
-		BRepMesh::Mesh(m_shape, 1.0);
+		BRepMesh_IncrementalMesh(m_shape, 1.0);
 		if(m_faces)m_faces->GetBox(m_box);
 	}
 
@@ -1020,7 +1031,7 @@ bool CShape::ExportSolidsFile(const std::list<HeeksObj*>& objects, const wxChar*
 
 void CShape::GetTriangles(void(*callbackfunc)(const double* x, const double* n), double cusp, bool just_one_average_normal){
 	BRepTools::Clean(m_shape);
-	BRepMesh::Mesh(m_shape, cusp);
+	BRepMesh_IncrementalMesh(m_shape, cusp);
 
 	return IdNamedObjList::GetTriangles(callbackfunc, cusp, just_one_average_normal);
 }

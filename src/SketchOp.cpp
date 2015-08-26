@@ -18,6 +18,7 @@
 #include "Tool.h"
 #include "CTool.h"
 #include "Reselect.h"
+#include "Picking.h"
 
 
 CSketchOp & CSketchOp::operator= ( const CSketchOp & rhs )
@@ -55,7 +56,11 @@ void CSketchOp::glCommands(bool select, bool marked, bool no_color)
 	{
 		// allow sketch operations to be selected
 		HeeksObj* sketch = wxGetApp().GetIDObject(SketchType, m_sketch);
-		if (sketch)sketch->glCommands(select, marked, no_color);
+		if (sketch)
+		{
+			if (select)SetPickingColor(sketch->GetIndex());
+			sketch->glCommands(select, marked, no_color);
+		}
 	}
 }
 

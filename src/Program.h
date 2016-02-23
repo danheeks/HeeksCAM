@@ -141,10 +141,8 @@ public:
 	void WriteXML(TiXmlNode *root);
 	bool Add(HeeksObj* object, HeeksObj* prev_object);
 	void Remove(HeeksObj* object);
-	bool CanBeRemoved(){return false;}
 	bool CanAdd(HeeksObj* object);
 	bool CanAddTo(HeeksObj* owner);
-	bool OneOfAKind(){return true;}
 	void SetClickMarkPoint(MarkedObject* marked_object, const double* ray_start, const double* ray_direction);
 	bool AutoExpand(){return true;}
 	static HeeksObj* ReadFromXMLElement(TiXmlElement* pElem);

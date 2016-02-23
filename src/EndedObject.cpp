@@ -22,7 +22,7 @@ EndedObject::~EndedObject(){
 }
 
 const EndedObject& EndedObject::operator=(const EndedObject &b){
-	HeeksObj::operator=(b);
+	ExtrudedObj<HeeksObj>::operator = (b);
 	A = b.A;
 	B = b.B;
 	color = b.color;
@@ -31,7 +31,7 @@ const EndedObject& EndedObject::operator=(const EndedObject &b){
 
 HeeksObj* EndedObject::MakeACopyWithID()
 {
-	EndedObject* pnew = (EndedObject*)HeeksObj::MakeACopyWithID();
+	EndedObject* pnew = (EndedObject*)ExtrudedObj<HeeksObj>::MakeACopyWithID();
 	return pnew;
 }
 
@@ -47,7 +47,7 @@ bool EndedObject::IsDifferent(HeeksObj *other)
 	if(color.COLORREF_color() != eobj->color.COLORREF_color())
 		return true;
 
-	return HeeksObj::IsDifferent(other);
+	return ExtrudedObj<HeeksObj>::IsDifferent(other);
 }
 
 void EndedObject::ModifyByMatrix(const double* m){
@@ -97,7 +97,7 @@ void EndedObject::WriteBaseXML(TiXmlElement *element)
 	element->SetDoubleAttribute("ey", B.Y());
 	element->SetDoubleAttribute("ez", B.Z());
 
-	HeeksObj::WriteBaseXML(element);
+	ExtrudedObj<HeeksObj>::WriteBaseXML(element);
 }
 
 void EndedObject::ReadBaseXML(TiXmlElement* pElem)
@@ -140,5 +140,5 @@ void EndedObject::ReadBaseXML(TiXmlElement* pElem)
 		}
 	}
 
-	HeeksObj::ReadBaseXML(pElem);
+	ExtrudedObj<HeeksObj>::ReadBaseXML(pElem);
 }

@@ -111,7 +111,7 @@ private:
 	std::map< int, int > next_id_map;
 	std::map< std::string, HeeksObj*(*)(TiXmlElement* pElem) > xml_read_fn_map;
 
-	void render_screen_text2(const wxChar* str);
+	void render_screen_text2(const wxChar* str, bool select);
 	void RenderDatumOrCurrentCoordSys();
 
 protected:
@@ -209,7 +209,7 @@ public:
 	bool m_loft_removes_sketches;
 	bool m_font_created;
 	glfont::GLFont m_gl_font;
-	unsigned int m_font_tex_number;
+	unsigned int m_font_tex_number[2];
 	GraphicsTextMode m_graphics_text_mode;
 	bool m_print_scaled_to_page;
 	wxPrintData *m_printData;
@@ -243,6 +243,7 @@ public:
 	int m_icon_texture_number;
 	bool m_extrude_to_solid;
 	double m_revolve_angle;
+	wxWindow* m_window;
 
 	typedef void(*FileOpenHandler_t)(const wxChar *path);
 	typedef std::map<wxString, FileOpenHandler_t> FileOpenHandlers_t;
@@ -416,10 +417,10 @@ public:
 	bool CheckForNOrMore(const std::list<HeeksObj*> &list, int min_num, int type, const wxString& msg, const wxString& caption);
 	bool CheckForNOrMore(const std::list<HeeksObj*> &list, int min_num, int type1, int type2, const wxString& msg, const wxString& caption);
 	bool CheckForNOrMore(const std::list<HeeksObj*> &list, int min_num, int type1, int type2, int type3, const wxString& msg, const wxString& caption);
-	void render_text(const wxChar* str);
+	void render_text(const wxChar* str, bool select);
 	bool get_text_size(const wxChar* str, float* width, float* height);
-	void render_screen_text(const wxChar* str1, const wxChar* str2);
-	void render_screen_text_at(const wxChar* str1, double scale, double x, double y, double theta);
+	void render_screen_text(const wxChar* str1, const wxChar* str2, bool select);
+	void render_screen_text_at(const wxChar* str1, double scale, double x, double y, double theta, bool select);
 	void OnInputModeTitleChanged();
 	void OnInputModeHelpTextChanged();
 	void PlotSetColor(const HeeksColor &c);
@@ -459,7 +460,9 @@ public:
 		COutputCanvas* m_output_canvas;
 		CPrintCanvas* m_print_canvas;
 		bool m_run_program_on_new_line;
+#ifdef HAVE_TOOLBARS
 		wxToolBarBase* m_machiningBar;
+#endif
 		wxMenu *m_menuMachining;
 		bool m_machining_hidden;
 		std::list< void(*)() > m_OnRewritePython_list;
@@ -478,6 +481,7 @@ public:
 		wxString GetDllFolder() const;
 		wxString GetResourceFilename(const wxString resource, const bool writableOnly = false) const;
 		void RunPythonScript();
+		void BackplotGCode(const wxString& output_file);
 
 		typedef int SymbolType_t;
 		typedef unsigned int SymbolId_t;
@@ -491,9 +495,11 @@ public:
 		static void GetNewOperationTools(std::list<Tool*>* t_list);
 		static void GetNewStockTools(std::list<Tool*>* t_list);
 
+#ifdef HAVE_TOOLBARS
 		void StartToolBarFlyout(const wxString& title_and_bitmap);
 		void AddFlyoutButton(const wxString& title, const wxBitmap& bitmap, const wxString& tooltip, void(*onButtonFunction)(wxCommandEvent&));
 		void EndToolBarFlyout(wxToolBar* toolbar);
+#endif
 		void LinkXMLEndChild(TiXmlNode* root, TiXmlElement* pElem);
 		TiXmlElement* FirstNamedXMLChildElement(TiXmlElement* pElem, const char* name);
 		void RemoveXMLChild(TiXmlNode* pElem, TiXmlElement* child);

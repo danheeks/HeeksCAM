@@ -53,8 +53,12 @@ void ProgramDlg::GetDataRaw(HeeksObj* object)
 	std::vector<CMachine> machines;
 	CProgram::GetMachines(machines);
 	
-	CMachine &machine = machines[m_cmbMachines->GetSelection()];
-	((CProgram*)object)->m_machine = machine;
+	int selection = m_cmbMachines->GetSelection();
+	if (selection >= 0 && selection < machines.size())
+	{
+		CMachine &machine = machines[m_cmbMachines->GetSelection()];
+		((CProgram*)object)->m_machine = machine;
+	}
 	((CProgram*)object)->m_output_file_name_follows_data_file_name = m_chkOutputNameFollowsDataName->GetValue();
 	((CProgram*)object)->m_output_file = m_txtOutputFile->GetValue();
 	((CProgram*)object)->m_units = ((m_cmbUnits->GetSelection() == 0) ? 1.0:25.4);

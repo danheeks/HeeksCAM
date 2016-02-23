@@ -39,18 +39,18 @@ SpeedOpDlg::SpeedOpDlg(wxWindow *parent, CSpeedOp* object, bool some_controls_on
 
 void SpeedOpDlg::GetDataRaw(HeeksObj* object)
 {
-	((CSpeedOp*)object)->m_speed_op_params.m_horizontal_feed_rate = m_lgthHFeed->GetValue();
-	((CSpeedOp*)object)->m_speed_op_params.m_vertical_feed_rate = m_lgthVFeed->GetValue();
-	((CSpeedOp*)object)->m_speed_op_params.m_spindle_speed = m_dblSpindleSpeed->GetValue();
+	((CSpeedOp*)object)->m_horizontal_feed_rate = m_lgthHFeed->GetValue();
+	((CSpeedOp*)object)->m_vertical_feed_rate = m_lgthVFeed->GetValue();
+	((CSpeedOp*)object)->m_spindle_speed = m_dblSpindleSpeed->GetValue();
 
 	OpDlg::GetDataRaw(object);
 }
 
 void SpeedOpDlg::SetFromDataRaw(HeeksObj* object)
 {
-	m_lgthHFeed->SetValue(((CSpeedOp*)object)->m_speed_op_params.m_horizontal_feed_rate);
-	m_lgthVFeed->SetValue(((CSpeedOp*)object)->m_speed_op_params.m_vertical_feed_rate);
-	m_dblSpindleSpeed->SetValue(((CSpeedOp*)object)->m_speed_op_params.m_spindle_speed);
+	m_lgthHFeed->SetValue(((CSpeedOp*)object)->m_horizontal_feed_rate);
+	m_lgthVFeed->SetValue(((CSpeedOp*)object)->m_vertical_feed_rate);
+	m_dblSpindleSpeed->SetValue(((CSpeedOp*)object)->m_spindle_speed);
 
 	OpDlg::SetFromDataRaw(object);
 }

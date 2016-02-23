@@ -160,6 +160,18 @@ void HLine::glCommands(bool select, bool marked, bool no_color){
 	glBegin(GL_LINES);
 	glVertex3d(A.X(), A.Y(), A.Z());
 	glVertex3d(B.X(), B.Y(), B.Z());
+	if (m_thickness != 0.0)
+	{
+		gp_Pnt Ve(m_extrusion_vector[0], m_extrusion_vector[1], m_extrusion_vector[2]);
+		gp_Pnt Ae = gp_XYZ(A.XYZ() + Ve.XYZ() * m_thickness);
+		gp_Pnt Be = gp_XYZ(B.XYZ() + Ve.XYZ() * m_thickness);
+		glVertex3d(B.X(), B.Y(), B.Z());
+		glVertex3d(Be.X(), Be.Y(), Be.Z());
+		glVertex3d(Be.X(), Be.Y(), Be.Z());
+		glVertex3d(Ae.X(), Ae.Y(), Ae.Z());
+		glVertex3d(Ae.X(), Ae.Y(), Ae.Z());
+		glVertex3d(A.X(), A.Y(), A.Z());
+	}
 	glEnd();
 	if(marked){
 		glLineWidth(1);

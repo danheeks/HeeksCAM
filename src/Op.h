@@ -9,12 +9,11 @@
 #define OP_HEADER
 
 #include "IdNamedObjList.h"
-#include "PythonStuff.h"
 
 class COp : public IdNamedObjList
 {
 public:
-	wxString m_comment;
+	std::wstring m_comment;
 	bool m_active; // don't make NC code, if this is not active
 	int m_tool_number;	// joins the m_tool_number in one of the CTool objects in the tools list.
 	int m_operation_type; // Type of operation (because GetType() overloading does not allow this class to call the parent's method)

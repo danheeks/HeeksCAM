@@ -332,6 +332,11 @@ void CViewport::ViewportOnMouse( wxMouseEvent& event )
 	wxGetApp().m_current_viewport = this;
 	this->m_need_refresh = false;
 	this->m_need_update = false;
+	if (event.LeftDown())
+	{
+		int a = 0;
+		a = 3;
+	}
 	wxGetApp().input_mode_object->OnMouse( event );
 
 	for(std::list< void(*)(wxMouseEvent&) >::iterator It = wxGetApp().m_lbutton_up_callbacks.begin(); It != wxGetApp().m_lbutton_up_callbacks.end(); It++)

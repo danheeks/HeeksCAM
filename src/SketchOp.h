@@ -18,7 +18,7 @@ class CSketchOp : public CDepthOp
 public:
 	int m_sketch;
 
-	CSketchOp(int sketch, const int tool_number = -1, const int operation_type = UnknownType )
+	CSketchOp(int sketch =0, const int tool_number = -1, const int operation_type = UnknownType )
 		: CDepthOp(tool_number, operation_type),
 		m_sketch(sketch)
 	{}

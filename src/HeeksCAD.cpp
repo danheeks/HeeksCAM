@@ -228,7 +228,8 @@ HeeksCADapp::HeeksCADapp(): ObjList()
 	m_show_grippers_on_drag = true;
 	m_extrude_removes_sketches = false;
 	m_loft_removes_sketches = false;
-	m_font_tex_number = 0;
+	m_font_tex_number[0] = 0;
+	m_font_tex_number[1] = 0;
 	m_graphics_text_mode = GraphicsTextModeNone;
 	m_locale_initialised = false;
 	m_printData = NULL;
@@ -2084,7 +2085,7 @@ void HeeksCADapp::glCommandsAll(const CViewPoint &view_point)
 				screen_text2.Append(help_str);
 			}
 		}
-		render_screen_text(screen_text1, screen_text2);
+		render_screen_text(screen_text1, screen_text2, false);
 	}
 }
 
@@ -4463,23 +4464,24 @@ void HeeksCADapp::create_font()
 				fstr = GetResFolder() + _T("/bitmaps/font.glf");
 				break;
 	}
-	glGenTextures(1, &m_font_tex_number );
+	glGenTextures(2, m_font_tex_number );
 
 	//Create our glFont from verdana.glf, using texture 1
-	m_gl_font.Create((char*)Ttc(fstr.c_str()), m_font_tex_number);
+	m_gl_font.Create((char*)Ttc(fstr.c_str()), m_font_tex_number[0], m_font_tex_number[1]);
 	m_gl_font_initialized = true;
 }
 
-void HeeksCADapp::render_text(const wxChar* str)
+void HeeksCADapp::render_text(const wxChar* str, bool select)
 {
 	//Needs to be called before text output
 	create_font();
 	//glColor4ub(0, 0, 0, 255);
 	EnableBlend();
 	glEnable(GL_TEXTURE_2D);
+
 	glDepthMask(0);
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	m_gl_font.Begin();
+	m_gl_font.Begin(select);
 
 	//Draws text with a glFont
 	m_gl_font.DrawString(str, 0.08f, 0.0f, 0.0f);
@@ -4502,7 +4504,7 @@ bool HeeksCADapp::get_text_size(const wxChar* str, float* width, float* height)
 	return true;
 }
 
-void HeeksCADapp::render_screen_text2(const wxChar* str)
+void HeeksCADapp::render_screen_text2(const wxChar* str, bool select)
 {
 #if wxUSE_UNICODE
 	size_t n = wcslen(str);
@@ -4522,14 +4524,14 @@ void HeeksCADapp::render_screen_text2(const wxChar* str)
 		j++;
 		if(str[i] == newline || i == n-1 || j == 1023){
 			buffer[j] = 0;
-			render_text(buffer);
+			render_text(buffer, select);
 			if(str[i] == newline)glTranslated(0.0, -2.2, 1.0);
 			j = 0;
 		}
 	}
 }
 
-void HeeksCADapp::render_screen_text(const wxChar* str1, const wxChar* str2)
+void HeeksCADapp::render_screen_text(const wxChar* str1, const wxChar* str2, bool select)
 {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
@@ -4542,10 +4544,10 @@ void HeeksCADapp::render_screen_text(const wxChar* str1, const wxChar* str2)
 	glTranslated(2.0, h - 1.0, 0.0);
 
 	glScaled(10.0, 10.0, 0);
-	render_screen_text2(str1);
+	render_screen_text2(str1, select);
 
 	glScaled(0.612, 0.612, 0);
-	render_screen_text2(str2);
+	render_screen_text2(str2, select);
 
 //Even though this is in reverse order, the different matrices have different stacks, and we want to exit here in the modelview
 	glMatrixMode(GL_PROJECTION);
@@ -4569,7 +4571,7 @@ void HeeksCADapp::DisableBlend()
 	if(!m_antialiasing)glDisable(GL_BLEND);
 }
 
-void HeeksCADapp::render_screen_text_at(const wxChar* str1, double scale, double x, double y, double theta)
+void HeeksCADapp::render_screen_text_at(const wxChar* str1, double scale, double x, double y, double theta, bool select)
 {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
@@ -4583,7 +4585,7 @@ void HeeksCADapp::render_screen_text_at(const wxChar* str1, double scale, double
 
 	glScaled(scale, scale, 0);
 	glRotated(theta,0,0,1);
-	render_screen_text2(str1);
+	render_screen_text2(str1, select);
 
 //Even though this is in reverse order, the different matrices have different stacks, and we want to exit here in the modelview
 	glMatrixMode(GL_PROJECTION);

@@ -125,7 +125,7 @@ public:
 	virtual bool CanEditString(void)const{return false;}
 	virtual void OnEditString(const wxChar* str){}
 	virtual void KillGLLists(void){};
-	virtual HeeksObj *MakeACopy()const = 0;
+	virtual HeeksObj *MakeACopy()const{ return NULL; }
 	virtual HeeksObj *MakeACopyWithID();
 	virtual void Clear(){}
 	virtual void ReloadPointers(){}

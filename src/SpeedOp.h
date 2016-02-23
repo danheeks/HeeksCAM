@@ -14,34 +14,27 @@
 
 class CSpeedOp;
 
-class CSpeedOpParams{
+class CSpeedOp : public COp
+{
 public:
 	double m_horizontal_feed_rate;
 	double m_vertical_feed_rate;
 	double m_spindle_speed;
 
-	CSpeedOpParams();
-	bool operator== ( const CSpeedOpParams & rhs ) const;
-	bool operator!= ( const CSpeedOpParams & rhs ) const { return(! (*this == rhs)); }
-
-	void GetProperties(CSpeedOp* parent, std::list<Property *> *list);
-	void WriteXMLAttributes(TiXmlNode* pElem);
-	void ReadFromXMLElement(TiXmlElement* pElem);
-};
-
-class CSpeedOp : public COp
-{
-public:
-	CSpeedOpParams m_speed_op_params;
-
 	CSpeedOp(const int tool_number = -1, const int operation_type = UnknownType )
             :COp(tool_number, operation_type)
     {
-        ReadDefaultValues();
+		m_horizontal_feed_rate = 0.0;
+		m_vertical_feed_rate = 0.0;
+		m_spindle_speed = 0.0;
+		ReadDefaultValues();
     }
 
 	CSpeedOp & operator= ( const CSpeedOp & rhs );
 	CSpeedOp( const CSpeedOp & rhs );
+
+	void WriteXMLAttributes(TiXmlNode* pElem);
+	void ReadFromXMLElement(TiXmlElement* pElem);
 
 	// HeeksObj's virtual functions
 	void GetProperties(std::list<Property *> *list);

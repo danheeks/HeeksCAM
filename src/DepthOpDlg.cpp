@@ -33,26 +33,26 @@ DepthOpDlg::DepthOpDlg(wxWindow *parent, CDepthOp* object, bool drill_pictures, 
 
 void DepthOpDlg::GetDataRaw(HeeksObj* object)
 {
-	((CDepthOp*)object)->m_depth_op_params.m_clearance_height = m_lgthClearanceHeight->GetValue();
-	((CDepthOp*)object)->m_depth_op_params.m_rapid_safety_space = m_lgthRapidDownToHeight->GetValue();
-	((CDepthOp*)object)->m_depth_op_params.m_start_depth = m_lgthStartDepth->GetValue();
-	((CDepthOp*)object)->m_depth_op_params.m_final_depth = m_lgthFinalDepth->GetValue();
-	((CDepthOp*)object)->m_depth_op_params.m_step_down = m_lgthStepDown->GetValue();
-	((CDepthOp*)object)->m_depth_op_params.m_z_finish_depth = m_lgthZFinishDepth->GetValue();
-	((CDepthOp*)object)->m_depth_op_params.m_z_thru_depth = m_lgthZThruDepth->GetValue();
+	((CDepthOp*)object)->m_clearance_height = m_lgthClearanceHeight->GetValue();
+	((CDepthOp*)object)->m_rapid_safety_space = m_lgthRapidDownToHeight->GetValue();
+	((CDepthOp*)object)->m_start_depth = m_lgthStartDepth->GetValue();
+	((CDepthOp*)object)->m_final_depth = m_lgthFinalDepth->GetValue();
+	((CDepthOp*)object)->m_step_down = m_lgthStepDown->GetValue();
+	((CDepthOp*)object)->m_z_finish_depth = m_lgthZFinishDepth->GetValue();
+	((CDepthOp*)object)->m_z_thru_depth = m_lgthZThruDepth->GetValue();
 
 	SpeedOpDlg::GetDataRaw(object);
 }
 
 void DepthOpDlg::SetFromDataRaw(HeeksObj* object)
 {
-	m_lgthClearanceHeight->SetValue(((CDepthOp*)object)->m_depth_op_params.m_clearance_height);
-	m_lgthRapidDownToHeight->SetValue(((CDepthOp*)object)->m_depth_op_params.m_rapid_safety_space);
-	m_lgthStartDepth->SetValue(((CDepthOp*)object)->m_depth_op_params.m_start_depth);
-	m_lgthFinalDepth->SetValue(((CDepthOp*)object)->m_depth_op_params.m_final_depth);
-	m_lgthStepDown->SetValue(((CDepthOp*)object)->m_depth_op_params.m_step_down);
-	m_lgthZFinishDepth->SetValue(((CDepthOp*)object)->m_depth_op_params.m_z_finish_depth);
-	m_lgthZThruDepth->SetValue(((CDepthOp*)object)->m_depth_op_params.m_z_thru_depth);
+	m_lgthClearanceHeight->SetValue(((CDepthOp*)object)->m_clearance_height);
+	m_lgthRapidDownToHeight->SetValue(((CDepthOp*)object)->m_rapid_safety_space);
+	m_lgthStartDepth->SetValue(((CDepthOp*)object)->m_start_depth);
+	m_lgthFinalDepth->SetValue(((CDepthOp*)object)->m_final_depth);
+	m_lgthStepDown->SetValue(((CDepthOp*)object)->m_step_down);
+	m_lgthZFinishDepth->SetValue(((CDepthOp*)object)->m_z_finish_depth);
+	m_lgthZThruDepth->SetValue(((CDepthOp*)object)->m_z_thru_depth);
 
 	SpeedOpDlg::SetFromDataRaw(object);
 }

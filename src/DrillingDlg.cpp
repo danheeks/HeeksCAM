@@ -58,11 +58,11 @@ void DrillingDlg::GetDataRaw(HeeksObj* object)
 	((CDrilling*)object)->m_points.clear();
 	m_idsPoints->GetIDList(((CDrilling*)object)->m_points);
 	
-	((CDrilling*)object)->m_params.m_dwell = m_dblDwell->GetValue();
-	((CDrilling*)object)->m_params.m_retract_mode = m_chkFeedRetract->GetValue();
-	((CDrilling*)object)->m_params.m_spindle_mode = m_chkStopSpindleAtBottom->GetValue();
-	((CDrilling*)object)->m_params.m_internal_coolant_on = m_chkInternalCoolantOn->GetValue();
-	((CDrilling*)object)->m_params.m_rapid_to_clearance = m_chkRapidToClearance->GetValue();
+	((CDrilling*)object)->m_dwell = m_dblDwell->GetValue();
+	((CDrilling*)object)->m_retract_mode = m_chkFeedRetract->GetValue();
+	((CDrilling*)object)->m_spindle_mode = m_chkStopSpindleAtBottom->GetValue();
+	((CDrilling*)object)->m_internal_coolant_on = m_chkInternalCoolantOn->GetValue();
+	((CDrilling*)object)->m_rapid_to_clearance = m_chkRapidToClearance->GetValue();
 
 	DepthOpDlg::GetDataRaw(object);
 }
@@ -70,11 +70,11 @@ void DrillingDlg::GetDataRaw(HeeksObj* object)
 void DrillingDlg::SetFromDataRaw(HeeksObj* object)
 {
 	m_idsPoints->SetFromIDList(((CDrilling*)object)->m_points);
-	m_dblDwell->SetValue(((CDrilling*)object)->m_params.m_dwell);
-	m_chkFeedRetract->SetValue(((CDrilling*)object)->m_params.m_retract_mode != 0);
-	m_chkStopSpindleAtBottom->SetValue(((CDrilling*)object)->m_params.m_spindle_mode != 0);
-	m_chkInternalCoolantOn->SetValue(((CDrilling*)object)->m_params.m_internal_coolant_on != 0);
-	m_chkRapidToClearance->SetValue(((CDrilling*)object)->m_params.m_rapid_to_clearance != 0);
+	m_dblDwell->SetValue(((CDrilling*)object)->m_dwell);
+	m_chkFeedRetract->SetValue(((CDrilling*)object)->m_retract_mode != 0);
+	m_chkStopSpindleAtBottom->SetValue(((CDrilling*)object)->m_spindle_mode != 0);
+	m_chkInternalCoolantOn->SetValue(((CDrilling*)object)->m_internal_coolant_on != 0);
+	m_chkRapidToClearance->SetValue(((CDrilling*)object)->m_rapid_to_clearance != 0);
 
 	DepthOpDlg::SetFromDataRaw(object);
 }
@@ -146,7 +146,8 @@ bool DrillingDlg::Do(CDrilling* object)
 				for(std::list<HeeksObj*>::const_iterator It = list.begin(); It != list.end(); It++)
 				{
 					HeeksObj* object = *It;
-					ids.push_back(object->GetID());
+					if (object->GetType() == PointType)
+						ids.push_back(object->GetID());
 				}
 			}
 

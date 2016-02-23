@@ -19,42 +19,25 @@
 #include "Tool.h"
 #include "CTool.h"
 
-CSpeedOpParams::CSpeedOpParams()
-{
-	m_horizontal_feed_rate = 0.0;
-	m_vertical_feed_rate = 0.0;
-	m_spindle_speed = 0.0;
-}
-
 static void on_set_horizontal_feed_rate(double value, HeeksObj* object)
 {
-	((CSpeedOp*)object)->m_speed_op_params.m_horizontal_feed_rate = value;
+	((CSpeedOp*)object)->m_horizontal_feed_rate = value;
 	((CSpeedOp*)object)->WriteDefaultValues();
 }
 
 static void on_set_vertical_feed_rate(double value, HeeksObj* object)
 {
-	((CSpeedOp*)object)->m_speed_op_params.m_vertical_feed_rate = value;
+	((CSpeedOp*)object)->m_vertical_feed_rate = value;
 	((CSpeedOp*)object)->WriteDefaultValues();
 }
 
 static void on_set_spindle_speed(double value, HeeksObj* object)
 {
-	((CSpeedOp*)object)->m_speed_op_params.m_spindle_speed = value;
+	((CSpeedOp*)object)->m_spindle_speed = value;
 	((CSpeedOp*)object)->WriteDefaultValues();
 }
 
-void CSpeedOpParams::GetProperties(CSpeedOp* parent, std::list<Property *> *list)
-{
-	if(CTool::IsMillingToolType(CTool::FindToolType(parent->m_tool_number)))
-	{
-		list->push_back(new PropertyLength(_("horizontal feed rate"), m_horizontal_feed_rate, parent, on_set_horizontal_feed_rate));
-		list->push_back(new PropertyLength(_("vertical feed rate"), m_vertical_feed_rate, parent, on_set_vertical_feed_rate));
-		list->push_back(new PropertyDouble(_("spindle speed"), m_spindle_speed, parent, on_set_spindle_speed));
-	}
-}
-
-void CSpeedOpParams::WriteXMLAttributes(TiXmlNode* pElem)
+void CSpeedOp::WriteXMLAttributes(TiXmlNode* pElem)
 {
 	TiXmlElement * element = new TiXmlElement( "speedop" );
 	wxGetApp().LinkXMLEndChild( pElem,  element );
@@ -63,7 +46,7 @@ void CSpeedOpParams::WriteXMLAttributes(TiXmlNode* pElem)
 	element->SetDoubleAttribute( "spin", m_spindle_speed);
 }
 
-void CSpeedOpParams::ReadFromXMLElement(TiXmlElement* pElem)
+void CSpeedOp::ReadFromXMLElement(TiXmlElement* pElem)
 {
 	TiXmlElement* speedop = wxGetApp().FirstNamedXMLChildElement(pElem, "speedop");
 	if(speedop)
@@ -87,7 +70,9 @@ CSpeedOp & CSpeedOp::operator= ( const CSpeedOp & rhs )
 	if (this != &rhs)
 	{
 		COp::operator=(rhs);
-		m_speed_op_params = rhs.m_speed_op_params;
+		m_horizontal_feed_rate = rhs.m_horizontal_feed_rate;
+		m_vertical_feed_rate = rhs.m_vertical_feed_rate;
+		m_spindle_speed = rhs.m_spindle_speed;
 	}
 
 	return(*this);
@@ -95,18 +80,20 @@ CSpeedOp & CSpeedOp::operator= ( const CSpeedOp & rhs )
 
 CSpeedOp::CSpeedOp( const CSpeedOp & rhs ) : COp(rhs)
 {
-	m_speed_op_params = rhs.m_speed_op_params;
+	m_horizontal_feed_rate = rhs.m_horizontal_feed_rate;
+	m_vertical_feed_rate = rhs.m_vertical_feed_rate;
+	m_spindle_speed = rhs.m_spindle_speed;
 }
 
 void CSpeedOp::WriteBaseXML(TiXmlElement *element)
 {
-	m_speed_op_params.WriteXMLAttributes(element);
+	WriteXMLAttributes(element);
 	COp::WriteBaseXML(element);
 }
 
 void CSpeedOp::ReadBaseXML(TiXmlElement* element)
 {
-	m_speed_op_params.ReadFromXMLElement(element);
+	ReadFromXMLElement(element);
 	COp::ReadBaseXML(element);
 }
 
@@ -115,9 +102,9 @@ void CSpeedOp::WriteDefaultValues()
 	COp::WriteDefaultValues();
 
 	HeeksConfig config;
-	config.Write(_T("SpeedOpHorizFeed"), m_speed_op_params.m_horizontal_feed_rate);
-	config.Write(_T("SpeedOpVertFeed"), m_speed_op_params.m_vertical_feed_rate);
-	config.Write(_T("SpeedOpSpindleSpeed"), m_speed_op_params.m_spindle_speed);
+	config.Write(_T("SpeedOpHorizFeed"), m_horizontal_feed_rate);
+	config.Write(_T("SpeedOpVertFeed"), m_vertical_feed_rate);
+	config.Write(_T("SpeedOpSpindleSpeed"), m_spindle_speed);
 }
 
 void CSpeedOp::ReadDefaultValues()
@@ -125,14 +112,19 @@ void CSpeedOp::ReadDefaultValues()
 	COp::ReadDefaultValues();
 
 	HeeksConfig config;
-	config.Read(_T("SpeedOpHorizFeed"), &m_speed_op_params.m_horizontal_feed_rate, 100.0);
-	config.Read(_T("SpeedOpVertFeed"), &m_speed_op_params.m_vertical_feed_rate, 100.0);
-	config.Read(_T("SpeedOpSpindleSpeed"), &m_speed_op_params.m_spindle_speed, 7000);
+	config.Read(_T("SpeedOpHorizFeed"), &m_horizontal_feed_rate, 100.0);
+	config.Read(_T("SpeedOpVertFeed"), &m_vertical_feed_rate, 100.0);
+	config.Read(_T("SpeedOpSpindleSpeed"), &m_spindle_speed, 7000);
 }
 
 void CSpeedOp::GetProperties(std::list<Property *> *list)
 {
-	m_speed_op_params.GetProperties(this, list);
+	if (CTool::IsMillingToolType(CTool::FindToolType(this->m_tool_number)))
+	{
+		list->push_back(new PropertyLength(_("horizontal feed rate"), m_horizontal_feed_rate, this, on_set_horizontal_feed_rate));
+		list->push_back(new PropertyLength(_("vertical feed rate"), m_vertical_feed_rate, this, on_set_vertical_feed_rate));
+		list->push_back(new PropertyDouble(_("spindle speed"), m_spindle_speed, this, on_set_spindle_speed));
+	}
 	COp::GetProperties(list);
 }
 
@@ -142,13 +134,13 @@ Python CSpeedOp::AppendTextToProgram()
 
 	python << COp::AppendTextToProgram();
 
-	if (m_speed_op_params.m_spindle_speed != 0)
+	if (m_spindle_speed != 0)
 	{
-		python << _T("spindle(") << m_speed_op_params.m_spindle_speed << _T(")\n");
+		python << _T("spindle(") << m_spindle_speed << _T(")\n");
 	} // End if - then
 
-	python << _T("feedrate_hv(") << m_speed_op_params.m_horizontal_feed_rate / wxGetApp().m_program->m_units << _T(", ");
-    python << m_speed_op_params.m_vertical_feed_rate / wxGetApp().m_program->m_units << _T(")\n");
+	python << _T("feedrate_hv(") << m_horizontal_feed_rate / wxGetApp().m_program->m_units << _T(", ");
+    python << m_vertical_feed_rate / wxGetApp().m_program->m_units << _T(")\n");
     python << _T("flush_nc()\n");
 
     return(python);
@@ -176,18 +168,11 @@ void CSpeedOp::GetTools(std::list<Tool*>* t_list, const wxPoint* p)
     COp::GetTools(t_list, p);
 }
 
-bool CSpeedOpParams::operator== ( const CSpeedOpParams & rhs ) const
+bool CSpeedOp::operator==(const CSpeedOp & rhs) const
 {
 	if (m_horizontal_feed_rate != rhs.m_horizontal_feed_rate) return(false);
 	if (m_vertical_feed_rate != rhs.m_vertical_feed_rate) return(false);
 	if (m_spindle_speed != rhs.m_spindle_speed) return(false);
-
-	return(true);
-}
-
-bool CSpeedOp::operator==(const CSpeedOp & rhs) const
-{
-	if (m_speed_op_params != rhs.m_speed_op_params) return(false);
 
 	return(COp::operator==(rhs));
 }

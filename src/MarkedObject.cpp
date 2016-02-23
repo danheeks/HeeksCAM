@@ -44,6 +44,8 @@ const MarkedObject& MarkedObject::operator=(const MarkedObject &so)
 	m_depth = so.m_depth;
 	m_object = so.m_object;
 	m_num_custom_names = so.m_num_custom_names;
+	if (m_custom_names)
+		free(m_custom_names);
 	m_custom_names = NULL;
 	if(m_num_custom_names>0)
 	{
@@ -135,6 +137,9 @@ MarkedObject* MarkedObject::Add(HeeksObj* object, unsigned long depth, int windo
 		{
 			marked_object->m_depth = depth;
 			marked_object->m_window_size = window_size;
+			free(marked_object->m_custom_names);
+			marked_object->m_custom_names = (unsigned int *)malloc(num_custom_names * sizeof(unsigned int));
+			memcpy(marked_object->m_custom_names, custom_names, num_custom_names * sizeof(unsigned int));
 		}
 	}
 	return marked_object;

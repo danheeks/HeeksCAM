@@ -63,7 +63,7 @@ void RulerMark::glCommands(double units)
 		glPushMatrix();
 		glTranslated(dpos + half_width, -length + 2.05, 0.0);
 		glColor4ub(0, 0, 0, 255);
-		wxGetApp().render_text(str);
+		wxGetApp().render_text(str, false);
 		glPopMatrix();
 	}
 	else if(pos % 10 == 0)
@@ -73,7 +73,7 @@ void RulerMark::glCommands(double units)
 		if(!wxGetApp().get_text_size(str, &text_width, &text_height))return;
 		glPushMatrix();
 		glTranslated(dpos - half_width - text_width, -length + 2.05, 0.0);
-		wxGetApp().render_text(str);
+		wxGetApp().render_text(str, false);
 		glPopMatrix();
 	}
 	glEnable(GL_POLYGON_OFFSET_FILL);
@@ -189,7 +189,7 @@ void HRuler::glCommands(bool select, bool marked, bool no_color)
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(1.0, 0.0);
 		if(!no_color)glColor4ub(255, 255, 255, 120); // white
-		wxGetApp().EnableBlend();
+		if (!select)wxGetApp().EnableBlend();
 		glDepthMask(0);
 		gp_Pnt point[4];
 		GetFourCorners(point);
@@ -201,7 +201,7 @@ void HRuler::glCommands(bool select, bool marked, bool no_color)
 		glVertex3d(point[2].X(), point[2].Y(), point[2].Z());
 		glVertex3d(point[3].X(), point[3].Y(), point[3].Z());
 		glEnd();
-		wxGetApp().DisableBlend();
+		if(select)wxGetApp().DisableBlend();
 		glDepthMask(1);
 
 		if (!no_color)

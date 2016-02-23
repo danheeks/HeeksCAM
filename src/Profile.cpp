@@ -22,7 +22,6 @@
 #include "Tool.h"
 #include "CTool.h"
 #include "CNCPoint.h"
-#include "PythonStuff.h"
 #include "Tags.h"
 #include "Tag.h"
 #include "ProfileDlg.h"
@@ -42,25 +41,27 @@
 // static
 double CProfile::max_deviation_for_spline_to_arc = 0.1;
 
-CProfileParams::CProfileParams()
+CProfile::CProfile() :CSketchOp(0, ProfileType), m_tags(NULL)
 {
+	m_tags = new CTags;
+	Add(m_tags, NULL);
 	m_tool_on_side = eOn;
 	m_cut_mode = eConventional;
 	m_auto_roll_radius = 2.0;
 	m_auto_roll_on = true;
 	m_auto_roll_off = true;
-	m_roll_on_point[0] = m_roll_on_point[1] = m_roll_on_point[2] = 0.0;
-	m_roll_off_point[0] = m_roll_off_point[1] = m_roll_off_point[2] = 0.0;
+	m_roll_on_point_x = m_roll_on_point_y = m_roll_on_point_z = 0.0;
+	m_roll_off_point_x = m_roll_off_point_y = m_roll_off_point_z = 0.0;
 	m_start_given = false;
 	m_end_given = false;
-	m_start[0] = m_start[1] = m_start[2] = 0.0;
-	m_end[0] = m_end[1] = m_end[2] = 0.0;
+	m_start_x = m_start_y = m_start_z = 0.0;
+	m_end_x = m_end_y = m_end_z = 0.0;
 
-    m_extend_at_start = 0.0; 
-    m_extend_at_end = 0.0; 
+	m_extend_at_start = 0.0;
+	m_extend_at_end = 0.0;
 
-    m_lead_in_line_len = 1.0;
-    m_lead_out_line_len= 1.0;
+	m_lead_in_line_len = 1.0;
+	m_lead_out_line_len = 1.0;
 
 	m_end_beyond_full_profile = false;
 	m_sort_sketches = 1;
@@ -76,13 +77,13 @@ static void on_set_tool_on_side(int value, HeeksObj* object, bool from_undo_redo
 	switch(value)
 	{
 	case 0:
-		((CProfile*)object)->m_profile_params.m_tool_on_side = CProfileParams::eLeftOrOutside;
+		((CProfile*)object)->m_tool_on_side = CProfile::eLeftOrOutside;
 		break;
 	case 1:
-		((CProfile*)object)->m_profile_params.m_tool_on_side = CProfileParams::eRightOrInside;
+		((CProfile*)object)->m_tool_on_side = CProfile::eRightOrInside;
 		break;
 	default:
-		((CProfile*)object)->m_profile_params.m_tool_on_side = CProfileParams::eOn;
+		((CProfile*)object)->m_tool_on_side = CProfile::eOn;
 		break;
 	}
 	((CProfile*)object)->WriteDefaultValues();
@@ -90,154 +91,51 @@ static void on_set_tool_on_side(int value, HeeksObj* object, bool from_undo_redo
 
 static void on_set_cut_mode(int value, HeeksObj* object, bool from_undo_redo)
 {
-	((CProfile*)object)->m_profile_params.m_cut_mode = (CProfileParams::eCutMode)value;
+	((CProfile*)object)->m_cut_mode = value;
 	((CProfile*)object)->WriteDefaultValues();
 }
 
-static void on_set_auto_roll_on(bool value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_auto_roll_on = value; wxGetApp().m_frame->RefreshProperties();}
-static void on_set_roll_on_point(const double* vt, HeeksObj* object){memcpy(((CProfile*)object)->m_profile_params.m_roll_on_point, vt, 3*sizeof(double));}
-static void on_set_roll_radius(double value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_auto_roll_radius = value; ((CProfile*)object)->WriteDefaultValues();}
-static void on_set_auto_roll_off(bool value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_auto_roll_off = value; wxGetApp().m_frame->RefreshProperties();}
-static void on_set_roll_off_point(const double* vt, HeeksObj* object){memcpy(((CProfile*)object)->m_profile_params.m_roll_off_point, vt, 3*sizeof(double));}
-static void on_set_start_given(bool value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_start_given = value; wxGetApp().m_frame->RefreshProperties();}
-static void on_set_start(const double* vt, HeeksObj* object){memcpy(((CProfile*)object)->m_profile_params.m_start, vt, 3*sizeof(double));}
-static void on_set_end_given(bool value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_end_given = value; wxGetApp().m_frame->RefreshProperties();}
-static void on_set_end(const double* vt, HeeksObj* object){memcpy(((CProfile*)object)->m_profile_params.m_end, vt, 3*sizeof(double));}
+static void on_set_auto_roll_on(bool value, HeeksObj* object){((CProfile*)object)->m_auto_roll_on = value; wxGetApp().m_frame->RefreshProperties();}
+static void on_set_roll_on_point(const double* vt, HeeksObj* object){memcpy(&((CProfile*)object)->m_roll_on_point_x, vt, 3*sizeof(double));}
+static void on_set_roll_radius(double value, HeeksObj* object){((CProfile*)object)->m_auto_roll_radius = value; ((CProfile*)object)->WriteDefaultValues();}
+static void on_set_auto_roll_off(bool value, HeeksObj* object){((CProfile*)object)->m_auto_roll_off = value; wxGetApp().m_frame->RefreshProperties();}
+static void on_set_roll_off_point(const double* vt, HeeksObj* object){memcpy(&((CProfile*)object)->m_roll_off_point_x, vt, 3*sizeof(double));}
+static void on_set_start_given(bool value, HeeksObj* object){((CProfile*)object)->m_start_given = value; wxGetApp().m_frame->RefreshProperties();}
+static void on_set_start(const double* vt, HeeksObj* object){memcpy(&((CProfile*)object)->m_start_x, vt, 3*sizeof(double));}
+static void on_set_end_given(bool value, HeeksObj* object){((CProfile*)object)->m_end_given = value; wxGetApp().m_frame->RefreshProperties();}
+static void on_set_end(const double* vt, HeeksObj* object){memcpy(&((CProfile*)object)->m_end_x, vt, 3*sizeof(double));}
 
-static void on_set_extend_at_start(double value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_extend_at_start = value; ((CProfile*)object)->WriteDefaultValues();}
-static void on_set_extend_at_end(double value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_extend_at_end = value; ((CProfile*)object)->WriteDefaultValues();}
+static void on_set_extend_at_start(double value, HeeksObj* object){((CProfile*)object)->m_extend_at_start = value; ((CProfile*)object)->WriteDefaultValues();}
+static void on_set_extend_at_end(double value, HeeksObj* object){((CProfile*)object)->m_extend_at_end = value; ((CProfile*)object)->WriteDefaultValues();}
 
 //lead in lead out line length
-static void on_set_lead_in_line_len(double value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_lead_in_line_len = value; ((CProfile*)object)->WriteDefaultValues();}
-static void on_set_lead_out_line_len(double value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_lead_out_line_len = value; ((CProfile*)object)->WriteDefaultValues();}
+static void on_set_lead_in_line_len(double value, HeeksObj* object){((CProfile*)object)->m_lead_in_line_len = value; ((CProfile*)object)->WriteDefaultValues();}
+static void on_set_lead_out_line_len(double value, HeeksObj* object){((CProfile*)object)->m_lead_out_line_len = value; ((CProfile*)object)->WriteDefaultValues();}
 
 
-static void on_set_end_beyond_full_profile(bool value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_end_beyond_full_profile = value;}
-static void on_set_offset_extra(const double value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_offset_extra = value;((CProfile*)object)->WriteDefaultValues();}
-static void on_set_do_finishing_pass(bool value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_do_finishing_pass = value; wxGetApp().m_frame->RefreshProperties();((CProfile*)object)->WriteDefaultValues();}
-static void on_set_only_finishing_pass(bool value, HeeksObj* object){((CProfile*)object)->m_profile_params.m_only_finishing_pass = value; wxGetApp().m_frame->RefreshProperties();((CProfile*)object)->WriteDefaultValues();}
+static void on_set_end_beyond_full_profile(bool value, HeeksObj* object){((CProfile*)object)->m_end_beyond_full_profile = value;}
+static void on_set_offset_extra(const double value, HeeksObj* object){((CProfile*)object)->m_offset_extra = value;((CProfile*)object)->WriteDefaultValues();}
+static void on_set_do_finishing_pass(bool value, HeeksObj* object){((CProfile*)object)->m_do_finishing_pass = value; wxGetApp().m_frame->RefreshProperties();((CProfile*)object)->WriteDefaultValues();}
+static void on_set_only_finishing_pass(bool value, HeeksObj* object){((CProfile*)object)->m_only_finishing_pass = value; wxGetApp().m_frame->RefreshProperties();((CProfile*)object)->WriteDefaultValues();}
 static void on_set_finishing_h_feed_rate(double value, HeeksObj* object)
 {
-	((CProfile*)object)->m_profile_params.m_finishing_h_feed_rate = value;
+	((CProfile*)object)->m_finishing_h_feed_rate = value;
 	((CProfile*)object)->WriteDefaultValues();
 }
 
 static void on_set_finish_cut_mode(int value, HeeksObj* object, bool from_undo_redo)
 {
-	((CProfile*)object)->m_profile_params.m_finishing_cut_mode = (CProfileParams::eCutMode)value;
+	((CProfile*)object)->m_finishing_cut_mode = value;
 	((CProfile*)object)->WriteDefaultValues();
 }
 
 static void on_set_finish_step_down(double value, HeeksObj* object)
 {
-	((CProfile*)object)->m_profile_params.m_finishing_step_down = value;
+	((CProfile*)object)->m_finishing_step_down = value;
 	((CProfile*)object)->WriteDefaultValues();
 }
 
-void CProfileParams::GetProperties(CProfile* parent, std::list<Property *> *list)
-{
-	CToolParams::eToolType tool_type = CTool::FindToolType(parent->m_tool_number);
-
-	if(CTool::IsMillingToolType(tool_type)){
-		std::list< wxString > choices;
-
-		SketchOrderType order = SketchOrderTypeUnknown;
-
-		{
-			HeeksObj* sketch = wxGetApp().GetIDObject(SketchType, parent->m_sketch);
-			if((sketch) && (sketch->GetType() == SketchType))
-			{
-				order = ((CSketch*)sketch)->GetSketchOrder();
-			}
-		}
-
-		switch(order)
-		{
-		case SketchOrderTypeOpen:
-			choices.push_back(_("Left"));
-			choices.push_back(_("Right"));
-			break;
-
-		case SketchOrderTypeCloseCW:
-		case SketchOrderTypeCloseCCW:
-			choices.push_back(_("Outside"));
-			choices.push_back(_("Inside"));
-			break;
-
-		default:
-			choices.push_back(_("Outside or Left"));
-			choices.push_back(_("Inside or Right"));
-			break;
-		}
-		choices.push_back(_("On"));
-
-		int choice = int(eOn);
-		switch (m_tool_on_side)
-		{
-			case eRightOrInside:	choice = 1;
-					break;
-
-			case eOn:	choice = 2;
-					break;
-
-			case eLeftOrOutside:	choice = 0;
-					break;
-		} // End switch
-
-		list->push_back(new PropertyChoice(_("tool on side"), choices, choice, parent, on_set_tool_on_side));
-	}
-
-	if(CTool::IsMillingToolType(tool_type)){
-		std::list< wxString > choices;
-		choices.push_back(_("Conventional"));
-		choices.push_back(_("Climb"));
-		list->push_back(new PropertyChoice(_("cut mode"), choices, m_cut_mode, parent, on_set_cut_mode));
-	}
-
-	{
-		list->push_back(new PropertyCheck(_("auto roll on"), m_auto_roll_on, parent, on_set_auto_roll_on));
-		if(!m_auto_roll_on)list->push_back(new PropertyVertex(_("roll on point"), m_roll_on_point, parent, on_set_roll_on_point));
-		list->push_back(new PropertyCheck(_("auto roll off"), m_auto_roll_off, parent, on_set_auto_roll_off));
-		if(!m_auto_roll_off)list->push_back(new PropertyVertex(_("roll off point"), m_roll_off_point, parent, on_set_roll_off_point));
-		if(m_auto_roll_on || m_auto_roll_off)list->push_back(new PropertyLength(_("roll radius"), m_auto_roll_radius, parent, on_set_roll_radius));
-		list->push_back(new PropertyCheck(_("use start point"), m_start_given, parent, on_set_start_given));
-		if(m_start_given)list->push_back(new PropertyVertex(_("start point"), m_start, parent, on_set_start));
-		list->push_back(new PropertyCheck(_("use end point"), m_end_given, parent, on_set_end_given));
-		if(m_end_given)
-		{
-			list->push_back(new PropertyVertex(_("end point"), m_end, parent, on_set_end));
-			list->push_back(new PropertyCheck(_("end beyond full profile"), m_end_beyond_full_profile, parent, on_set_end_beyond_full_profile));
-		}
-	}
-    
-    list->push_back(new PropertyLength(_("extend before start"), m_extend_at_start, parent, on_set_extend_at_start));
-    list->push_back(new PropertyLength(_("extend past end"), m_extend_at_end, parent, on_set_extend_at_end));
-
-    //lead in lead out line length
-    list->push_back(new PropertyLength(_("lead in line length"), m_lead_in_line_len, parent, on_set_lead_in_line_len));
-    list->push_back(new PropertyLength(_("lead out line length"), m_lead_out_line_len, parent, on_set_lead_out_line_len));
-
-	list->push_back(new PropertyLength(_("offset_extra"), m_offset_extra, parent, on_set_offset_extra));
-	if(CTool::IsMillingToolType(tool_type))
-	{
-		list->push_back(new PropertyCheck(_("do finishing pass"), m_do_finishing_pass, parent, on_set_do_finishing_pass));
-		if(m_do_finishing_pass)
-		{
-			list->push_back(new PropertyCheck(_("only finishing pass"), m_only_finishing_pass, parent, on_set_only_finishing_pass));
-			list->push_back(new PropertyLength(_("finishing feed rate"), m_finishing_h_feed_rate, parent, on_set_finishing_h_feed_rate));
-
-			{
-				std::list< wxString > choices;
-				choices.push_back(_("Conventional"));
-				choices.push_back(_("Climb"));
-				list->push_back(new PropertyChoice(_("finish cut mode"), choices, m_finishing_cut_mode, parent, on_set_finish_cut_mode));
-			}
-			list->push_back(new PropertyLength(_("finishing step down"), m_finishing_step_down, parent, on_set_finish_step_down));
-		}
-	}
-}
-
-void CProfileParams::WriteXMLAttributes(TiXmlNode *root)
+void CProfile::WriteXMLAttributes(TiXmlNode *root)
 {
 	TiXmlElement * element;
 	element = new TiXmlElement( "params" );
@@ -247,16 +145,16 @@ void CProfileParams::WriteXMLAttributes(TiXmlNode *root)
 	element->SetAttribute( "auto_roll_on", m_auto_roll_on ? 1:0);
 	if(!m_auto_roll_on)
 	{
-		element->SetDoubleAttribute( "roll_onx", m_roll_on_point[0]);
-		element->SetDoubleAttribute( "roll_ony", m_roll_on_point[1]);
-		element->SetDoubleAttribute( "roll_onz", m_roll_on_point[2]);
+		element->SetDoubleAttribute("roll_onx", m_roll_on_point_x);
+		element->SetDoubleAttribute("roll_ony", m_roll_on_point_y);
+		element->SetDoubleAttribute("roll_onz", m_roll_on_point_z);
 	}
 	element->SetAttribute( "auto_roll_off", m_auto_roll_off ? 1:0);
 	if(!m_auto_roll_off)
 	{
-		element->SetDoubleAttribute( "roll_offx", m_roll_off_point[0]);
-		element->SetDoubleAttribute( "roll_offy", m_roll_off_point[1]);
-		element->SetDoubleAttribute( "roll_offz", m_roll_off_point[2]);
+		element->SetDoubleAttribute("roll_offx", m_roll_off_point_x);
+		element->SetDoubleAttribute("roll_offy", m_roll_off_point_y);
+		element->SetDoubleAttribute("roll_offz", m_roll_off_point_z);
 	}
 	if(m_auto_roll_on || m_auto_roll_off)
 	{
@@ -265,16 +163,16 @@ void CProfileParams::WriteXMLAttributes(TiXmlNode *root)
 	element->SetAttribute( "start_given", m_start_given ? 1:0);
 	if(m_start_given)
 	{
-		element->SetDoubleAttribute( "startx", m_start[0]);
-		element->SetDoubleAttribute( "starty", m_start[1]);
-		element->SetDoubleAttribute( "startz", m_start[2]);
+		element->SetDoubleAttribute("startx", m_start_x);
+		element->SetDoubleAttribute("starty", m_start_y);
+		element->SetDoubleAttribute("startz", m_start_z);
 	}
 	element->SetAttribute( "end_given", m_end_given ? 1:0);
 	if(m_end_given)
 	{
-		element->SetDoubleAttribute( "endx", m_end[0]);
-		element->SetDoubleAttribute( "endy", m_end[1]);
-		element->SetDoubleAttribute( "endz", m_end[2]);
+		element->SetDoubleAttribute("endx", m_end_x);
+		element->SetDoubleAttribute("endy", m_end_y);
+		element->SetDoubleAttribute("endz", m_end_z);
 		element->SetAttribute( "end_beyond_full_profile", m_end_beyond_full_profile ? 1:0);
 	}
 
@@ -295,7 +193,7 @@ void CProfileParams::WriteXMLAttributes(TiXmlNode *root)
 	element->SetDoubleAttribute( "finishing_step_down", m_finishing_step_down);
 }
 
-void CProfileParams::ReadFromXMLElement(TiXmlElement* pElem)
+void CProfile::ReadParamsFromXMLElement(TiXmlElement* pElem)
 {
 	int int_for_bool;
 	int int_for_enum;
@@ -303,22 +201,22 @@ void CProfileParams::ReadFromXMLElement(TiXmlElement* pElem)
 	if(pElem->Attribute("side", &int_for_enum))m_tool_on_side = (eSide)int_for_enum;
 	if(pElem->Attribute("cut_mode", &int_for_enum))m_cut_mode = (eCutMode)int_for_enum;
 	if(pElem->Attribute("auto_roll_on", &int_for_bool))m_auto_roll_on = (int_for_bool != 0);
-	pElem->Attribute("roll_onx", &m_roll_on_point[0]);
-	pElem->Attribute("roll_ony", &m_roll_on_point[1]);
-	pElem->Attribute("roll_onz", &m_roll_on_point[2]);
+	pElem->Attribute("roll_onx", &m_roll_on_point_x);
+	pElem->Attribute("roll_ony", &m_roll_on_point_y);
+	pElem->Attribute("roll_onz", &m_roll_on_point_z);
 	if(pElem->Attribute("auto_roll_off", &int_for_bool))m_auto_roll_off = (int_for_bool != 0);
-	pElem->Attribute("roll_offx", &m_roll_off_point[0]);
-	pElem->Attribute("roll_offy", &m_roll_off_point[1]);
-	pElem->Attribute("roll_offz", &m_roll_off_point[2]);
+	pElem->Attribute("roll_offx", &m_roll_off_point_x);
+	pElem->Attribute("roll_offy", &m_roll_off_point_y);
+	pElem->Attribute("roll_offz", &m_roll_off_point_z);
 	pElem->Attribute("roll_radius", &m_auto_roll_radius);
 	if(pElem->Attribute("start_given", &int_for_bool))m_start_given = (int_for_bool != 0);
-	pElem->Attribute("startx", &m_start[0]);
-	pElem->Attribute("starty", &m_start[1]);
-	pElem->Attribute("startz", &m_start[2]);
+	pElem->Attribute("startx", &m_start_x);
+	pElem->Attribute("starty", &m_start_y);
+	pElem->Attribute("startz", &m_start_z);
 	if(pElem->Attribute("end_given", &int_for_bool))m_end_given = (int_for_bool != 0);
-	pElem->Attribute("endx", &m_end[0]);
-	pElem->Attribute("endy", &m_end[1]);
-	pElem->Attribute("endz", &m_end[2]);
+	pElem->Attribute("endx", &m_end_x);
+	pElem->Attribute("endy", &m_end_y);
+	pElem->Attribute("endz", &m_end_z);
 	if(pElem->Attribute("end_beyond_full_profile", &int_for_bool))m_end_beyond_full_profile = (int_for_bool != 0);
 	if(pElem->Attribute("sort_sketches"))m_sort_sketches = atoi(pElem->Attribute("sort_sketches"));
 	pElem->Attribute("offset_extra", &m_offset_extra);
@@ -341,7 +239,35 @@ CProfile::CProfile( const CProfile & rhs ) : CSketchOp(rhs)
 	Add( m_tags, NULL );
 	if (rhs.m_tags != NULL) *m_tags = *(rhs.m_tags);
 	m_sketch = rhs.m_sketch;
-	m_profile_params = rhs.m_profile_params;
+	m_auto_roll_on = rhs.m_auto_roll_on;
+	m_auto_roll_off = rhs.m_auto_roll_off;
+	m_auto_roll_radius = rhs.m_auto_roll_radius;
+	m_lead_in_line_len = rhs.m_lead_in_line_len;
+	m_lead_out_line_len = rhs.m_lead_out_line_len;
+	m_roll_on_point_x = rhs.m_roll_on_point_x;
+	m_roll_on_point_y = rhs.m_roll_on_point_y;
+	m_roll_on_point_z = rhs.m_roll_on_point_z;
+	m_roll_off_point_x = rhs.m_roll_off_point_x;
+	m_roll_off_point_y = rhs.m_roll_off_point_y;
+	m_roll_off_point_z = rhs.m_roll_off_point_z;
+	m_start_given = rhs.m_start_given;
+	m_end_given = rhs.m_end_given;
+	m_start_x = rhs.m_start_x;
+	m_start_y = rhs.m_start_y;
+	m_start_z = rhs.m_start_z;
+	m_end_x = rhs.m_end_x;
+	m_end_y = rhs.m_end_y;
+	m_end_z = rhs.m_end_z;
+	m_extend_at_start = rhs.m_extend_at_start;
+	m_extend_at_end = rhs.m_extend_at_end;
+	m_end_beyond_full_profile = rhs.m_end_beyond_full_profile;
+	m_sort_sketches = rhs.m_sort_sketches;
+	m_offset_extra = rhs.m_offset_extra;
+	m_do_finishing_pass = rhs.m_do_finishing_pass;
+	m_only_finishing_pass = rhs.m_only_finishing_pass;
+	m_finishing_h_feed_rate = rhs.m_finishing_h_feed_rate;
+	m_finishing_cut_mode = rhs.m_finishing_cut_mode;
+	m_finishing_step_down = rhs.m_finishing_step_down;
 }
 
 CProfile::CProfile(int sketch, const int tool_number )
@@ -357,8 +283,35 @@ CProfile & CProfile::operator= ( const CProfile & rhs )
 		CSketchOp::operator=( rhs );
 		if ((m_tags != NULL) && (rhs.m_tags != NULL)) *m_tags = *(rhs.m_tags);
 		m_sketch = rhs.m_sketch;
-
-		m_profile_params = rhs.m_profile_params;
+		m_auto_roll_on = rhs.m_auto_roll_on;
+		m_auto_roll_off = rhs.m_auto_roll_off;
+		m_auto_roll_radius = rhs.m_auto_roll_radius;
+		m_lead_in_line_len = rhs.m_lead_in_line_len;
+		m_lead_out_line_len = rhs.m_lead_out_line_len;
+		m_roll_on_point_x = rhs.m_roll_on_point_x;
+		m_roll_on_point_y = rhs.m_roll_on_point_y;
+		m_roll_on_point_z = rhs.m_roll_on_point_z;
+		m_roll_off_point_x = rhs.m_roll_off_point_x;
+		m_roll_off_point_y = rhs.m_roll_off_point_y;
+		m_roll_off_point_z = rhs.m_roll_off_point_z;
+		m_start_given = rhs.m_start_given;
+		m_end_given = rhs.m_end_given;
+		m_start_x = rhs.m_start_x;
+		m_start_y = rhs.m_start_y;
+		m_start_z = rhs.m_start_z;
+		m_end_x = rhs.m_end_x;
+		m_end_y = rhs.m_end_y;
+		m_end_z = rhs.m_end_z;
+		m_extend_at_start = rhs.m_extend_at_start;
+		m_extend_at_end = rhs.m_extend_at_end;
+		m_end_beyond_full_profile = rhs.m_end_beyond_full_profile;
+		m_sort_sketches = rhs.m_sort_sketches;
+		m_offset_extra = rhs.m_offset_extra;
+		m_do_finishing_pass = rhs.m_do_finishing_pass;
+		m_only_finishing_pass = rhs.m_only_finishing_pass;
+		m_finishing_h_feed_rate = rhs.m_finishing_h_feed_rate;
+		m_finishing_cut_mode = rhs.m_finishing_cut_mode;
+		m_finishing_step_down = rhs.m_finishing_step_down;
 	}
 
 	return(*this);
@@ -569,12 +522,12 @@ Python CProfile::WriteSketchDefn(HeeksObj* sketch, bool reversed )
 
 	python << _T("\n");
 
-	if(m_profile_params.m_start_given || m_profile_params.m_end_given)
+	if(m_start_given || m_end_given)
 	{
 		double startx, starty, finishx, finishy;
 
 		wxString start_string;
-		if(m_profile_params.m_start_given)
+		if(m_start_given)
 		{
 #ifdef UNICODE
 			std::wostringstream ss;
@@ -582,8 +535,8 @@ Python CProfile::WriteSketchDefn(HeeksObj* sketch, bool reversed )
 			std::ostringstream ss;
 #endif
 
-			gp_Pnt starting(m_profile_params.m_start[0] / wxGetApp().m_program->m_units,
-					m_profile_params.m_start[1] / wxGetApp().m_program->m_units,
+			gp_Pnt starting(m_start_x / wxGetApp().m_program->m_units,
+				m_start_y / wxGetApp().m_program->m_units,
 					0.0 );
 
 			startx = starting.X();
@@ -598,7 +551,7 @@ Python CProfile::WriteSketchDefn(HeeksObj* sketch, bool reversed )
 
 		wxString finish_string;
 		wxString beyond_string;
-		if(m_profile_params.m_end_given)
+		if(m_end_given)
 		{
 #ifdef UNICODE
 			std::wostringstream ss;
@@ -606,8 +559,8 @@ Python CProfile::WriteSketchDefn(HeeksObj* sketch, bool reversed )
 			std::ostringstream ss;
 #endif
 
-			gp_Pnt finish(m_profile_params.m_end[0] / wxGetApp().m_program->m_units,
-					m_profile_params.m_end[1] / wxGetApp().m_program->m_units,
+			gp_Pnt finish(m_end_x / wxGetApp().m_program->m_units,
+				m_end_y / wxGetApp().m_program->m_units,
 					0.0 );
 
 			finishx = finish.X();
@@ -618,7 +571,7 @@ Python CProfile::WriteSketchDefn(HeeksObj* sketch, bool reversed )
 			ss << ", finish = area.Point(" << finishx << ", " << finishy << ")";
 			finish_string = ss.str().c_str();
 
-			if(m_profile_params.m_end_beyond_full_profile)beyond_string = _T(", end_beyond = True");
+			if(m_end_beyond_full_profile)beyond_string = _T(", end_beyond = True");
 		}
 
 		python << (wxString::Format(_T("kurve_funcs.make_smaller( curve%s%s%s)\n"), start_string.c_str(), finish_string.c_str(), beyond_string.c_str())).c_str();
@@ -627,7 +580,7 @@ Python CProfile::WriteSketchDefn(HeeksObj* sketch, bool reversed )
 	return(python);
 }
 
-Python CProfile::AppendTextForSketch(HeeksObj* object, CProfileParams::eCutMode cut_mode)
+Python CProfile::AppendTextForSketch(HeeksObj* object, int cut_mode)
 {
     Python python;
 
@@ -636,7 +589,7 @@ Python CProfile::AppendTextForSketch(HeeksObj* object, CProfileParams::eCutMode 
 		// decide if we need to reverse the kurve
 		bool reversed = false;
 		bool initially_ccw = false;
-		if(m_profile_params.m_tool_on_side != CProfileParams::eOn)
+		if (m_tool_on_side != CProfile::eOn)
 		{
 			if(object)
 			{
@@ -652,15 +605,15 @@ Python CProfile::AppendTextForSketch(HeeksObj* object, CProfileParams::eCutMode 
 					break;
 				}
 			}
-			if(m_speed_op_params.m_spindle_speed<0)reversed = !reversed;
-			if(cut_mode == CProfileParams::eConventional)reversed = !reversed;
-			if(m_profile_params.m_tool_on_side == CProfileParams::eRightOrInside)reversed = !reversed;
+			if(m_spindle_speed<0)reversed = !reversed;
+			if (cut_mode == CProfile::eConventional)reversed = !reversed;
+			if (m_tool_on_side == CProfile::eRightOrInside)reversed = !reversed;
 		}
 
 		// write the kurve definition
 		python << WriteSketchDefn(object, initially_ccw != reversed);
 
-		if((m_profile_params.m_start_given == false) && (m_profile_params.m_end_given == false))
+		if((m_start_given == false) && (m_end_given == false))
 		{
 			python << _T("kurve_funcs.set_good_start_point(curve, ") << (reversed ? _T("True") : _T("False")) << _T(")\n");
 		}
@@ -669,13 +622,13 @@ Python CProfile::AppendTextForSketch(HeeksObj* object, CProfileParams::eCutMode 
 
 		// get offset side string
 		wxString side_string;
-		switch(m_profile_params.m_tool_on_side)
+		switch(m_tool_on_side)
 		{
-		case CProfileParams::eLeftOrOutside:
+		case CProfile::eLeftOrOutside:
 			if(reversed)side_string = _T("right");
 			else side_string = _T("left");
 			break;
-		case CProfileParams::eRightOrInside:
+		case CProfile::eRightOrInside:
 			if(reversed)side_string = _T("left");
 			else side_string = _T("right");
 			break;
@@ -685,18 +638,18 @@ Python CProfile::AppendTextForSketch(HeeksObj* object, CProfileParams::eCutMode 
 		}
 
 		// roll on
-		switch(m_profile_params.m_tool_on_side)
+		switch(m_tool_on_side)
 		{
-		case CProfileParams::eLeftOrOutside:
-		case CProfileParams::eRightOrInside:
+		case CProfile::eLeftOrOutside:
+		case CProfile::eRightOrInside:
 			{
-				if(m_profile_params.m_auto_roll_on)
+				if(m_auto_roll_on)
 				{
 					python << wxString(_T("roll_on = 'auto'\n"));
 				}
 				else
 				{
-					python << wxString(_T("roll_on = area.Point(")) << m_profile_params.m_roll_on_point[0] / wxGetApp().m_program->m_units << wxString(_T(", ")) << m_profile_params.m_roll_on_point[1] / wxGetApp().m_program->m_units << wxString(_T(")\n"));
+					python << wxString(_T("roll_on = area.Point(")) << m_roll_on_point_x / wxGetApp().m_program->m_units << wxString(_T(", ")) << m_roll_on_point_y / wxGetApp().m_program->m_units << wxString(_T(")\n"));
 				}
 			}
 			break;
@@ -710,18 +663,18 @@ Python CProfile::AppendTextForSketch(HeeksObj* object, CProfileParams::eCutMode 
 		// rapid across to it
 		//python << wxString::Format(_T("rapid(%s)\n"), roll_on_string.c_str()).c_str();
 
-		switch(m_profile_params.m_tool_on_side)
+		switch(m_tool_on_side)
 		{
-		case CProfileParams::eLeftOrOutside:
-		case CProfileParams::eRightOrInside:
+		case CProfile::eLeftOrOutside:
+		case CProfile::eRightOrInside:
 			{
-				if(m_profile_params.m_auto_roll_off)
+				if(m_auto_roll_off)
 				{
 					python << wxString(_T("roll_off = 'auto'\n"));
 				}
 				else
 				{
-					python << wxString(_T("roll_off = area.Point(")) << m_profile_params.m_roll_off_point[0] / wxGetApp().m_program->m_units << wxString(_T(", ")) << m_profile_params.m_roll_off_point[1] / wxGetApp().m_program->m_units << wxString(_T(")\n"));
+					python << wxString(_T("roll_off = area.Point(")) << m_roll_off_point_x / wxGetApp().m_program->m_units << wxString(_T(", ")) << m_roll_off_point_y / wxGetApp().m_program->m_units << wxString(_T(")\n"));
 				}
 			}
 			break;
@@ -740,12 +693,12 @@ Python CProfile::AppendTextForSketch(HeeksObj* object, CProfileParams::eCutMode 
 			python << _T("kurve_funcs.add_tag(area.Point(") << tag->m_pos[0] / wxGetApp().m_program->m_units << _T(", ") << tag->m_pos[1] / wxGetApp().m_program->m_units << _T("), ") << tag->m_width / wxGetApp().m_program->m_units << _T(", ") << tag->m_angle * M_PI/180 << _T(", ") << tag->m_height / wxGetApp().m_program->m_units << _T(")\n");
 		}
         //extend_at_start, extend_at_end
-        python << _T("extend_at_start= ") << m_profile_params.m_extend_at_start / wxGetApp().m_program->m_units << _T("\n");
-        python << _T("extend_at_end= ") << m_profile_params.m_extend_at_end / wxGetApp().m_program->m_units<< _T("\n");
+        python << _T("extend_at_start= ") << m_extend_at_start / wxGetApp().m_program->m_units << _T("\n");
+        python << _T("extend_at_end= ") << m_extend_at_end / wxGetApp().m_program->m_units<< _T("\n");
 
         //lead in lead out line length
-        python << _T("lead_in_line_len= ") << m_profile_params.m_lead_in_line_len / wxGetApp().m_program->m_units << _T("\n");
-        python << _T("lead_out_line_len= ") << m_profile_params.m_lead_out_line_len / wxGetApp().m_program->m_units<< _T("\n");
+        python << _T("lead_in_line_len= ") << m_lead_in_line_len / wxGetApp().m_program->m_units << _T("\n");
+        python << _T("lead_out_line_len= ") << m_lead_out_line_len / wxGetApp().m_program->m_units<< _T("\n");
 
 		// profile the kurve
 		python << wxString::Format(_T("kurve_funcs.profile(curve, '%s', tool_diameter/2, offset_extra, roll_radius, roll_on, roll_off, depthparams, extend_at_start,extend_at_end,lead_in_line_len,lead_out_line_len )\n"), side_string.c_str());
@@ -759,21 +712,21 @@ void CProfile::WriteDefaultValues()
 	CSketchOp::WriteDefaultValues();
 
 	HeeksConfig config;
-	config.Write(_T("ToolOnSide"), (int)(m_profile_params.m_tool_on_side));
-	config.Write(_T("CutMode"), (int)(m_profile_params.m_cut_mode));
-	config.Write(_T("RollRadius"), m_profile_params.m_auto_roll_radius);
-	config.Write(_T("OffsetExtra"), m_profile_params.m_offset_extra);
-	config.Write(_T("DoFinishPass"), m_profile_params.m_do_finishing_pass);
-	config.Write(_T("OnlyFinishPass"), m_profile_params.m_only_finishing_pass);
-	config.Write(_T("FinishFeedRate"), m_profile_params.m_finishing_h_feed_rate);
-	config.Write(_T("FinishCutMode"), (int)(m_profile_params.m_finishing_cut_mode));
-	config.Write(_T("FinishStepDown"), m_profile_params.m_finishing_step_down);
-	config.Write(_T("EndBeyond"), m_profile_params.m_end_beyond_full_profile);
+	config.Write(_T("ToolOnSide"), (int)(m_tool_on_side));
+	config.Write(_T("CutMode"), (int)(m_cut_mode));
+	config.Write(_T("RollRadius"), m_auto_roll_radius);
+	config.Write(_T("OffsetExtra"), m_offset_extra);
+	config.Write(_T("DoFinishPass"), m_do_finishing_pass);
+	config.Write(_T("OnlyFinishPass"), m_only_finishing_pass);
+	config.Write(_T("FinishFeedRate"), m_finishing_h_feed_rate);
+	config.Write(_T("FinishCutMode"), (int)(m_finishing_cut_mode));
+	config.Write(_T("FinishStepDown"), m_finishing_step_down);
+	config.Write(_T("EndBeyond"), m_end_beyond_full_profile);
 
-	config.Write(_T("ExtendAtStart"), m_profile_params.m_extend_at_start);
-	config.Write(_T("ExtendAtEnd"), m_profile_params.m_extend_at_end);
-	config.Write(_T("LeadInLineLen"), m_profile_params.m_lead_in_line_len);
-	config.Write(_T("LeadOutLineLen"), m_profile_params.m_lead_out_line_len);
+	config.Write(_T("ExtendAtStart"), m_extend_at_start);
+	config.Write(_T("ExtendAtEnd"), m_extend_at_end);
+	config.Write(_T("LeadInLineLen"), m_lead_in_line_len);
+	config.Write(_T("LeadOutLineLen"), m_lead_out_line_len);
 
 }
 
@@ -782,26 +735,20 @@ void CProfile::ReadDefaultValues()
 	CSketchOp::ReadDefaultValues();
 
 	HeeksConfig config;
-	int int_side = m_profile_params.m_tool_on_side;
-	config.Read(_T("ToolOnSide"), &int_side, CProfileParams::eLeftOrOutside);
-	m_profile_params.m_tool_on_side = (CProfileParams::eSide)int_side;
-	int int_mode = m_profile_params.m_cut_mode;
-	config.Read(_T("CutMode"), &int_mode, CProfileParams::eConventional);
-	m_profile_params.m_cut_mode = (CProfileParams::eCutMode)int_mode;
-	config.Read(_T("RollRadius"), &m_profile_params.m_auto_roll_radius, 2.0);
-	config.Read(_T("OffsetExtra"), &m_profile_params.m_offset_extra, 0.0);
-	config.Read(_T("DoFinishPass"), &m_profile_params.m_do_finishing_pass, false);
-	config.Read(_T("OnlyFinishPass"), &m_profile_params.m_only_finishing_pass, false);
-	config.Read(_T("FinishFeedRate"), &m_profile_params.m_finishing_h_feed_rate, 100.0);
-	config.Read(_T("FinishCutMode"), &int_mode, CProfileParams::eConventional);
-	m_profile_params.m_finishing_cut_mode = (CProfileParams::eCutMode)int_mode;
-	config.Read(_T("FinishStepDown"), &m_profile_params.m_finishing_step_down, 1.0);
-	config.Read(_T("EndBeyond"), &m_profile_params.m_end_beyond_full_profile, false);
-
-	config.Read(_T("ExtendAtStart"), &m_profile_params.m_extend_at_start, 0.0);
-	config.Read(_T("ExtendAtEnd"), &m_profile_params.m_extend_at_end, 0.0);
-	config.Read(_T("LeadInLineLen"), &m_profile_params.m_lead_in_line_len, 0.0);
-	config.Read(_T("LeadOutLineLen"), &m_profile_params.m_lead_out_line_len, 0.0);
+	config.Read(_T("ToolOnSide"), &m_tool_on_side, CProfile::eLeftOrOutside);
+	config.Read(_T("CutMode"), &m_cut_mode, CProfile::eConventional);
+	config.Read(_T("RollRadius"), &m_auto_roll_radius, 2.0);
+	config.Read(_T("OffsetExtra"), &m_offset_extra, 0.0);
+	config.Read(_T("DoFinishPass"), &m_do_finishing_pass, false);
+	config.Read(_T("OnlyFinishPass"), &m_only_finishing_pass, false);
+	config.Read(_T("FinishFeedRate"), &m_finishing_h_feed_rate, 100.0);
+	config.Read(_T("FinishCutMode"), &m_finishing_cut_mode, CProfile::eConventional);
+	config.Read(_T("FinishStepDown"), &m_finishing_step_down, 1.0);
+	config.Read(_T("EndBeyond"), &m_end_beyond_full_profile, false);
+	config.Read(_T("ExtendAtStart"), &m_extend_at_start, 0.0);
+	config.Read(_T("ExtendAtEnd"), &m_extend_at_end, 0.0);
+	config.Read(_T("LeadInLineLen"), &m_lead_in_line_len, 0.0);
+	config.Read(_T("LeadOutLineLen"), &m_lead_out_line_len, 0.0);
 }
 
 Python CProfile::AppendTextToProgram()
@@ -811,17 +758,17 @@ Python CProfile::AppendTextToProgram()
 	// only do finish pass for non milling cutters
 	if(!CTool::IsMillingToolType(CTool::FindToolType(m_tool_number)))
 	{
-		this->m_profile_params.m_only_finishing_pass = true;
+		this->m_only_finishing_pass = true;
 	}
 
 	// roughing pass
-	if(!this->m_profile_params.m_do_finishing_pass || !this->m_profile_params.m_only_finishing_pass)
+	if(!this->m_do_finishing_pass || !this->m_only_finishing_pass)
 	{
 		python << AppendTextToProgram(false);
 	}
 
 	// finishing pass
-	if(this->m_profile_params.m_do_finishing_pass)
+	if(this->m_do_finishing_pass)
 	{
 		python << AppendTextToProgram(true);
 	}
@@ -840,33 +787,33 @@ Python CProfile::AppendTextToProgram(bool finishing_pass)
 		return(python);
 	} // End if - then
 
-	if(!finishing_pass || m_profile_params.m_only_finishing_pass)
+	if(!finishing_pass || m_only_finishing_pass)
 	{
 		python << CSketchOp::AppendTextToProgram();
 
-		if(m_profile_params.m_auto_roll_on || m_profile_params.m_auto_roll_off)
+		if(m_auto_roll_on || m_auto_roll_off)
 		{
 			python << _T("roll_radius = float(");
-			python << m_profile_params.m_auto_roll_radius / wxGetApp().m_program->m_units;
+			python << m_auto_roll_radius / wxGetApp().m_program->m_units;
 			python << _T(")\n");
 		}
 	}
 
 	if(finishing_pass)
 	{
-		python << _T("feedrate_hv(") << m_profile_params.m_finishing_h_feed_rate / wxGetApp().m_program->m_units << _T(", ");
-		python << m_speed_op_params.m_vertical_feed_rate / wxGetApp().m_program->m_units << _T(")\n");
+		python << _T("feedrate_hv(") << m_finishing_h_feed_rate / wxGetApp().m_program->m_units << _T(", ");
+		python << m_vertical_feed_rate / wxGetApp().m_program->m_units << _T(")\n");
 		python << _T("flush_nc()\n");
 		python << _T("offset_extra = 0.0\n");
-		python << _T("depthparams.step_down = ") << m_profile_params.m_finishing_step_down << _T("\n");
+		python << _T("depthparams.step_down = ") << m_finishing_step_down << _T("\n");
 		python << _T("depthparams.z_finish_depth = 0.0\n");
 	}
 	else
 	{
-		python << _T("offset_extra = ") << m_profile_params.m_offset_extra / wxGetApp().m_program->m_units << _T("\n");
+		python << _T("offset_extra = ") << m_offset_extra / wxGetApp().m_program->m_units << _T("\n");
 	}
 
-	CProfileParams::eCutMode cut_mode = finishing_pass ? m_profile_params.m_finishing_cut_mode : m_profile_params.m_cut_mode;
+	int cut_mode = finishing_pass ? m_finishing_cut_mode : m_cut_mode;
 
 	HeeksObj* object = wxGetApp().GetIDObject(SketchType, m_sketch);
 	if(object)
@@ -931,31 +878,31 @@ void CProfile::glCommands(bool select, bool marked, bool no_color)
 	{
 		{
 			// draw roll on point
-			if(!m_profile_params.m_auto_roll_on)
+			if(!m_auto_roll_on)
 			{
 				glColor3ub(0, 200, 200);
-				glRasterPos3dv(m_profile_params.m_roll_on_point);
+				glRasterPos3dv(&m_roll_on_point_x);
 				glBitmap(16, 16, 8, 8, 10.0, 0.0, cross16);
 			}
 			// draw roll off point
-			if(!m_profile_params.m_auto_roll_on)
+			if(!m_auto_roll_on)
 			{
 				glColor3ub(255, 128, 0);
-				glRasterPos3dv(m_profile_params.m_roll_off_point);
+				glRasterPos3dv(&m_roll_off_point_x);
 				glBitmap(16, 16, 8, 8, 10.0, 0.0, cross16);
 			}
 			// draw start point
-			if(m_profile_params.m_start_given)
+			if(m_start_given)
 			{
 				glColor3ub(128, 0, 255);
-				glRasterPos3dv(m_profile_params.m_start);
+				glRasterPos3dv(&m_start_x);
 				glBitmap(16, 16, 8, 8, 10.0, 0.0, cross16);
 			}
 			// draw end point
-			if(m_profile_params.m_end_given)
+			if(m_end_given)
 			{
 				glColor3ub(200, 200, 0);
-				glRasterPos3dv(m_profile_params.m_end);
+				glRasterPos3dv(&m_end_x);
 				glBitmap(16, 16, 8, 8, 10.0, 0.0, cross16);
 			}
 		}
@@ -964,7 +911,105 @@ void CProfile::glCommands(bool select, bool marked, bool no_color)
 
 void CProfile::GetProperties(std::list<Property *> *list)
 {
-	m_profile_params.GetProperties(this, list);
+	int tool_type = CTool::FindToolType(this->m_tool_number);
+
+	if (CTool::IsMillingToolType(tool_type)){
+		std::list< wxString > choices;
+
+		SketchOrderType order = SketchOrderTypeUnknown;
+
+		{
+			HeeksObj* sketch = wxGetApp().GetIDObject(SketchType, this->m_sketch);
+			if ((sketch) && (sketch->GetType() == SketchType))
+			{
+				order = ((CSketch*)sketch)->GetSketchOrder();
+			}
+		}
+
+		switch (order)
+		{
+		case SketchOrderTypeOpen:
+			choices.push_back(_("Left"));
+			choices.push_back(_("Right"));
+			break;
+
+		case SketchOrderTypeCloseCW:
+		case SketchOrderTypeCloseCCW:
+			choices.push_back(_("Outside"));
+			choices.push_back(_("Inside"));
+			break;
+
+		default:
+			choices.push_back(_("Outside or Left"));
+			choices.push_back(_("Inside or Right"));
+			break;
+		}
+		choices.push_back(_("On"));
+
+		int choice = int(eOn);
+		switch (m_tool_on_side)
+		{
+		case eRightOrInside:	choice = 1;
+			break;
+
+		case eOn:	choice = 2;
+			break;
+
+		case eLeftOrOutside:	choice = 0;
+			break;
+		} // End switch
+
+		list->push_back(new PropertyChoice(_("tool on side"), choices, choice, this, on_set_tool_on_side));
+	}
+
+	if (CTool::IsMillingToolType(tool_type)){
+		std::list< wxString > choices;
+		choices.push_back(_("Conventional"));
+		choices.push_back(_("Climb"));
+		list->push_back(new PropertyChoice(_("cut mode"), choices, m_cut_mode, this, on_set_cut_mode));
+	}
+
+	{
+		list->push_back(new PropertyCheck(_("auto roll on"), m_auto_roll_on, this, on_set_auto_roll_on));
+		if (!m_auto_roll_on)list->push_back(new PropertyVertex(_("roll on point"), &m_roll_on_point_x, this, on_set_roll_on_point));
+		list->push_back(new PropertyCheck(_("auto roll off"), m_auto_roll_off, this, on_set_auto_roll_off));
+		if (!m_auto_roll_off)list->push_back(new PropertyVertex(_("roll off point"), &m_roll_off_point_x, this, on_set_roll_off_point));
+		if (m_auto_roll_on || m_auto_roll_off)list->push_back(new PropertyLength(_("roll radius"), m_auto_roll_radius, this, on_set_roll_radius));
+		list->push_back(new PropertyCheck(_("use start point"), m_start_given, this, on_set_start_given));
+		if (m_start_given)list->push_back(new PropertyVertex(_("start point"), &m_start_x, this, on_set_start));
+		list->push_back(new PropertyCheck(_("use end point"), m_end_given, this, on_set_end_given));
+		if (m_end_given)
+		{
+			list->push_back(new PropertyVertex(_("end point"), &m_end_x, this, on_set_end));
+			list->push_back(new PropertyCheck(_("end beyond full profile"), m_end_beyond_full_profile, this, on_set_end_beyond_full_profile));
+		}
+	}
+
+	list->push_back(new PropertyLength(_("extend before start"), m_extend_at_start, this, on_set_extend_at_start));
+	list->push_back(new PropertyLength(_("extend past end"), m_extend_at_end, this, on_set_extend_at_end));
+
+	//lead in lead out line length
+	list->push_back(new PropertyLength(_("lead in line length"), m_lead_in_line_len, this, on_set_lead_in_line_len));
+	list->push_back(new PropertyLength(_("lead out line length"), m_lead_out_line_len, this, on_set_lead_out_line_len));
+
+	list->push_back(new PropertyLength(_("offset_extra"), m_offset_extra, this, on_set_offset_extra));
+	if (CTool::IsMillingToolType(tool_type))
+	{
+		list->push_back(new PropertyCheck(_("do finishing pass"), m_do_finishing_pass, this, on_set_do_finishing_pass));
+		if (m_do_finishing_pass)
+		{
+			list->push_back(new PropertyCheck(_("only finishing pass"), m_only_finishing_pass, this, on_set_only_finishing_pass));
+			list->push_back(new PropertyLength(_("finishing feed rate"), m_finishing_h_feed_rate, this, on_set_finishing_h_feed_rate));
+
+			{
+				std::list< wxString > choices;
+				choices.push_back(_("Conventional"));
+				choices.push_back(_("Climb"));
+				list->push_back(new PropertyChoice(_("finish cut mode"), choices, m_finishing_cut_mode, this, on_set_finish_cut_mode));
+			}
+			list->push_back(new PropertyLength(_("finishing step down"), m_finishing_step_down, this, on_set_finish_step_down));
+		}
+	}
 
 	CSketchOp::GetProperties(list);
 }
@@ -974,7 +1019,7 @@ static CProfile* object_for_tools = NULL;
 class PickStart: public Tool{
 	// Tool's virtual functions
 	const wxChar* GetTitle(){return _("Pick Start");}
-	void Run(){if(wxGetApp().PickPosition(_("Pick new start point"), object_for_tools->m_profile_params.m_start))object_for_tools->m_profile_params.m_start_given = true; wxGetApp().m_frame->RefreshProperties();}
+	void Run(){if(wxGetApp().PickPosition(_("Pick new start point"), &object_for_tools->m_start_x))object_for_tools->m_start_given = true; wxGetApp().m_frame->RefreshProperties();}
 	wxString BitmapPath(){ return _T("pickstart");}
 };
 
@@ -983,7 +1028,7 @@ static PickStart pick_start;
 class PickEnd: public Tool{
 	// Tool's virtual functions
 	const wxChar* GetTitle(){return _("Pick End");}
-	void Run(){if(wxGetApp().PickPosition(_("Pick new end point"), object_for_tools->m_profile_params.m_end))object_for_tools->m_profile_params.m_end_given = true; wxGetApp().m_frame->RefreshProperties();}
+	void Run(){if(wxGetApp().PickPosition(_("Pick new end point"), &object_for_tools->m_end_x))object_for_tools->m_end_given = true; wxGetApp().m_frame->RefreshProperties();}
 	wxString BitmapPath(){ return _T("pickend");}
 };
 
@@ -992,7 +1037,7 @@ static PickEnd pick_end;
 class PickRollOn: public Tool{
 	// Tool's virtual functions
 	const wxChar* GetTitle(){return _("Pick roll on point");}
-	void Run(){if(wxGetApp().PickPosition(_("Pick roll on point"), object_for_tools->m_profile_params.m_roll_on_point))object_for_tools->m_profile_params.m_auto_roll_on = false;}
+	void Run(){if(wxGetApp().PickPosition(_("Pick roll on point"), &object_for_tools->m_roll_on_point_x))object_for_tools->m_auto_roll_on = false;}
 	wxString BitmapPath(){ return _T("rollon");}
 };
 
@@ -1001,7 +1046,7 @@ static PickRollOn pick_roll_on;
 class PickRollOff: public Tool{
 	// Tool's virtual functions
 	const wxChar* GetTitle(){return _("Pick roll off point");}
-	void Run(){if(wxGetApp().PickPosition(_("Pick roll off point"), object_for_tools->m_profile_params.m_roll_off_point))object_for_tools->m_profile_params.m_auto_roll_off = false;}
+	void Run(){if(wxGetApp().PickPosition(_("Pick roll off point"), &object_for_tools->m_roll_off_point_x))object_for_tools->m_auto_roll_off = false;}
 	wxString BitmapPath(){ return _T("rolloff");}
 };
 
@@ -1129,9 +1174,36 @@ void CProfile::CopyFrom(const HeeksObj* object)
 		if ((m_tags != NULL) && (rhs->m_tags != NULL)) m_tags->CopyFrom( rhs->m_tags );
 
 		m_sketch = rhs->m_sketch;
-		m_profile_params = rhs->m_profile_params;
-		m_depth_op_params = rhs->m_depth_op_params;
-		m_speed_op_params = rhs->m_speed_op_params;
+
+		m_auto_roll_on = rhs->m_auto_roll_on;
+		m_auto_roll_off = rhs->m_auto_roll_off;
+		m_auto_roll_radius = rhs->m_auto_roll_radius;
+		m_lead_in_line_len = rhs->m_lead_in_line_len;
+		m_lead_out_line_len = rhs->m_lead_out_line_len;
+		m_roll_on_point_x = rhs->m_roll_on_point_x;
+		m_roll_on_point_y = rhs->m_roll_on_point_y;
+		m_roll_on_point_z = rhs->m_roll_on_point_z;
+		m_roll_off_point_x = rhs->m_roll_off_point_x;
+		m_roll_off_point_y = rhs->m_roll_off_point_y;
+		m_roll_off_point_z = rhs->m_roll_off_point_z;
+		m_start_given = rhs->m_start_given;
+		m_end_given = rhs->m_end_given;
+		m_start_x = rhs->m_start_x;
+		m_start_y = rhs->m_start_y;
+		m_start_z = rhs->m_start_z;
+		m_end_x = rhs->m_end_x;
+		m_end_y = rhs->m_end_y;
+		m_end_z = rhs->m_end_z;
+		m_extend_at_start = rhs->m_extend_at_start;
+		m_extend_at_end = rhs->m_extend_at_end;
+		m_end_beyond_full_profile = rhs->m_end_beyond_full_profile;
+		m_sort_sketches = rhs->m_sort_sketches;
+		m_offset_extra = rhs->m_offset_extra;
+		m_do_finishing_pass = rhs->m_do_finishing_pass;
+		m_only_finishing_pass = rhs->m_only_finishing_pass;
+		m_finishing_h_feed_rate = rhs->m_finishing_h_feed_rate;
+		m_finishing_cut_mode = rhs->m_finishing_cut_mode;
+		m_finishing_step_down = rhs->m_finishing_step_down;
 		m_comment = rhs->m_comment;
 		m_active = rhs->m_active;
 		m_tool_number = rhs->m_tool_number;
@@ -1155,7 +1227,7 @@ void CProfile::WriteXML(TiXmlNode *root)
 {
 	TiXmlElement * element = new TiXmlElement( "Profile" );
 	wxGetApp().LinkXMLEndChild( root,  element );
-	m_profile_params.WriteXMLAttributes(element);
+	WriteXMLAttributes(element);
 
 	CSketchOp::WriteBaseXML(element);
 }
@@ -1171,7 +1243,7 @@ HeeksObj* CProfile::ReadFromXMLElement(TiXmlElement* element)
 	TiXmlElement* params = wxGetApp().FirstNamedXMLChildElement(element, "params");
 	if(params)
 	{
-		new_object->m_profile_params.ReadFromXMLElement(params);
+		new_object->ReadParamsFromXMLElement(params);
 		elements_to_remove.push_back(params);
 	}
 
@@ -1218,32 +1290,33 @@ void CProfile::WriteToConfig()
 	HeeksConfig config;
 	config.Write(_T("ProfileSplineDeviation"), max_deviation_for_spline_to_arc);
 }
-bool CProfileParams::operator==( const CProfileParams & rhs ) const
+
+bool CProfile::operator==( const CProfile & rhs ) const
 {
 	if (m_auto_roll_on != rhs.m_auto_roll_on) return(false);
 	if (m_auto_roll_off != rhs.m_auto_roll_off) return(false);
 	if (m_auto_roll_radius != rhs.m_auto_roll_radius) return(false);
-	for (::size_t i=0; i<sizeof(m_roll_on_point)/sizeof(m_roll_on_point[0]); i++) if (m_roll_on_point[i] != rhs.m_roll_on_point[i]) return(false);
-	for (::size_t i=0; i<sizeof(m_roll_off_point)/sizeof(m_roll_off_point[0]); i++) if (m_roll_off_point[i] != rhs.m_roll_off_point[i]) return(false);
+	if (m_roll_on_point_x != rhs.m_roll_on_point_x) return(false);
+	if (m_roll_on_point_y != rhs.m_roll_on_point_y) return(false);
+	if (m_roll_on_point_z != rhs.m_roll_on_point_z) return(false);
+	if (m_roll_off_point_x != rhs.m_roll_off_point_x) return(false);
+	if (m_roll_off_point_y != rhs.m_roll_off_point_y) return(false);
+	if (m_roll_off_point_z != rhs.m_roll_off_point_z) return(false);
 	if (m_start_given != rhs.m_start_given) return(false);
 	if (m_end_given != rhs.m_end_given) return(false);
 	if (m_end_beyond_full_profile != rhs.m_end_beyond_full_profile) return(false);
-	for (::size_t i=0; i<sizeof(m_start)/sizeof(m_start[0]); i++) if (m_start[i] != rhs.m_start[i]) return(false);
-	for (::size_t i=0; i<sizeof(m_end)/sizeof(m_end[0]); i++) if (m_end[i] != rhs.m_end[i]) return(false);
+	if (m_start_x != rhs.m_start_x) return(false);
+	if (m_start_y != rhs.m_start_y) return(false);
+	if (m_start_z != rhs.m_start_z) return(false);
+	if (m_end_x != rhs.m_end_x) return(false);
+	if (m_end_y != rhs.m_end_y) return(false);
+	if (m_end_z != rhs.m_end_z) return(false);
 	if (m_sort_sketches != rhs.m_sort_sketches) return(false);
 	if (m_offset_extra != rhs.m_offset_extra) return(false);
 	if (m_do_finishing_pass != rhs.m_do_finishing_pass) return(false);
 	if (m_finishing_h_feed_rate != rhs.m_finishing_h_feed_rate) return(false);
 	if (m_finishing_cut_mode != rhs.m_finishing_cut_mode) return(false);
-
-	return(true);
-}
-
-bool CProfile::operator==( const CProfile & rhs ) const
-{
-	if (m_profile_params != rhs.m_profile_params) return(false);
-
-	if(m_sketch != rhs.m_sketch)return false;
+	if (m_sketch != rhs.m_sketch)return false;
 
 	return(CSketchOp::operator==(rhs));
 }

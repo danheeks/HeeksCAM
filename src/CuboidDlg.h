@@ -3,6 +3,7 @@
 // This program is released under the BSD license. See the file COPYING for details.
 
 #include "HeeksObjDlg.h"
+#include "XYZBoxes.h"
 
 class XYZBoxes;
 

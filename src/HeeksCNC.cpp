@@ -16,7 +16,6 @@
 #include "PropertyList.h"
 #include "Observer.h"
 #include "ToolImage.h"
-#include "PythonStuff.h"
 #include "Program.h"
 #include "ProgramCanvas.h"
 #include "OutputCanvas.h"
@@ -56,6 +55,8 @@ extern void ImportToolsFile( const wxChar *file_path );
 
 wxString HeeksCNCType(const int type);
 
+
+#ifdef HAVE_TOOLBARS
 void OnMachiningBar( wxCommandEvent& event )
 {
 	wxAuiManager* aui_manager = wxGetApp().m_frame->m_aui_manager;
@@ -71,6 +72,7 @@ void OnUpdateMachiningBar( wxUpdateUIEvent& event )
 	wxAuiManager* aui_manager = wxGetApp().m_frame->m_aui_manager;
 	event.Check(aui_manager->GetPane(wxGetApp().m_machiningBar).IsShown());
 }
+#endif
 
 void OnProgramCanvas( wxCommandEvent& event )
 {
@@ -359,7 +361,7 @@ static void NewStockMenuCallback(wxCommandEvent &event)
 	}
 }
 
-static void AddNewTool(CToolParams::eToolType type)
+static void AddNewTool(CTool::eToolType type)
 {
 	// find next available tool number
 	int max_tool_number = 0;
@@ -382,63 +384,45 @@ static void AddNewTool(CToolParams::eToolType type)
 
 static void NewDrillMenuCallback(wxCommandEvent &event)
 {
-	AddNewTool(CToolParams::eDrill);
+	AddNewTool(CTool::eDrill);
 }
 
 static void NewCentreDrillMenuCallback(wxCommandEvent &event)
 {
-	AddNewTool(CToolParams::eCentreDrill);
+	AddNewTool(CTool::eCentreDrill);
 }
 
 static void NewEndmillMenuCallback(wxCommandEvent &event)
 {
-	AddNewTool(CToolParams::eEndmill);
+	AddNewTool(CTool::eEndmill);
 }
 
 static void NewSlotCutterMenuCallback(wxCommandEvent &event)
 {
-	AddNewTool(CToolParams::eSlotCutter);
+	AddNewTool(CTool::eSlotCutter);
 }
 
 static void NewBallEndMillMenuCallback(wxCommandEvent &event)
 {
-	AddNewTool(CToolParams::eBallEndMill);
+	AddNewTool(CTool::eBallEndMill);
 }
 
 static void NewChamferMenuCallback(wxCommandEvent &event)
 {
-	AddNewTool(CToolParams::eChamfer);
+	AddNewTool(CTool::eChamfer);
 }
 
-void HeeksCADapp::RunPythonScript()
+static void NewProgramMenuCallback(wxCommandEvent &event)
 {
+	// Add a new program.
+	CProgram *new_object = new CProgram;
+	if (new_object->Edit())
 	{
-		// clear the output file
-		wxFile f(m_program->GetOutputFileName().c_str(), wxFile::write);
-		if(f.IsOpened())f.Write(_T("\n"));
+		new_object->AddMissingChildren();
+		AddNewObjectUndoablyAndMarkIt(new_object, NULL);
 	}
-
-	// Check to see if someone has modified the contents of the
-	// program canvas manually.  If so, replace the m_python_program
-	// with the edited program.  We don't want to do this without
-	// this check since the maximum size of m_textCtrl is sometimes
-	// a limitation to the size of the python program.  If the first 'n' characters
-	// of m_python_program matches the full contents of the m_textCtrl then
-	// it's likely that the text control holds as much of the python program
-	// as it can hold but more may still exist in m_python_program.
-	unsigned int text_control_length = m_program_canvas->m_textCtrl->GetLastPosition();
-	if (m_program->m_python_program.substr(0,text_control_length) != m_program_canvas->m_textCtrl->GetValue())
-	{
-        // copy the contents of the program canvas to the string
-        m_program->m_python_program.clear();
-        m_program->m_python_program << wxGetApp().m_program_canvas->m_textCtrl->GetValue();
-	}
-
-#ifdef FREE_VERSION
-	::wxLaunchDefaultBrowser(_T("http://heeks.net/help/buy-heekscnc-1-0"));
-#endif
-
-	HeeksPyPostProcess(m_program, m_program->GetOutputFileName(), true );
+	else
+		delete new_object;
 }
 
 static void RunScriptMenuCallback(wxCommandEvent &event)
@@ -457,7 +441,7 @@ static void PostProcessMenuCallback(wxCommandEvent &event)
 
 static void CancelMenuCallback(wxCommandEvent &event)
 {
-	HeeksPyCancel();
+	// to do
 }
 
 #ifdef WIN32
@@ -476,7 +460,7 @@ static void OpenNcFileMenuCallback(wxCommandEvent& event)
 
     if (dialog.ShowModal() == wxID_OK)
     {
-		HeeksPyBackplot(wxGetApp().m_program, wxGetApp().m_program, dialog.GetPath().c_str());
+		wxGetApp().BackplotGCode(dialog.GetPath());
 	}
 }
 
@@ -527,7 +511,7 @@ static void SaveNcFileMenuCallback(wxCommandEvent& event)
             else
 			    ofs.Write(wxGetApp().m_output_canvas->m_textCtrl->GetValue());
 		}
-		HeeksPyBackplot(wxGetApp().m_program, wxGetApp().m_program, nc_file_str);
+		wxGetApp().BackplotGCode(nc_file_str);
 	}
 }
 
@@ -713,11 +697,14 @@ static void AddXmlScriptOpMenuItems(wxMenu *menu = NULL)
 
 		if(menu)
 			wxGetApp().m_frame->AddMenuItem(menu, s.m_name, ToolImage(s.m_bitmap), onButtonFunction);
+#ifdef HAVE_TOOLBARS
 		else
 			wxGetApp().AddFlyoutButton(s.m_name, ToolImage(s.m_bitmap), s.m_name, onButtonFunction);
+#endif
 	}
 }	
 
+#ifdef HAVE_TOOLBARS
 static void AddToolBars()
 {
 	if(!wxGetApp().m_machining_hidden)
@@ -772,6 +759,7 @@ static void AddToolBars()
 
 	}
 }
+#endif
 
 void OnBuildTexture()
 {
@@ -884,21 +872,21 @@ public:
 								((CTag*)tag)->m_pos[1] += sketch_box.m_latest_shift.Y();
 							}
 
-							profile->m_profile_params.m_start[0] += sketch_box.m_latest_shift.X();
-							profile->m_profile_params.m_start[1] += sketch_box.m_latest_shift.Y();
-							profile->m_profile_params.m_start[2] += sketch_box.m_latest_shift.Z();
+							profile->m_start_x += sketch_box.m_latest_shift.X();
+							profile->m_start_y += sketch_box.m_latest_shift.Y();
+							profile->m_start_z += sketch_box.m_latest_shift.Z();
 
-							profile->m_profile_params.m_end[0] += sketch_box.m_latest_shift.X();
-							profile->m_profile_params.m_end[1] += sketch_box.m_latest_shift.Y();
-							profile->m_profile_params.m_end[2] += sketch_box.m_latest_shift.Z();
+							profile->m_end_x += sketch_box.m_latest_shift.X();
+							profile->m_end_y += sketch_box.m_latest_shift.Y();
+							profile->m_end_z += sketch_box.m_latest_shift.Z();
 
-							profile->m_profile_params.m_roll_on_point[0] += sketch_box.m_latest_shift.X();
-							profile->m_profile_params.m_roll_on_point[1] += sketch_box.m_latest_shift.Y();
-							profile->m_profile_params.m_roll_on_point[2] += sketch_box.m_latest_shift.Z();
+							profile->m_roll_on_point_x += sketch_box.m_latest_shift.X();
+							profile->m_roll_on_point_y += sketch_box.m_latest_shift.Y();
+							profile->m_roll_on_point_z += sketch_box.m_latest_shift.Z();
 
-							profile->m_profile_params.m_roll_off_point[0] += sketch_box.m_latest_shift.X();
-							profile->m_profile_params.m_roll_off_point[1] += sketch_box.m_latest_shift.Y();
-							profile->m_profile_params.m_roll_off_point[2] += sketch_box.m_latest_shift.Z();
+							profile->m_roll_off_point_x += sketch_box.m_latest_shift.X();
+							profile->m_roll_off_point_y += sketch_box.m_latest_shift.Y();
+							profile->m_roll_off_point_z += sketch_box.m_latest_shift.Z();
 						}
 					}
 				}
@@ -998,9 +986,11 @@ void HeeksCADapp::OnCNCStartUp()
 	wxFrame* frame = wxGetApp().m_frame;
 	wxAuiManager* aui_manager = wxGetApp().m_frame->m_aui_manager;
 
+#ifdef HAVE_TOOLBARS
 	// tool bars
 	wxGetApp().m_AddToolBars_list.push_back(AddToolBars);
 	AddToolBars();
+#endif
 
 	// Help menu
 	wxMenu *menuHelp = wxGetApp().m_frame->m_menuHelp;
@@ -1032,6 +1022,7 @@ void HeeksCADapp::OnCNCStartUp()
 
 	// Machining menu
 	wxMenu *menuMachining = new wxMenu;
+	wxGetApp().m_frame->AddMenuItem(menuMachining, _("Add New Program"), ToolImage(_T("program")), NewProgramMenuCallback);
 	wxGetApp().m_frame->AddMenuItem(menuMachining, _("Add New Milling Operation"), ToolImage(_T("ops")), NULL, NULL, menuMillingOperations);
 	wxGetApp().m_frame->AddMenuItem(menuMachining, _("Add Other Operation"), ToolImage(_T("ops")), NULL, NULL, menuOperations);
 	wxGetApp().m_frame->AddMenuItem(menuMachining, _("Add New Tool"), ToolImage(_T("tools")), NULL, NULL, menuTools);
@@ -1084,11 +1075,15 @@ void HeeksCADapp::OnCNCStartUp()
 	wxGetApp().m_frame->AddMenuItem(window_menu, _("Program"), wxBitmap(), OnProgramCanvas, OnUpdateProgramCanvas, NULL, true);
 	wxGetApp().m_frame->AddMenuItem(window_menu, _("Output"), wxBitmap(), OnOutputCanvas, OnUpdateOutputCanvas, NULL, true);
 	wxGetApp().m_frame->AddMenuItem(window_menu, _("Print"), wxBitmap(), OnPrintCanvas, OnUpdatePrintCanvas, NULL, true);
+#ifdef HAVE_TOOLBARS
 	wxGetApp().m_frame->AddMenuItem(window_menu, _("Machining"), wxBitmap(), OnMachiningBar, OnUpdateMachiningBar, NULL, true);
+#endif
 	wxGetApp().RegisterHideableWindow(m_program_canvas);
 	wxGetApp().RegisterHideableWindow(m_output_canvas);
 	wxGetApp().RegisterHideableWindow(m_print_canvas);
+#ifdef HAVE_TOOLBARS
 	wxGetApp().RegisterHideableWindow(m_machiningBar);
+#endif
 
 	// add object reading functions
 	wxGetApp().RegisterReadXMLfunction("Program", CProgram::ReadFromXMLElement);
@@ -1219,7 +1214,9 @@ void HeeksCADapp::OnFrameDelete()
 	config.Write(_T("ProgramVisible"), aui_manager->GetPane(m_program_canvas).IsShown());
 	config.Write(_T("OutputVisible"), aui_manager->GetPane(m_output_canvas).IsShown());
 	config.Write(_T("PrintVisible"), aui_manager->GetPane(m_print_canvas).IsShown());
+#ifdef HAVE_TOOLBARS
 	config.Write(_T("MachiningBarVisible"), aui_manager->GetPane(m_machiningBar).IsShown());
+#endif
 
 	CNCCode::WriteColorsToConfig();
 	CProfile::WriteToConfig();

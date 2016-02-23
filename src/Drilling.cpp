@@ -33,7 +33,7 @@
 #include <algorithm>
 
 
-void CDrillingParams::set_initial_values( const double depth, const int tool_number )
+void CDrilling::set_initial_values( const double depth, const int tool_number )
 {
 	HeeksConfig config;
 
@@ -44,7 +44,7 @@ void CDrillingParams::set_initial_values( const double depth, const int tool_num
 	config.Read(_T("m_rapid_to_clearance"), &m_rapid_to_clearance, true);
 }
 
-void CDrillingParams::write_values_to_config()
+void CDrilling::write_values_to_config()
 {
 	HeeksConfig config;
 
@@ -58,61 +58,35 @@ void CDrillingParams::write_values_to_config()
 
 static void on_set_spindle_mode(int value, HeeksObj* object, bool from_undo_redo)
 {
-	((CDrilling*)object)->m_params.m_spindle_mode = value;
-	((CDrilling*)object)->m_params.write_values_to_config();
+	((CDrilling*)object)->m_spindle_mode = value;
+	((CDrilling*)object)->write_values_to_config();
 }
 
 static void on_set_retract_mode(int value, HeeksObj* object, bool from_undo_redo)
 {
-	((CDrilling*)object)->m_params.m_retract_mode = value;
-	((CDrilling*)object)->m_params.write_values_to_config();
+	((CDrilling*)object)->m_retract_mode = value;
+	((CDrilling*)object)->write_values_to_config();
 }
 
 static void on_set_dwell(double value, HeeksObj* object)
 {
-	((CDrilling*)object)->m_params.m_dwell = value;
-	((CDrilling*)object)->m_params.write_values_to_config();
+	((CDrilling*)object)->m_dwell = value;
+	((CDrilling*)object)->write_values_to_config();
 }
 
 static void on_set_internal_coolant(bool value, HeeksObj* object)
 {
-	((CDrilling*)object)->m_params.m_internal_coolant_on = value;
-	((CDrilling*)object)->m_params.write_values_to_config();
+	((CDrilling*)object)->m_internal_coolant_on = value;
+	((CDrilling*)object)->write_values_to_config();
 }
 
 static void on_set_rapid_to_clearance(bool value, HeeksObj* object)
 {
-	((CDrilling*)object)->m_params.m_rapid_to_clearance = value;
-	((CDrilling*)object)->m_params.write_values_to_config();
+	((CDrilling*)object)->m_rapid_to_clearance = value;
+	((CDrilling*)object)->write_values_to_config();
 }
 
-void CDrillingParams::GetProperties(CDrilling* parent, std::list<Property *> *list)
-{
-	list->push_back(new PropertyDouble(_("dwell"), m_dwell, parent, on_set_dwell));
-	{ // Begin choice scope
-		std::list< wxString > choices;
-
-		choices.push_back(_("Rapid retract"));	// Must be 'false' (0)
-		choices.push_back(_("Feed retract"));	// Must be 'true' (non-zero)
-
-		int choice = int(m_retract_mode);
-		list->push_back(new PropertyChoice(_("retract_mode"), choices, choice, parent, on_set_retract_mode));
-	} // End choice scope
-	{ // Begin choice scope
-		std::list< wxString > choices;
-
-		choices.push_back(_("Keep running"));	// Must be 'false' (0)
-		choices.push_back(_("Stop at bottom"));	// Must be 'true' (non-zero)
-
-		int choice = int(m_spindle_mode);
-		list->push_back(new PropertyChoice(_("spindle_mode"), choices, choice, parent, on_set_spindle_mode));
-	} // End choice scope
-
-	list->push_back(new PropertyCheck(_("internal coolant on"), m_internal_coolant_on, parent, on_set_internal_coolant));
-	list->push_back(new PropertyCheck(_("rapid to clearance between positions"), m_rapid_to_clearance, parent, on_set_rapid_to_clearance));
-}
-
-void CDrillingParams::WriteXMLAttributes(TiXmlNode *root)
+void CDrilling::WriteXMLAttributes(TiXmlNode *root)
 {
 	TiXmlElement * element;
 	element = new TiXmlElement( "params" );
@@ -125,7 +99,7 @@ void CDrillingParams::WriteXMLAttributes(TiXmlNode *root)
 	element->SetAttribute( "rapid_to_clearance", m_rapid_to_clearance ? 1:0);
 }
 
-void CDrillingParams::ReadParametersFromXMLElement(TiXmlElement* pElem)
+void CDrilling::ReadParametersFromXMLElement(TiXmlElement* pElem)
 {
 	if (pElem->Attribute("dwell")) pElem->Attribute("dwell", &m_dwell);
 	if (pElem->Attribute("retract_mode")) pElem->Attribute("retract_mode", &m_retract_mode);
@@ -164,12 +138,12 @@ Python CDrilling::AppendTextToProgram()
 		python << _T("drill(")
 			<< _T("x=") << p[0]/wxGetApp().m_program->m_units << _T(", ")
 			<< _T("y=") << p[1]/wxGetApp().m_program->m_units << _T(", ")
-			<< _T("dwell=") << m_params.m_dwell << _T(", ")
+			<< _T("dwell=") << m_dwell << _T(", ")
 			<< _T("depthparams = depthparams, ")
-			<< _T("retract_mode=") << m_params.m_retract_mode << _T(", ")
-			<< _T("spindle_mode=") << m_params.m_spindle_mode << _T(", ")
-			<< _T("internal_coolant_on=") << m_params.m_internal_coolant_on << _T(", ")
-			<< _T("rapid_to_clearance=") << m_params.m_rapid_to_clearance
+			<< _T("retract_mode=") << m_retract_mode << _T(", ")
+			<< _T("spindle_mode=") << m_spindle_mode << _T(", ")
+			<< _T("internal_coolant_on=") << m_internal_coolant_on << _T(", ")
+			<< _T("rapid_to_clearance=") << m_rapid_to_clearance
 			<< _T(")\n");
         wxGetApp().m_location = make_point(p); // Remember where we are.
 	} // End for
@@ -327,18 +301,18 @@ void CDrilling::glCommands(bool select, bool marked, bool no_color)
 
 							start[0] = point.X();
 							start[1] = point.Y();
-							start[2] = m_depth_op_params.m_start_depth;
+							start[2] = m_start_depth;
 
 							end[0] = point.X();
 							end[1] = point.Y();
-							end[2] = m_depth_op_params.m_final_depth;
+							end[2] = m_final_depth;
 
 							glBegin(GL_LINE_STRIP);
 							glVertex3dv( start );
 							glVertex3dv( end );
 							glEnd();
 
-							std::list< CNCPoint > pointsAroundCircle = DrillBitVertices( 	make_point(start), tool->m_params.m_diameter / 2, m_depth_op_params.m_start_depth - m_depth_op_params.m_final_depth);
+							std::list< CNCPoint > pointsAroundCircle = DrillBitVertices( 	make_point(start), tool->m_diameter / 2, m_start_depth - m_final_depth);
 
 							glBegin(GL_LINE_STRIP);
 							CNCPoint previous = *(pointsAroundCircle.begin());
@@ -362,7 +336,28 @@ void CDrilling::glCommands(bool select, bool marked, bool no_color)
 
 void CDrilling::GetProperties(std::list<Property *> *list)
 {
-	m_params.GetProperties(this, list);
+	list->push_back(new PropertyDouble(_("dwell"), m_dwell, this, on_set_dwell));
+	{ // Begin choice scope
+		std::list< wxString > choices;
+
+		choices.push_back(_("Rapid retract"));	// Must be 'false' (0)
+		choices.push_back(_("Feed retract"));	// Must be 'true' (non-zero)
+
+		int choice = int(m_retract_mode);
+		list->push_back(new PropertyChoice(_("retract_mode"), choices, choice, this, on_set_retract_mode));
+	} // End choice scope
+	{ // Begin choice scope
+		std::list< wxString > choices;
+
+		choices.push_back(_("Keep running"));	// Must be 'false' (0)
+		choices.push_back(_("Stop at bottom"));	// Must be 'true' (non-zero)
+
+		int choice = int(m_spindle_mode);
+		list->push_back(new PropertyChoice(_("spindle_mode"), choices, choice, this, on_set_spindle_mode));
+	} // End choice scope
+
+	list->push_back(new PropertyCheck(_("internal coolant on"), m_internal_coolant_on, this, on_set_internal_coolant));
+	list->push_back(new PropertyCheck(_("rapid to clearance between positions"), m_rapid_to_clearance, this, on_set_rapid_to_clearance));
 	CDepthOp::GetProperties(list);
 }
 
@@ -384,14 +379,18 @@ CDrilling::CDrilling(	const std::list<int> &points,
         const double depth )
     : CDepthOp(tool_number, DrillingType), m_points(points)
 {
-    m_params.set_initial_values(depth, tool_number);
+    set_initial_values(depth, tool_number);
 }
 
 
 CDrilling::CDrilling( const CDrilling & rhs ) : CDepthOp( rhs )
 {
 	m_points = rhs.m_points;
-    m_params = rhs.m_params;
+	m_dwell = rhs.m_dwell;
+	m_retract_mode = rhs.m_retract_mode;
+	m_spindle_mode = rhs.m_spindle_mode;
+	m_internal_coolant_on = rhs.m_internal_coolant_on;
+	m_rapid_to_clearance = rhs.m_rapid_to_clearance;
 }
 
 CDrilling & CDrilling::operator= ( const CDrilling & rhs )
@@ -401,7 +400,11 @@ CDrilling & CDrilling::operator= ( const CDrilling & rhs )
 		CDepthOp::operator=(rhs);
 		m_points.clear();
 		m_points = rhs.m_points;
-		m_params = rhs.m_params;
+		m_dwell = rhs.m_dwell;
+		m_retract_mode = rhs.m_retract_mode;
+		m_spindle_mode = rhs.m_spindle_mode;
+		m_internal_coolant_on = rhs.m_internal_coolant_on;
+		m_rapid_to_clearance = rhs.m_rapid_to_clearance;
 	}
 
 	return(*this);
@@ -427,7 +430,7 @@ void CDrilling::WriteXML(TiXmlNode *root)
 {
 	TiXmlElement * element = new TiXmlElement( "Drilling" );
 	wxGetApp().LinkXMLEndChild( root,  element );
-	m_params.WriteXMLAttributes(element);
+	WriteXMLAttributes(element);
 
 	for (std::list<int>::iterator It = m_points.begin(); It != m_points.end(); It++)
 	{
@@ -451,7 +454,7 @@ HeeksObj* CDrilling::ReadFromXMLElement(TiXmlElement* element)
 	{
 		std::string name(pElem->Value());
 		if(name == "params"){
-			new_object->m_params.ReadParametersFromXMLElement(pElem);
+			new_object->ReadParametersFromXMLElement(pElem);
 			elements_to_remove.push_back(pElem);
 		}
 		else if(name == "symbols"){
@@ -490,21 +493,13 @@ void CDrilling::GetTools(std::list<Tool*>* t_list, const wxPoint* p)
     CDepthOp::GetTools( t_list, p );
 }
 
-bool CDrillingParams::operator==( const CDrillingParams & rhs) const
+bool CDrilling::operator==( const CDrilling & rhs ) const
 {
 	if (m_dwell != rhs.m_dwell) return(false);
 	if (m_retract_mode != rhs.m_retract_mode) return(false);
 	if (m_spindle_mode != rhs.m_spindle_mode) return(false);
 	if (m_internal_coolant_on != rhs.m_internal_coolant_on) return(false);
 	if (m_rapid_to_clearance != rhs.m_rapid_to_clearance) return(false);
-
-	return(true);
-}
-
-
-bool CDrilling::operator==( const CDrilling & rhs ) const
-{
-	if (m_params != rhs.m_params) return(false);
 
 	return(CDepthOp::operator==(rhs));
 }

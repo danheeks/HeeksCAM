@@ -33,7 +33,7 @@ public:
 	void SetPictureByWindow(wxWindow* w);
 	void SetPicture(const wxString& name);
 
-	void EnableAndSetCornerFlatAndAngle(CToolParams::eToolType type);
+	void EnableAndSetCornerFlatAndAngle(int type);
 	void OnComboTitleType( wxCommandEvent& event );
 	void OnComboToolType(wxCommandEvent& event);
 	void OnComboMaterial(wxCommandEvent& event);

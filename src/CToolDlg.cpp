@@ -55,31 +55,31 @@ void CToolDlg::GetDataRaw(HeeksObj* object)
 	long i = 0;
 	m_dlbToolNumber->GetValue().ToLong(&i);
 	((CTool*)object)->m_tool_number = i;
-	((CTool*)object)->m_params.m_material = m_cmbMaterial->GetSelection();
-	((CTool*)object)->m_params.m_type = (CToolParams::eToolType)(m_cmbToolType->GetSelection());
-	((CTool*)object)->m_params.m_diameter = m_dblDiameter->GetValue();
-	((CTool*)object)->m_params.m_tool_length_offset = m_dblToolLengthOffset->GetValue();	
-	((CTool*)object)->m_params.m_flat_radius = m_dblFlatRadius->GetValue();
-	((CTool*)object)->m_params.m_corner_radius = m_dblCornerRadius->GetValue();
-	((CTool*)object)->m_params.m_cutting_edge_angle = m_dblCuttingEdgeAngle->GetValue();
-	((CTool*)object)->m_params.m_cutting_edge_height = m_dblCuttingEdgeHeight->GetValue();
+	((CTool*)object)->m_material = m_cmbMaterial->GetSelection();
+	((CTool*)object)->m_type = m_cmbToolType->GetSelection();
+	((CTool*)object)->m_diameter = m_dblDiameter->GetValue();
+	((CTool*)object)->m_tool_length_offset = m_dblToolLengthOffset->GetValue();	
+	((CTool*)object)->m_flat_radius = m_dblFlatRadius->GetValue();
+	((CTool*)object)->m_corner_radius = m_dblCornerRadius->GetValue();
+	((CTool*)object)->m_cutting_edge_angle = m_dblCuttingEdgeAngle->GetValue();
+	((CTool*)object)->m_cutting_edge_height = m_dblCuttingEdgeHeight->GetValue();
 	((CTool*)object)->m_title = m_txtTitle->GetValue();
-	((CTool*)object)->m_params.m_automatically_generate_title = (m_cmbTitleType->GetSelection() != 0);
+	((CTool*)object)->m_automatically_generate_title = (m_cmbTitleType->GetSelection() != 0);
 }
 
 void CToolDlg::SetFromDataRaw(HeeksObj* object)
 {
 	m_dlbToolNumber->SetValue(wxString::Format(_T("%d"), ((CTool*)object)->m_tool_number));
 	m_txtTitle->SetValue(((CTool*)object)->m_title);
-	m_cmbMaterial->SetSelection(((CTool*)object)->m_params.m_material);
-	m_cmbToolType->SetSelection(((CTool*)object)->m_params.m_type);
-	m_dblDiameter->SetValue(((CTool*)object)->m_params.m_diameter);
-	m_dblToolLengthOffset->SetValue(((CTool*)object)->m_params.m_tool_length_offset);
-	m_dblCuttingEdgeHeight->SetValue(((CTool*)object)->m_params.m_cutting_edge_height);
+	m_cmbMaterial->SetSelection(((CTool*)object)->m_material);
+	m_cmbToolType->SetSelection(((CTool*)object)->m_type);
+	m_dblDiameter->SetValue(((CTool*)object)->m_diameter);
+	m_dblToolLengthOffset->SetValue(((CTool*)object)->m_tool_length_offset);
+	m_dblCuttingEdgeHeight->SetValue(((CTool*)object)->m_cutting_edge_height);
 	m_txtTitle->SetValue(((CTool*)object)->m_title);
-	m_cmbTitleType->SetSelection(((CTool*)object)->m_params.m_automatically_generate_title ? 1:0);
+	m_cmbTitleType->SetSelection(((CTool*)object)->m_automatically_generate_title ? 1:0);
 
-	EnableAndSetCornerFlatAndAngle(((CTool*)object)->m_params.m_type);
+	EnableAndSetCornerFlatAndAngle(((CTool*)object)->m_type);
 }
 
 void CToolDlg::SetPicture(const wxString& name)
@@ -89,11 +89,11 @@ void CToolDlg::SetPicture(const wxString& name)
 
 void CToolDlg::SetPictureByWindow(wxWindow* w)
 {
-	CToolParams::eToolType type = (CToolParams::eToolType)(m_cmbToolType->GetSelection());
+	int type = m_cmbToolType->GetSelection();
 
 	switch(type)
 	{
-		case CToolParams::eDrill:
+	case CTool::eDrill:
 			if(w == m_dblDiameter)SetPicture(_T("drill_diameter"));
 			else if(w == m_dblToolLengthOffset)SetPicture(_T("drill_offset"));
 			else if(w == m_dblFlatRadius)SetPicture(_T("drill_flat"));
@@ -102,7 +102,7 @@ void CToolDlg::SetPictureByWindow(wxWindow* w)
 			else if(w == m_dblCuttingEdgeHeight)SetPicture(_T("drill_height"));
 			else SetPicture(_T("drill"));
 			break;
-		case CToolParams::eCentreDrill:
+	case CTool::eCentreDrill:
 			if(w == m_dblDiameter)SetPicture(_T("centre_drill_diameter"));
 			else if(w == m_dblToolLengthOffset)SetPicture(_T("centre_drill_offset"));
 			else if(w == m_dblFlatRadius)SetPicture(_T("centre_drill_flat"));
@@ -111,8 +111,8 @@ void CToolDlg::SetPictureByWindow(wxWindow* w)
 			else if(w == m_dblCuttingEdgeHeight)SetPicture(_T("centre_drill_height"));
 			else SetPicture(_T("centre_drill"));
 			break;
-		case CToolParams::eEndmill:
-		case CToolParams::eSlotCutter:
+	case CTool::eEndmill:
+	case CTool::eSlotCutter:
 			if(w == m_dblDiameter)SetPicture(_T("end_mill_diameter"));
 			else if(w == m_dblToolLengthOffset)SetPicture(_T("end_mill_offset"));
 			else if(w == m_dblFlatRadius)SetPicture(_T("end_mill_flat"));
@@ -121,7 +121,7 @@ void CToolDlg::SetPictureByWindow(wxWindow* w)
 			else if(w == m_dblCuttingEdgeHeight)SetPicture(_T("end_mill_height"));
 			else SetPicture(_T("end_mill"));
 			break;
-		case CToolParams::eBallEndMill:
+	case CTool::eBallEndMill:
 			if(w == m_dblDiameter)SetPicture(_T("ball_mill_diameter"));
 			else if(w == m_dblToolLengthOffset)SetPicture(_T("ball_mill_offset"));
 			else if(w == m_dblFlatRadius)SetPicture(_T("ball_mill_flat"));
@@ -130,7 +130,7 @@ void CToolDlg::SetPictureByWindow(wxWindow* w)
 			else if(w == m_dblCuttingEdgeHeight)SetPicture(_T("ball_mill_height"));
 			else SetPicture(_T("ball_mill"));
 			break;
-		case CToolParams::eChamfer:
+	case CTool::eChamfer:
 			if(w == m_dblDiameter)SetPicture(_T("chamfer_diameter"));
 			else if(w == m_dblToolLengthOffset)SetPicture(_T("chamfer_offset"));
 			else if(w == m_dblFlatRadius)SetPicture(_T("chamfer_flat"));
@@ -139,7 +139,7 @@ void CToolDlg::SetPictureByWindow(wxWindow* w)
 			else if(w == m_dblCuttingEdgeHeight)SetPicture(_T("chamfer_height"));
 			else SetPicture(_T("chamfer"));
 			break;
-		case CToolParams::eEngravingTool:
+	case CTool::eEngravingTool:
 			if(w == m_dblDiameter)SetPicture(_T("engraver_diameter"));
 			else if(w == m_dblToolLengthOffset)SetPicture(_T("engraver_offset"));
 			else if(w == m_dblFlatRadius)SetPicture(_T("engraver_flat"));
@@ -184,34 +184,34 @@ void CToolDlg::OnTextCtrlEvent(wxCommandEvent& event)
 void CToolDlg::OnComboToolType(wxCommandEvent& event)
 {
 	if(m_ignore_event_functions)return;
-	CToolParams::eToolType type = (CToolParams::eToolType)(m_cmbToolType->GetSelection());
+	int type = m_cmbToolType->GetSelection();
 	EnableAndSetCornerFlatAndAngle(type);
 	HeeksObjDlg::SetPicture();
 }
 
-void CToolDlg::EnableAndSetCornerFlatAndAngle(CToolParams::eToolType type)
+void CToolDlg::EnableAndSetCornerFlatAndAngle(int type)
 {
 	switch(type)
 	{
-		case CToolParams::eDrill:
-		case CToolParams::eCentreDrill:
+	case CTool::eDrill:
+	case CTool::eCentreDrill:
 			m_dblCornerRadius->Enable(false);
 			m_dblCornerRadius->SetLabel(_T(""));
 			m_dblFlatRadius->Enable(false);
 			m_dblFlatRadius->SetLabel(_T(""));
 			m_dblCuttingEdgeAngle->Enable();
-			m_dblCuttingEdgeAngle->SetValue(((CTool*)m_object)->m_params.m_cutting_edge_angle);
+			m_dblCuttingEdgeAngle->SetValue(((CTool*)m_object)->m_cutting_edge_angle);
 			break;
-		case CToolParams::eEndmill:
-		case CToolParams::eSlotCutter:
+	case CTool::eEndmill:
+	case CTool::eSlotCutter:
 			m_dblCornerRadius->Enable();
-			m_dblCornerRadius->SetValue(((CTool*)m_object)->m_params.m_corner_radius);
+			m_dblCornerRadius->SetValue(((CTool*)m_object)->m_corner_radius);
 			m_dblFlatRadius->Enable(false);
 			m_dblFlatRadius->SetLabel(_T(""));
 			m_dblCuttingEdgeAngle->Enable(false);
 			m_dblCuttingEdgeAngle->SetLabel(_T(""));
 			break;
-		case CToolParams::eBallEndMill:
+	case CTool::eBallEndMill:
 			m_dblCornerRadius->Enable(false);
 			m_dblCornerRadius->SetLabel(_T(""));
 			m_dblFlatRadius->Enable(false);
@@ -219,14 +219,14 @@ void CToolDlg::EnableAndSetCornerFlatAndAngle(CToolParams::eToolType type)
 			m_dblCuttingEdgeAngle->Enable(false);
 			m_dblCuttingEdgeAngle->SetLabel(_T(""));
 			break;
-		case CToolParams::eChamfer:
-		case CToolParams::eEngravingTool:
+	case CTool::eChamfer:
+	case CTool::eEngravingTool:
 			m_dblCornerRadius->Enable(false);
 			m_dblCornerRadius->SetLabel(_T(""));
 			m_dblFlatRadius->Enable();
-			m_dblFlatRadius->SetValue(((CTool*)m_object)->m_params.m_flat_radius);
+			m_dblFlatRadius->SetValue(((CTool*)m_object)->m_flat_radius);
 			m_dblCuttingEdgeAngle->Enable();
-			m_dblCuttingEdgeAngle->SetValue(((CTool*)m_object)->m_params.m_cutting_edge_angle);
+			m_dblCuttingEdgeAngle->SetValue(((CTool*)m_object)->m_cutting_edge_angle);
 			break;
 		default:
 			break;

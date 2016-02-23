@@ -16,6 +16,7 @@ public:
 
 	CSolid(const TopoDS_Solid &solid, const wxChar* title, const HeeksColor& col, float opacity);
 	CSolid( const CSolid & rhs );
+	CSolid(){}
 
 	~CSolid();
 

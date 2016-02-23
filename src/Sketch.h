@@ -60,6 +60,9 @@ public:
 	static void ReverseObject(HeeksObj* object);
 	double GetArea()const;
 	CSketch* SplineToBiarcs(double tolerance)const;
+	bool IsCircle()const;
+	bool IsClosed();
+	bool HasMultipleSketches();
 };
 
 class CSketchRelinker{

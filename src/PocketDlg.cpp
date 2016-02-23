@@ -51,27 +51,27 @@ PocketDlg::PocketDlg(wxWindow *parent, CPocket* object, const wxString& title, b
 
 void PocketDlg::GetDataRaw(HeeksObj* object)
 {
-	((CPocket*)object)->m_pocket_params.m_step_over = m_lgthStepOver->GetValue();
-	((CPocket*)object)->m_pocket_params.m_material_allowance = m_lgthMaterialAllowance->GetValue();
-	((CPocket*)object)->m_pocket_params.m_starting_place = (m_cmbStartingPlace->GetValue().CmpNoCase(_("Center")) == 0) ? 1 : 0;
-	((CPocket*)object)->m_pocket_params.m_cut_mode = (m_cmbCutMode->GetValue().CmpNoCase(_("climb")) == 0) ? CPocketParams::eClimb : CPocketParams::eConventional;
-	((CPocket*)object)->m_pocket_params.m_keep_tool_down_if_poss = m_chkKeepToolDown->GetValue();
-	((CPocket*)object)->m_pocket_params.m_use_zig_zag = m_chkUseZigZag->GetValue();
-	if(((CPocket*)object)->m_pocket_params.m_use_zig_zag)((CPocket*)object)->m_pocket_params.m_zig_angle = m_dblZigAngle->GetValue();
+	((CPocket*)object)->m_step_over = m_lgthStepOver->GetValue();
+	((CPocket*)object)->m_material_allowance = m_lgthMaterialAllowance->GetValue();
+	((CPocket*)object)->m_starting_place = (m_cmbStartingPlace->GetValue().CmpNoCase(_("Center")) == 0) ? 1 : 0;
+	((CPocket*)object)->m_cut_mode = (m_cmbCutMode->GetValue().CmpNoCase(_("climb")) == 0) ? CPocket::eClimb : CPocket::eConventional;
+	((CPocket*)object)->m_keep_tool_down_if_poss = m_chkKeepToolDown->GetValue();
+	((CPocket*)object)->m_use_zig_zag = m_chkUseZigZag->GetValue();
+	if(((CPocket*)object)->m_use_zig_zag)((CPocket*)object)->m_zig_angle = m_dblZigAngle->GetValue();
 
 	SketchOpDlg::GetDataRaw(object);
 }
 
 void PocketDlg::SetFromDataRaw(HeeksObj* object)
 {
-	m_lgthStepOver->SetValue(((CPocket*)object)->m_pocket_params.m_step_over);
-	m_lgthMaterialAllowance->SetValue(((CPocket*)object)->m_pocket_params.m_material_allowance);
-	m_cmbStartingPlace->SetValue((((CPocket*)object)->m_pocket_params.m_starting_place == 1) ? _("Center") : _("Boundary"));
-	m_cmbCutMode->SetValue((((CPocket*)object)->m_pocket_params.m_cut_mode == CPocketParams::eClimb) ? _("Climb") : _("Conventional"));
+	m_lgthStepOver->SetValue(((CPocket*)object)->m_step_over);
+	m_lgthMaterialAllowance->SetValue(((CPocket*)object)->m_material_allowance);
+	m_cmbStartingPlace->SetValue((((CPocket*)object)->m_starting_place == 1) ? _("Center") : _("Boundary"));
+	m_cmbCutMode->SetValue((((CPocket*)object)->m_cut_mode == CPocket::eClimb) ? _("Climb") : _("Conventional"));
 
-	m_chkKeepToolDown->SetValue(((CPocket*)object)->m_pocket_params.m_keep_tool_down_if_poss);
-	m_chkUseZigZag->SetValue(((CPocket*)object)->m_pocket_params.m_use_zig_zag);
-	if(((CPocket*)object)->m_pocket_params.m_use_zig_zag)m_dblZigAngle->SetValue(((CPocket*)object)->m_pocket_params.m_zig_angle);
+	m_chkKeepToolDown->SetValue(((CPocket*)object)->m_keep_tool_down_if_poss);
+	m_chkUseZigZag->SetValue(((CPocket*)object)->m_use_zig_zag);
+	if(((CPocket*)object)->m_use_zig_zag)m_dblZigAngle->SetValue(((CPocket*)object)->m_zig_angle);
 
 	EnableZigZagControls();
 

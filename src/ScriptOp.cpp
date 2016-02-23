@@ -13,7 +13,6 @@
 #include "PropertyList.h"
 #include "PropertyCheck.h"
 #include "tinyxml.h"
-#include "PythonStuff.h"
 #include "ScriptOpDlg.h"
 
 #include <sstream>
@@ -68,7 +67,7 @@ Python CScriptOp::AppendTextToProgram()
 {
 	Python python;
 
-	if(m_comment.Len() > 0)
+	if(m_comment.length() > 0)
 	{
 	  python << _T("comment(") << PythonString(m_comment) << _T(")\n");
 	}

@@ -17,25 +17,6 @@
 
 class CDrilling;
 
-class CDrillingParams{
-
-public:
-	double m_dwell;			// If dwell_bottom is non-zero then we're using the G82 drill cycle rather than G83 peck drill cycle.  This is the 'P' word
-	int    m_retract_mode;	// boring - 0 - rapid retract, 1 - feed retract
-	int    m_spindle_mode;	// boring - if true, stop spindle at bottom
-	bool   m_internal_coolant_on;
-	bool   m_rapid_to_clearance;
-
-	void set_initial_values( const double depth, const int tool_number );
-	void write_values_to_config();
-	void GetProperties(CDrilling* parent, std::list<Property *> *list);
-	void WriteXMLAttributes(TiXmlNode* pElem);
-	void ReadParametersFromXMLElement(TiXmlElement* pElem);
-
-	bool operator== ( const CDrillingParams & rhs ) const;
-	bool operator!= ( const CDrillingParams & rhs ) const { return(! (*this == rhs)); }
-};
-
 class CDrilling: public CDepthOp {
 public:
 	/**
@@ -47,7 +28,11 @@ public:
 
 public:
 	std::list<int> m_points;
-	CDrillingParams m_params;
+	double m_dwell;			// If dwell_bottom is non-zero then we're using the G82 drill cycle rather than G83 peck drill cycle.  This is the 'P' word
+	int    m_retract_mode;	// boring - 0 - rapid retract, 1 - feed retract
+	int    m_spindle_mode;	// boring - if true, stop spindle at bottom
+	bool   m_internal_coolant_on;
+	bool   m_rapid_to_clearance;
 
 	//	Constructors.
 	CDrilling():CDepthOp(0){}
@@ -57,6 +42,13 @@ public:
 
 	CDrilling( const CDrilling & rhs );
 	CDrilling & operator= ( const CDrilling & rhs );
+
+
+	void set_initial_values(const double depth, const int tool_number);
+	void write_values_to_config();
+	void WriteXMLAttributes(TiXmlNode* pElem);
+	void ReadParametersFromXMLElement(TiXmlElement* pElem);
+
 
 	// HeeksObj's virtual functions
 	virtual int GetType() const {return DrillingType;}

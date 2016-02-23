@@ -64,7 +64,7 @@
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>.\;$(CASROOT)\inc;$(WXWIN30)\include;$(WXWIN30);$(WXWIN30)\lib\vc_dll\mswu;$(WXWIN)\include\msvc;$(PYTHON3_32BIT_INCLUDE);$(BOOST57_PYTHON_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;$(CASROOT)\inc;$(WXWIN30)\include;$(WXWIN30);$(WXWIN30)\lib\vc_dll\mswu;$(PYTHON3_32BIT_INCLUDE);$(BOOST57_PYTHON_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;WNT;_CRT_SECURE_NO_WARNINGS;WXUSINGDLL;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL=0;USE_GENERIC_TREECTRL;__BOOST_PYTHON_NO_LIB__;BOOST_PYTHON_STATIC_LIB=1;BOOST_LIB_DIAGNOSTIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>

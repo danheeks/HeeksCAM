@@ -17,10 +17,8 @@
 class CTool;
 class CSurface;
 
-class CToolParams{
-
+class CTool: public HeeksObj {
 public:
-
 	typedef enum {
 		eDrill = 0,
 		eCentreDrill,
@@ -50,36 +48,17 @@ public:
 	double m_flat_radius;
 	double m_cutting_edge_angle;
 	double m_cutting_edge_height;	// How far, from the bottom of the cutter, do the flutes extend?
-	eToolType	m_type;
+	int	m_type;
 	int m_automatically_generate_title;	// Set to true by default but reset to false when the user edits the title.
-
-	void set_initial_values();
-	void write_values_to_config();
-	void GetProperties(CTool* parent, std::list<Property *> *list);
-	void WriteXMLAttributes(TiXmlNode* pElem);
-	void ReadParametersFromXMLElement(TiXmlElement* pElem);
-
-	double ReasonableGradient( const eToolType type ) const;
-
-	bool operator== ( const CToolParams & rhs ) const;
-	bool operator!= ( const CToolParams & rhs ) const { return(! (*this == rhs)); }
-};
-
-class CTool: public HeeksObj {
-public:
-	//	These are references to the CAD elements whose position indicate where the Tool Cycle begins.
-	CToolParams m_params;
-	wxString m_title;
-
-	typedef int ToolNumber_t;
-	ToolNumber_t m_tool_number;
+	std::wstring m_title;
+	int m_tool_number;
 	HeeksObj *m_pToolSolid;
 
 	//	Constructors.
-	CTool(const wxChar *title, CToolParams::eToolType type, const int tool_number) : m_tool_number(tool_number), m_pToolSolid(NULL)
+	CTool(const wxChar *title = NULL, int type = eDrill, const int tool_number = 0) : m_tool_number(tool_number), m_pToolSolid(NULL)
 	{
         ReadDefaultValues();
-		m_params.m_type = type;
+		m_type = type;
 		if (title != NULL)m_title = title;
 		else m_title = GetMeaningfulName(wxGetApp().m_view_units);
 	} // End constructor
@@ -88,6 +67,14 @@ public:
     CTool & operator= ( const CTool & rhs );
 
 	~CTool();
+
+
+	void set_initial_values();
+	void write_values_to_config();
+	void WriteXMLAttributes(TiXmlNode* pElem);
+	void ReadParametersFromXMLElement(TiXmlElement* pElem);
+
+	double ReasonableGradient(const int type) const;
 
 	bool operator== ( const CTool & rhs ) const;
 	bool operator!= ( const CTool & rhs ) const { return(! (*this == rhs)); }
@@ -122,17 +109,17 @@ public:
 
 	static CTool *Find( const int tool_number );
 	static int FindTool( const int tool_number );
-	static CToolParams::eToolType FindToolType( const int tool_number );
-	static bool IsMillingToolType( CToolParams::eToolType type );
-	static ToolNumber_t FindFirstByType( const CToolParams::eToolType type );
+	static int FindToolType( const int tool_number );
+	static bool IsMillingToolType( int type );
+	static int FindFirstByType( const int type );
 	wxString GetMeaningfulName(double units) const;
 	wxString ResetTitle();
 	static wxString FractionalRepresentation( const double original_value, const int max_denominator = 64 );
 	TopoDS_Shape GetShape() const;
 	TopoDS_Face  GetSideProfile() const;
 	double CuttingRadius(const bool express_in_program_units = false, const double depth = -1) const;
-	static CToolParams::eToolType CutterType( const int tool_number );
-	static CToolParams::eMaterial_t CutterMaterial( const int tool_number );
+	static int CutterType( const int tool_number );
+	static CTool::eMaterial_t CutterMaterial( const int tool_number );
 	void SetDiameter( const double diameter );
 	Python OpenCamLibDefinition(const unsigned int indent = 0)const;
 	Python VoxelcutDefinition()const;

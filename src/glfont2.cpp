@@ -38,7 +38,8 @@ inline void endian_swap(int& x)
 GLFont::GLFont ()
 {
 	//Initialize header to safe state
-	header.tex = -1;
+	header.tex_normal = -1;
+	m_tex_sharp = -1;
 	header.tex_width = 0;
 	header.tex_height = 0;
 	header.start_char = 0;
@@ -52,7 +53,7 @@ GLFont::~GLFont ()
 	Destroy();
 }
 //*******************************************************************
-bool GLFont::Create (const char *file_name, int tex)
+bool GLFont::Create(const char *file_name, int tex_normal, int tex_sharp)
 {
 	ifstream input;
 	int num_chars, num_tex_bytes;
@@ -73,7 +74,8 @@ bool GLFont::Create (const char *file_name, int tex)
 	//on 64-bit the sizeof(header) is no longer correct and it reads to many
 	//bytes
 	input.read((char *)&header, sizeof(header) - (sizeof(void*) - 4));
-	header.tex = tex;
+	header.tex_normal = tex_normal;
+	m_tex_sharp = tex_sharp;
 
 	//Allocate space for character array
 #ifdef __BIG_ENDIAN__
@@ -94,12 +96,31 @@ bool GLFont::Create (const char *file_name, int tex)
 	input.read(tex_bytes, num_tex_bytes);
 
 	//Create OpenGL texture
-	glBindTexture(GL_TEXTURE_2D, tex);  
+	glBindTexture(GL_TEXTURE_2D, tex_normal);  
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glTexImage2D(GL_TEXTURE_2D, 0, 2, header.tex_width,
+		header.tex_height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE,
+		(void *)tex_bytes);
+
+	for (int i = 0; i < num_tex_bytes; i += 2)
+	{
+		tex_bytes[i] = -1;
+		if (tex_bytes[i + 1] != 0)
+			tex_bytes[i + 1] = -1;
+		else
+			tex_bytes[i + 1] = 0;
+	}
+
+	glBindTexture(GL_TEXTURE_2D, tex_sharp);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 	glTexImage2D(GL_TEXTURE_2D, 0, 2, header.tex_width,
 		header.tex_height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE,
 		(void *)tex_bytes);
@@ -126,11 +147,7 @@ bool GLFont::Create (const char *file_name, int tex)
 
 	return true;
 }
-//*******************************************************************
-bool GLFont::Create (const std::string &file_name, int tex)
-{
-	return Create(file_name.c_str(), tex);
-}
+
 //*******************************************************************
 void GLFont::Destroy (void)
 {
@@ -231,10 +248,13 @@ int GLFont::GetCharHeight (int c)
 	}
 }
 //*******************************************************************
-void GLFont::Begin (void)
+void GLFont::Begin (bool sharp)
 {
 	//Bind to font texture
-	glBindTexture(GL_TEXTURE_2D, header.tex);
+	if (sharp)
+		glBindTexture(GL_TEXTURE_2D, m_tex_sharp);
+	else
+		glBindTexture(GL_TEXTURE_2D, header.tex_normal);
 }
 //*******************************************************************
 

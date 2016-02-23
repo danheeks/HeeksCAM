@@ -1077,3 +1077,65 @@ CSketch* CSketch::SplineToBiarcs(double tolerance)const
 
 	return new_sketch;
 }
+
+bool CSketch::IsCircle()const
+{
+	if (m_objects.size() == 1)
+	{
+		return m_objects.front()->GetType() == CircleType;
+	}
+
+	if (m_objects.size() > 1)
+	{
+		if (m_objects.front()->GetType() != ArcType)
+			return false;
+		HArc* reference_arc = (HArc*)(m_objects.front());
+		gp_Circ reference_circle = reference_arc->GetCircle();
+
+		for (std::list<HeeksObj*>::const_iterator It = m_objects.begin(); It != m_objects.end(); It++)
+		{
+			HeeksObj* span = *It;
+			if (span->GetType() != ArcType)
+				return false;
+
+			HArc* arc = (HArc*)span;
+			gp_Circ circle = arc->GetCircle();
+
+			if (fabs(circle.Radius() - reference_circle.Radius()) > wxGetApp().m_geom_tol)
+				return false;
+
+			if (!circle.Axis().Direction().IsEqual(reference_circle.Axis().Direction(), 0.01))
+				return false;
+		}
+		return true;
+	}
+
+	return false;
+}
+
+bool CSketch::IsClosed()
+{
+	switch (GetSketchOrder())
+	{
+	case SketchOrderTypeCloseCW:
+	case SketchOrderTypeCloseCCW:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool CSketch::HasMultipleSketches()
+{
+	switch (GetSketchOrder())
+	{
+	case SketchOrderTypeMultipleCurves:
+		return true;
+	case SketchOrderHasCircles:
+		if (this->m_objects.size() > 1)
+			return true;
+		return false;
+	default:
+		return false;
+	}
+}

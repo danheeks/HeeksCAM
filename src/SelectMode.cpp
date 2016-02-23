@@ -61,7 +61,7 @@ bool CSelectMode::GetLastClickPosition(double *pos)
 
 const wxChar* CSelectMode::GetTitle()
 {
-	return m_doing_a_main_loop ? (m_prompt_when_doing_a_main_loop.c_str()):wxString(_("Select Mode")).c_str();
+	return m_doing_a_main_loop ? (m_prompt_when_doing_a_main_loop.c_str()):(_("Select Mode").c_str());
 }
 
 static wxString str_for_GetHelpText;

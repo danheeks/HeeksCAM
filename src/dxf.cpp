@@ -3,7 +3,7 @@
 // This program is released under the BSD license. See the file COPYING for details.
 
 #include "dxf.h"
-#include <wx/string.h>
+
 using namespace std;
 static const double Pi = 3.14159265358979323846264338327950288419716939937511;
 
@@ -40,7 +40,22 @@ CDxfWrite::~CDxfWrite()
 	delete m_ofs;
 }
 
-void CDxfWrite::WriteLine(const double* s, const double* e, const char* layer_name)
+void CDxfWrite::WriteExtrusion(double thickness, const double* extru)
+{
+	if (thickness == 0.0)return;
+	if (extru == NULL)return;
+
+	(*m_ofs) << 39 << endl;	// thickness
+	(*m_ofs) << thickness << endl;
+	(*m_ofs) << 210 << endl;	// extrusion_vector
+	(*m_ofs) << extru[0] << endl;
+	(*m_ofs) << 220 << endl;	// extrusion_vector
+	(*m_ofs) << extru[1] << endl;
+	(*m_ofs) << 230 << endl;	// extrusion_vector
+	(*m_ofs) << extru[2] << endl;
+}
+
+void CDxfWrite::WriteLine(const double* s, const double* e, const char* layer_name, double thickness, const double* extru)
 {
 	(*m_ofs) << 0			<< endl;
 	(*m_ofs) << "LINE"		<< endl;
@@ -58,6 +73,8 @@ void CDxfWrite::WriteLine(const double* s, const double* e, const char* layer_na
 	(*m_ofs) << e[1]		<< endl;	// Y in WCS coordinates
 	(*m_ofs) << 31			<< endl;
 	(*m_ofs) << e[2]		<< endl;	// Z in WCS coordinates
+
+	WriteExtrusion(thickness, extru);
 }
 
 void CDxfWrite::WritePoint(const double* s, const char* layer_name)
@@ -74,7 +91,7 @@ void CDxfWrite::WritePoint(const double* s, const char* layer_name)
 	(*m_ofs) << s[2]		<< endl;	// Z in WCS coordinates
 }
 
-void CDxfWrite::WriteArc(const double* s, const double* e, const double* c, bool dir, const char* layer_name)
+void CDxfWrite::WriteArc(const double* s, const double* e, const double* c, bool dir, const char* layer_name, double thickness, const double* extru)
 {
 	double ax = s[0] - c[0];
 	double ay = s[1] - c[1];
@@ -105,9 +122,11 @@ void CDxfWrite::WriteArc(const double* s, const double* e, const double* c, bool
 	(*m_ofs) << start_angle	<< endl;	// Start angle
 	(*m_ofs) << 51			<< endl;
 	(*m_ofs) << end_angle	<< endl;	// End angle
+
+	WriteExtrusion(thickness, extru);
 }
 
-void CDxfWrite::WriteCircle(const double* c, double radius, const char* layer_name)
+void CDxfWrite::WriteCircle(const double* c, double radius, const char* layer_name, double thickness, const double* extru)
 {
 	(*m_ofs) << 0			<< endl;
 	(*m_ofs) << "CIRCLE"		<< endl;
@@ -121,9 +140,11 @@ void CDxfWrite::WriteCircle(const double* c, double radius, const char* layer_na
 	(*m_ofs) << c[2]		<< endl;	// Z in WCS coordinates
 	(*m_ofs) << 40			<< endl;	//
 	(*m_ofs) << radius		<< endl;	// Radius
+
+	WriteExtrusion(thickness, extru);
 }
 
-void CDxfWrite::WriteEllipse(const double* c, double major_radius, double minor_radius, double rotation, double start_angle, double end_angle, bool dir, const char* layer_name )
+void CDxfWrite::WriteEllipse(const double* c, double major_radius, double minor_radius, double rotation, double start_angle, double end_angle, bool dir, const char* layer_name, double thickness, const double* extru)
 {
 	double m[3];
 	m[2]=0;
@@ -159,6 +180,8 @@ void CDxfWrite::WriteEllipse(const double* c, double major_radius, double minor_
 	(*m_ofs) << start_angle	<< endl;	// Start angle
 	(*m_ofs) << 42		<< endl;
 	(*m_ofs) << end_angle	<< endl;	// End angle
+
+	WriteExtrusion(thickness, extru);
 }
 
 CDxfRead::CDxfRead(const char* filepath)
@@ -177,7 +200,7 @@ CDxfRead::CDxfRead(const char* filepath)
 	m_ifs = new ifstream(filepath);
 	if(!(*m_ifs)){
 		m_fail = true;
-        wprintf(_T("DXF file didn't load\n"));
+        printf("DXF file didn't load\n");
 		return;
 	}
 	m_ifs->imbue(std::locale("C"));
@@ -222,12 +245,13 @@ double CDxfRead::mm( double value ) const
 	} // End switch
 } // End mm() method
 
-
 bool CDxfRead::ReadLine()
 {
 	double s[3] = {0, 0, 0};
 	double e[3] = {0, 0, 0};
 	bool hidden = false;
+	
+	ResetExtrusionAndThickness();
 
 	while(!((*m_ifs).eof()))
 	{
@@ -290,17 +314,19 @@ bool CDxfRead::ReadLine()
 				get_line();
 				ss.str(m_str); ss >> e[2]; e[2] = mm(e[2]); if(ss.fail()) return false;
 				break;
-		        case 62:
+	        case 62:
 				// color index
 				get_line();
 				ss.str(m_str); ss >> m_aci; if(ss.fail()) return false;
 				break;
-
-			case 100:
 			case 39:
 			case 210:
 			case 220:
 			case 230:
+				if (!ReadExtrusionOrThickness(n))
+					return false;
+				break;
+			case 100:
 				// skip the next line
 				get_line();
 				break;
@@ -375,12 +401,15 @@ bool CDxfRead::ReadPoint()
 				break;
 
 			case 100:
+				// skip the next line
+				get_line();
+				break;
 			case 39:
 			case 210:
 			case 220:
 			case 230:
-				// skip the next line
-				get_line();
+				if (!ReadExtrusionOrThickness(n))
+					return false;
 				break;
 			default:
 				// skip the next line
@@ -408,7 +437,6 @@ bool CDxfRead::ReadArc()
 	double end_angle = 0.0;
 	double radius = 0.0;
 	double c[3]; // centre
-    double z_extrusion_dir = 1.0;
 	bool hidden = false;
     
 	while(!((*m_ifs).eof()))
@@ -427,7 +455,7 @@ bool CDxfRead::ReadArc()
 			case 0:
 				// next item found, so finish with arc
 			        DerefACI();
-			        OnReadArc(start_angle, end_angle, radius, c,z_extrusion_dir, hidden);
+			        OnReadArc(start_angle, end_angle, radius, c, hidden);
 					hidden = false;
 			        return true;
 
@@ -480,16 +508,15 @@ bool CDxfRead::ReadArc()
 
 
 			case 100:
-			case 39:
-			case 210:
-			case 220:
                 // skip the next line
 				get_line();
 				break;
+			case 39:
+			case 210:
+			case 220:
 			case 230:
-                //Z extrusion direction for arc 
-				get_line();
-				ss.str(m_str); ss >> z_extrusion_dir; if(ss.fail()) return false;                                
+				if (!ReadExtrusionOrThickness(n))
+					return false;
 				break;
 
 			default:
@@ -499,7 +526,7 @@ bool CDxfRead::ReadArc()
 		}
 	}
 	DerefACI();
-	OnReadArc(start_angle, end_angle, radius, c, z_extrusion_dir, false);
+	OnReadArc(start_angle, end_angle, radius, c, false);
 	return false;
 }
 
@@ -747,12 +774,15 @@ bool CDxfRead::ReadCircle()
 				break;
 
 			case 100:
+				// skip the next line
+				get_line();
+				break;
 			case 39:
 			case 210:
 			case 220:
 			case 230:
-				// skip the next line
-				get_line();
+				if (!ReadExtrusionOrThickness(n))
+					return false;
 				break;
 			default:
 				// skip the next line
@@ -845,12 +875,15 @@ bool CDxfRead::ReadText()
 				break;
 
 			case 100:
+				// skip the next line
+				get_line();
+				break;
 			case 39:
 			case 210:
 			case 220:
 			case 230:
-				// skip the next line
-				get_line();
+				if (!ReadExtrusionOrThickness(n))
+					return false;
 				break;
 			default:
 				// skip the next line
@@ -980,17 +1013,158 @@ bool CDxfRead::ReadMText()
 				break;
 
 			case 100:
+				// skip the next line
+				get_line();
+				break;
 			case 39:
 			case 210:
 			case 220:
 			case 230:
-				// skip the next line
-				get_line();
+				if (!ReadExtrusionOrThickness(n))
+					return false;
 				break;
 			default:
 				// skip the next line
 				get_line();
 				break;
+		}
+	}
+
+	return false;
+}
+
+
+bool CDxfRead::ReadRText()
+{
+	double c[3]; // coordinate
+	double height = 0.03082;
+	int hj = 0;
+	int vj = 0;
+
+	memset(c, 0, sizeof(c));
+
+	while (!((*m_ifs).eof()))
+	{
+		get_line();
+		int n;
+		if (sscanf(m_str, "%d", &n) != 1)
+		{
+			printf("CDxfRead::ReadText() Failed to read integer from '%s'\n", m_str);
+			return false;
+		}
+		std::istringstream ss;
+		ss.imbue(std::locale("C"));
+		switch (n){
+		case 0:
+			return false;
+		case 8: // Layer name follows
+			get_line();
+			strcpy(m_layer_name, m_str);
+			break;
+
+		case 10:
+			// centre x
+			get_line();
+			ss.str(m_str); ss >> c[0]; c[0] = mm(c[0]); if (ss.fail()) return false;
+			break;
+		case 20:
+			// centre y
+			get_line();
+			ss.str(m_str); ss >> c[1]; c[1] = mm(c[1]); if (ss.fail()) return false;
+			break;
+		case 30:
+			// centre z
+			get_line();
+			ss.str(m_str); ss >> c[2]; c[2] = mm(c[2]); if (ss.fail()) return false;
+			break;
+		case 40:
+		case 43:
+			// text height
+			get_line();
+			ss.str(m_str); ss >> height; height = mm(height); if (ss.fail()) return false;
+			break;
+		case 1:
+			// text
+			get_line();
+			DerefACI();
+			OnReadText(c, height * 25.4 / 72.0, m_str, hj, vj);
+			return(true);
+
+		case 62:
+			// color index
+			get_line();
+			ss.str(m_str); ss >> m_aci; if (ss.fail()) return false;
+			break;
+
+		case 71:
+			//Attachment point:
+			//1 = Top left; 2 = Top center; 3 = Top right;
+			//4 = Middle left; 5 = Middle center; 6 = Middle right
+			//7 = Bottom left; 8 = Bottom center; 9 = Bottom right
+			get_line();
+			ss.str(m_str); ss >> hj; if (ss.fail()) return false;
+			switch (hj)
+			{
+			case 1:
+				hj = 0;
+				vj = 3;
+				break;
+			case 2:
+				hj = 1;
+				vj = 3;
+				break;
+			case 3:
+				hj = 2;
+				vj = 3;
+				break;
+			case 4:
+				hj = 0;
+				vj = 2;
+				break;
+			case 5:
+				hj = 1;
+				vj = 2;
+				break;
+			case 6:
+				hj = 2;
+				vj = 2;
+				break;
+			case 7:
+				hj = 0;
+				vj = 1;
+				break;
+			case 8:
+				hj = 1;
+				vj = 1;
+				break;
+			case 9:
+				hj = 2;
+				vj = 1;
+				break;
+			}
+			break;
+
+		case 72:
+			// drawing direction
+			get_line(); // to do
+			//ss.str(m_str); ss >> vj; if(ss.fail()) return false;
+			break;
+
+		case 100:
+			// skip the next line
+			get_line();
+			break;
+		case 39:
+		case 210:
+		case 220:
+		case 230:
+			if (!ReadExtrusionOrThickness(n))
+				return false;
+			break;
+		default:
+			// skip the next line
+			get_line();
+			break;
 		}
 	}
 
@@ -1184,6 +1358,49 @@ void CDxfRead::AddPolyLinePoints(bool mirrored, bool closed)
 	}
 
 	poly_line_points.clear();
+}
+
+void CDxfRead::ResetExtrusionAndThickness()
+{
+	m_thickness = 0.0;
+	m_extrusion_vector[0] = 0.0;
+	m_extrusion_vector[1] = 0.0;
+	m_extrusion_vector[2] = 1.0;
+}
+
+bool CDxfRead::ReadExtrusionOrThickness(int n)
+{
+	std::istringstream ss;
+	ss.imbue(std::locale("C"));
+
+	switch (n)
+	{
+	case 39:
+		// thickness
+		get_line();
+		ss.str(m_str); ss >> m_thickness; m_thickness = mm(m_thickness); if (ss.fail()) return false;
+		break;
+
+	case 210:
+		// extrusion_vector
+		get_line();
+		ss.str(m_str); ss >> m_extrusion_vector[0]; if (ss.fail()) return false;
+		break;
+
+	case 220:
+		// extrusion_vector
+		get_line();
+		ss.str(m_str); ss >> m_extrusion_vector[1]; if (ss.fail()) return false;
+		break;
+
+	case 230:
+		// extrusion_vector
+		get_line();
+		ss.str(m_str); ss >> m_extrusion_vector[2]; if (ss.fail()) return false;
+		break;
+	}
+
+	return true;
 }
 
 void CDxfRead::StorePolyLinePoint(double x, double y, double z, bool bulge_found, double bulge)
@@ -1383,6 +1600,8 @@ bool CDxfRead::ReadPolyLine()
 {
 	PolyLineStart();
 
+	ResetExtrusionAndThickness();
+
 	bool closed = false;
 	int flags;
 	bool first_vertex_section_found = false;
@@ -1436,6 +1655,13 @@ bool CDxfRead::ReadPolyLine()
 				get_line();
 				ss.str(m_str); ss >> m_aci; if(ss.fail()) return false;
 				break;
+			case 39:
+			case 210:
+			case 220:
+			case 230:
+				if (!ReadExtrusionOrThickness(n))
+					return false;
+				break;
 			default:
 				// skip the next line
 				get_line();
@@ -1455,6 +1681,9 @@ bool CDxfRead::ReadLeader()
 {
 	double vertex_coordinates[3] = {0, 0, 0};
 	double horizontal_direction[3] = {1, 0, 0};
+	double insertion_offset[3] = { 0, 0, 0 };
+	double placement_offset[3] = { 0, 0, 0 };
+	double normal_vector[3] = { 0, 0, 1 };
 	int leader_creation_flag = 3;
 	int arrowhead_flag = 1;
 	int leader_path_type = 0;
@@ -1504,36 +1733,100 @@ bool CDxfRead::ReadLeader()
 				for(int i = 0; i<3; i++)td.x[i] = vertex_coordinates[i];
 				vertices.push_back(td);
 				break;
+			case 71:
+				get_line();
+				ss.str(m_str); ss >> arrowhead_flag; if (ss.fail()) return false;
+				break; 
+			case 72:
+				get_line();
+				ss.str(m_str); ss >> leader_path_type; if (ss.fail()) return false;
+				break;
+			case 73:
+				get_line();
+				ss.str(m_str); ss >> leader_creation_flag; if (ss.fail()) return false;
+				break;
+			case 74:
+				get_line();
+				ss.str(m_str); ss >> hookline_direction_flag; if (ss.fail()) return false;
+				break;
+			case 75:
+				get_line();
+				ss.str(m_str); ss >> hookline_flag; if (ss.fail()) return false;
+				break;
+			case 40:
+				get_line();
+				ss.str(m_str); ss >> text_annotation_height; if (ss.fail()) return false;
+				break;
+			case 41:
+				get_line();
+				ss.str(m_str); ss >> text_annotation_width; if (ss.fail()) return false;
+				break;
 			case 211:
 				// x
 				get_line();
-				ss.str(m_str); ss >> horizontal_direction[0]; if(ss.fail()) return false;
+				ss.str(m_str); ss >> horizontal_direction[0]; if (ss.fail()) return false;
 				break;
 			case 221:
 				// y
 				get_line();
-				ss.str(m_str); ss >> horizontal_direction[1]; if(ss.fail()) return false;
+				ss.str(m_str); ss >> horizontal_direction[1]; if (ss.fail()) return false;
 				break;
 			case 231:
 				// z
 				get_line();
-				ss.str(m_str); ss >> horizontal_direction[2]; if(ss.fail()) return false;
+				ss.str(m_str); ss >> horizontal_direction[2]; if (ss.fail()) return false;
 				break;
-			case 40:
-				// ratio
+			case 212:
+				// x
 				get_line();
-				ss.str(m_str); ss >> text_annotation_height; if(ss.fail()) return false;
+				ss.str(m_str); ss >> insertion_offset[0]; if (ss.fail()) return false;
 				break;
-			case 41:
-				// start
+			case 222:
+				// y
 				get_line();
-				ss.str(m_str); ss >> text_annotation_width; if(ss.fail()) return false;
+				ss.str(m_str); ss >> insertion_offset[1]; if (ss.fail()) return false;
+				break;
+			case 232:
+				// z
+				get_line();
+				ss.str(m_str); ss >> insertion_offset[2]; if (ss.fail()) return false;
+				break;
+			case 213:
+				// x
+				get_line();
+				ss.str(m_str); ss >> placement_offset[0]; if (ss.fail()) return false;
+				break;
+			case 223:
+				// y
+				get_line();
+				ss.str(m_str); ss >> placement_offset[1]; if (ss.fail()) return false;
+				break;
+			case 233:
+				// z
+				get_line();
+				ss.str(m_str); ss >> placement_offset[2]; if (ss.fail()) return false;
+				break;
+			case 210:
+				// x
+				get_line();
+				ss.str(m_str); ss >> normal_vector[0]; if (ss.fail()) return false;
+				break;
+			case 220:
+				// y
+				get_line();
+				ss.str(m_str); ss >> normal_vector[1]; if (ss.fail()) return false;
+				break;
+			case 230:
+				// z
+				get_line();
+				ss.str(m_str); ss >> normal_vector[2]; if (ss.fail()) return false;
 				break;
 			case 100:
-			case 210:
-			case 220:
-			case 230:
 				// skip the next line
+				get_line();
+				break;
+			case 340:
+				// Hard reference to associated annotation (mtext, tolerance, or insert entity)
 				get_line();
 				break;
 			default:
@@ -1802,9 +2095,9 @@ bool CDxfRead::ReadDimension()
 	return false;
 }
 
-void CDxfRead::OnReadArc(double start_angle, double end_angle, double radius, const double* c, double z_extrusion_dir, bool hidden){
+void CDxfRead::OnReadArc(double start_angle, double end_angle, double radius, const double* c, bool hidden){
 	double s[3], e[3], temp[3] ;
-    if (z_extrusion_dir==1.0)
+    if (m_extrusion_vector[2]==1.0)
   {
     temp[0] =c[0];
     temp[1] =c[1];
@@ -2295,6 +2588,7 @@ void CDxfRead::DoRead(const bool ignore_errors /* = false */ )
 	{
 		if(!strcmp(m_str, "0"))
 		{
+			m_thickness = 0.0;
 			get_line();
 			if (!strcmp( m_str, "SECTION" )){
 				if(!ReadSection())
@@ -2379,15 +2673,23 @@ void CDxfRead::DoRead(const bool ignore_errors /* = false */ )
 				}
 				continue;
 			}
-			else if(!strcmp(m_str, "MTEXT")){
-				if(!ReadMText())
+			else if (!strcmp(m_str, "MTEXT")){
+				if (!ReadMText())
 				{
 					printf("CDxfRead::DoRead() Failed to read mtext\n");
 					return;
 				}
 				continue;
 			}
-			else if(!strcmp(m_str, "ELLIPSE")){
+			else if (!strcmp(m_str, "RTEXT")){
+				if (!ReadRText())
+				{
+					printf("CDxfRead::DoRead() Failed to read rtext\n");
+					return;
+				}
+				continue;
+			}
+			else if (!strcmp(m_str, "ELLIPSE")){
 				if(!ReadEllipse())
 				{
 					printf("CDxfRead::DoRead() Failed to read ellipse\n");

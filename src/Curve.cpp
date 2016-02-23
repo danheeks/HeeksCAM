@@ -8,24 +8,6 @@
 #include "Area.h"
 #include "geometry.h"
 
-const Point operator*(const double &d, const Point &p){ return p * d;}
-double Point::tolerance = 0.001;
-
-//static const double PI = 3.1415926535897932; duplicated in kurve/geometry.h
-
-double Point::length()const
-{
-    return sqrt( x*x + y*y );
-}
-
-double Point::normalize()
-{
-	double len = length();
-	if(fabs(len)> 0.000000000000001)
-		*this = (*this) / len;
-	return len;
-}
-
 Line::Line(const Point& P0, const Point& V):p0(P0), v(V)
 {
 }

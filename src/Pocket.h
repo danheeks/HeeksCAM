@@ -11,7 +11,7 @@
 
 class CPocket;
 
-class CPocketParams{
+class CPocket: public CSketchOp{
 public:
 	int m_starting_place;
 	double m_material_allowance;
@@ -20,45 +20,34 @@ public:
 	bool m_use_zig_zag;
 	double m_zig_angle;
 	bool m_zig_unidirectional;
+	int m_cut_mode;
 
 	typedef enum {
 		eConventional,
 		eClimb
 	}eCutMode;
-	eCutMode m_cut_mode;
 
-    typedef enum {
-            ePlunge = 0,
-            eRamp,
-            eHelical,
-            eUndefinedeDescentStrategy
-    } eEntryStyle;
-    eEntryStyle m_entry_move;
-
-	CPocketParams();
-
-    void set_initial_values(const CTool::ToolNumber_t tool_number);
-	void GetProperties(CPocket* parent, std::list<Property *> *list);
-	void WriteXMLAttributes(TiXmlNode* pElem);
-	void ReadFromXMLElement(TiXmlElement* pElem);
-
-	bool operator== ( const CPocketParams & rhs ) const;
-	bool operator!= ( const CPocketParams & rhs ) const { return(! (*this == rhs)); }
-};
-
-class CPocket: public CSketchOp{
-public:
-	CPocketParams m_pocket_params;
+	typedef enum {
+		ePlunge = 0,
+		eRamp,
+		eHelical,
+		eUndefinedeDescentStrategy
+	} eEntryStyle;
+	eEntryStyle m_entry_move;
 
 	static double max_deviation_for_spline_to_arc;
 
-	CPocket():CSketchOp(0, PocketType){}
+	CPocket();
 	CPocket(int sketch, const int tool_number );
 	CPocket( const CPocket & rhs );
 	CPocket & operator= ( const CPocket & rhs );
 
 	bool operator== ( const CPocket & rhs ) const;
 	bool operator!= ( const CPocket & rhs ) const { return(! (*this == rhs)); }
+
+	void set_initial_values(int tool_number);
+	void WriteXMLAttributes(TiXmlNode* pElem);
+	void ReadParamsFromXMLElement(TiXmlElement* pElem);
 
 	// HeeksObj's virtual functions
 	int GetType()const{return PocketType;}

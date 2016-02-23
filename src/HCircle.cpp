@@ -28,7 +28,7 @@ HCircle::~HCircle(){
 }
 
 const HCircle& HCircle::operator=(const HCircle &c){
-	IdNamedObj::operator=(c);
+	ExtrudedObj<IdNamedObj>::operator=(c);
 
 	m_axis = c.m_axis;
 	m_radius = c.m_radius;
@@ -55,7 +55,7 @@ bool HCircle::IsDifferent(HeeksObj* other)
 	if(cir->m_radius != m_radius)
 		return true;
 
-	return IdNamedObj::IsDifferent(other);
+	return ExtrudedObj<IdNamedObj>::IsDifferent(other);
 }
 
 //segments - number of segments per full revolution!
@@ -98,7 +98,18 @@ void HCircle::GetSegments(void(*callbackfunc)(const double *p), double pixels_pe
     }
 }
 
-static void glVertexFunction(const double *p){glVertex3d(p[0], p[1], p[2]);}
+static HCircle* circle_for_glVertexFunction = NULL;
+static void glVertexFunction(const double *p)
+{
+	glVertex3d(p[0], p[1], p[2]);
+}
+
+static void glVertexThickened(const double *p)
+{
+	glVertex3d(p[0] + circle_for_glVertexFunction->m_extrusion_vector[0] * circle_for_glVertexFunction->m_thickness
+		, p[1] + circle_for_glVertexFunction->m_extrusion_vector[1] * circle_for_glVertexFunction->m_thickness
+		, p[2] + circle_for_glVertexFunction->m_extrusion_vector[2] * circle_for_glVertexFunction->m_thickness);
+}
 
 void HCircle::glCommands(bool select, bool marked, bool no_color){
 	if(!no_color){
@@ -111,8 +122,14 @@ void HCircle::glCommands(bool select, bool marked, bool no_color){
 		glLineWidth(2);
 	}
 
+
 	glBegin(GL_LINE_STRIP);
 	GetSegments(glVertexFunction, wxGetApp().GetPixelScale());
+	if (m_thickness != 0.0)
+	{
+		circle_for_glVertexFunction = this;
+		GetSegments(glVertexThickened, wxGetApp().GetPixelScale());
+	}
 	glEnd();
 
 	if(marked){
@@ -195,7 +212,7 @@ void HCircle::GetProperties(std::list<Property *> *list){
 	list->push_back(new PropertyVector(_("axis"), a, this, on_set_axis));
 	list->push_back(new PropertyLength(_("radius"), m_radius, this, on_set_radius));
 
-	IdNamedObj::GetProperties(list);
+	ExtrudedObj<IdNamedObj>::GetProperties(list);
 }
 
 bool HCircle::FindNearPoint(const double* ray_start, const double* ray_direction, double *point){
@@ -990,5 +1007,10 @@ void HCircle::GetTools(std::list<Tool*>* t_list, const wxPoint* p)
 		t_list->push_back(&click_eastern_midpoint_of_circle);
 		t_list->push_back(&click_western_midpoint_of_circle);
 	}
+}
 
+double HCircle::GetDiameter()const
+{
+	gp_Circ c = GetCircle();
+	return 2 * c.Radius();
 }

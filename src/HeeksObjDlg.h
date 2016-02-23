@@ -38,4 +38,19 @@ public:
     DECLARE_EVENT_TABLE()
 };
 
+class HTypeObjectDropDown : public wxComboBox
+{
+public:
+	int m_object_type;
+	HeeksObj* m_obj_list;
+	std::vector< std::pair< int, wxString > > m_ids_for_combo;
+
+	HTypeObjectDropDown(wxWindow *parent, wxWindowID id, int object_type, HeeksObj* obj_list);
+	int GetSelectedId();
+	void SelectById(int id);
+	void Recreate();
+
+	static wxArrayString GetObjectArrayString(int object_type, HeeksObj* obj_list, std::vector< std::pair< int, wxString > > &ids_for_combo);
+};
+
 #endif

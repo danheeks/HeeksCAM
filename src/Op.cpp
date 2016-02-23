@@ -17,10 +17,9 @@
 #include "tinyxml.h"
 #include "HeeksCNCTypes.h"
 #include "CTool.h"
-#include "PythonStuff.h"
 #include "HeeksConfig.h"
 #include "Program.h"
-#include "HDialogs.h"
+#include "HeeksObjDlg.h"
 #include "Tools.h"
 
 #define FIND_FIRST_TOOL CTool::FindFirstByType
@@ -38,7 +37,7 @@ const wxBitmap& COp::GetInactiveIcon()
 
 void COp::WriteBaseXML(TiXmlElement *element)
 {
-	if(m_comment.Len() > 0)element->SetAttribute( "comment", m_comment.utf8_str());
+	if(m_comment.length() > 0)element->SetAttribute( "comment", wxString(m_comment.c_str()).utf8_str());
 	element->SetAttribute( "active", m_active);
 	element->SetAttribute( "tool_number", m_tool_number);
 	element->SetAttribute( "pattern", m_pattern);
@@ -110,7 +109,7 @@ static void on_set_tool_number(int zero_based_choice, HeeksObj* object, bool fro
 
 void COp::GetProperties(std::list<Property *> *list)
 {
-	list->push_back(new PropertyString(_("comment"), m_comment, this, on_set_comment));
+	list->push_back(new PropertyString(_("comment"), m_comment.c_str(), this, on_set_comment));
 	list->push_back(new PropertyCheck(_("active"), m_active, this, on_set_active));
 
 	if(UsesTool()){
@@ -195,20 +194,20 @@ void COp::ReadDefaultValues()
 		switch(m_operation_type)
 		{
 		case DrillingType:
-			default_tool = FIND_FIRST_TOOL( CToolParams::eDrill );
-			if (default_tool <= 0) default_tool = FIND_FIRST_TOOL( CToolParams::eCentreDrill );
+			default_tool = FIND_FIRST_TOOL(CTool::eDrill);
+			if (default_tool <= 0) default_tool = FIND_FIRST_TOOL(CTool::eCentreDrill);
 			break;
 		case ProfileType:
 		case PocketType:
-			default_tool = FIND_FIRST_TOOL( CToolParams::eEndmill );
-			if (default_tool <= 0) default_tool = FIND_FIRST_TOOL( CToolParams::eSlotCutter );
-			if (default_tool <= 0) default_tool = FIND_FIRST_TOOL( CToolParams::eBallEndMill );
+			default_tool = FIND_FIRST_TOOL(CTool::eEndmill);
+			if (default_tool <= 0) default_tool = FIND_FIRST_TOOL(CTool::eSlotCutter);
+			if (default_tool <= 0) default_tool = FIND_FIRST_TOOL(CTool::eBallEndMill);
 			break;
 
 		default:
-			default_tool = FIND_FIRST_TOOL( CToolParams::eEndmill );
-			if (default_tool <= 0) default_tool = FIND_FIRST_TOOL( CToolParams::eSlotCutter );
-			if (default_tool <= 0) default_tool = FIND_FIRST_TOOL( CToolParams::eBallEndMill );
+			default_tool = FIND_FIRST_TOOL(CTool::eEndmill);
+			if (default_tool <= 0) default_tool = FIND_FIRST_TOOL(CTool::eSlotCutter);
+			if (default_tool <= 0) default_tool = FIND_FIRST_TOOL(CTool::eBallEndMill);
 			if (default_tool <= 0) default_tool = 4;
 			break;
 		}
@@ -227,7 +226,7 @@ Python COp::AppendTextToProgram()
 {
     Python python;
 
-	if(m_comment.Len() > 0)
+	if(m_comment.length() > 0)
 	{
 		python << _T("comment(") << PythonString(m_comment) << _T(")\n");
 	}

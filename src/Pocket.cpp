@@ -31,20 +31,7 @@
 // static
 double CPocket::max_deviation_for_spline_to_arc = 0.1;
 
-CPocketParams::CPocketParams()
-{
-	m_step_over = 0.0;
-	m_material_allowance = 0.0;
-	m_starting_place = true;
-	m_keep_tool_down_if_poss = true;
-	m_use_zig_zag = true;
-	m_zig_angle = 0.0;
-	m_zig_unidirectional = false;
-	m_entry_move = ePlunge;
-	m_cut_mode = eConventional;
-}
-
-void CPocketParams::set_initial_values(const CTool::ToolNumber_t tool_number)
+void CPocket::set_initial_values(int tool_number)
 {
     if (tool_number > 0)
     {
@@ -58,95 +45,59 @@ void CPocketParams::set_initial_values(const CTool::ToolNumber_t tool_number)
 
 static void on_set_entry_move(int value, HeeksObj* object, bool from_undo_redo)
 {
-	((CPocket*)object)->m_pocket_params.m_entry_move = (CPocketParams::eEntryStyle) value;
+	((CPocket*)object)->m_entry_move = (CPocket::eEntryStyle) value;
 	((CPocket*)object)->WriteDefaultValues();
 }
 
 static void on_set_step_over(double value, HeeksObj* object)
 {
-	((CPocket*)object)->m_pocket_params.m_step_over = value;
+	((CPocket*)object)->m_step_over = value;
 	((CPocket*)object)->WriteDefaultValues();
 }
 
 static void on_set_material_allowance(double value, HeeksObj* object)
 {
-	((CPocket*)object)->m_pocket_params.m_material_allowance = value;
+	((CPocket*)object)->m_material_allowance = value;
 	((CPocket*)object)->WriteDefaultValues();
 }
 
 static void on_set_starting_place(int value, HeeksObj* object, bool from_undo_redo)
 {
-	((CPocket*)object)->m_pocket_params.m_starting_place = value;
+	((CPocket*)object)->m_starting_place = value;
 	((CPocket*)object)->WriteDefaultValues();
 }
 
 static void on_set_keep_tool_down(bool value, HeeksObj* object)
 {
-	((CPocket*)object)->m_pocket_params.m_keep_tool_down_if_poss = value;
+	((CPocket*)object)->m_keep_tool_down_if_poss = value;
 	((CPocket*)object)->WriteDefaultValues();
 }
 
 static void on_set_use_zig_zag(bool value, HeeksObj* object)
 {
-	((CPocket*)object)->m_pocket_params.m_use_zig_zag = value;
+	((CPocket*)object)->m_use_zig_zag = value;
 	((CPocket*)object)->WriteDefaultValues();
 }
 
 static void on_set_zig_angle(double value, HeeksObj* object)
 {
-	((CPocket*)object)->m_pocket_params.m_zig_angle = value;
+	((CPocket*)object)->m_zig_angle = value;
 	((CPocket*)object)->WriteDefaultValues();
 }
 
 static void on_set_zig_uni(bool value, HeeksObj* object)
 {
-	((CPocket*)object)->m_pocket_params.m_zig_unidirectional = value;
+	((CPocket*)object)->m_zig_unidirectional = value;
 	((CPocket*)object)->WriteDefaultValues();
 }
 
 static void on_set_cut_mode(int value, HeeksObj* object, bool from_undo_redo)
 {
-	((CPocket*)object)->m_pocket_params.m_cut_mode = (CPocketParams::eCutMode)value;
+	((CPocket*)object)->m_cut_mode = (CPocket::eCutMode)value;
 	((CPocket*)object)->WriteDefaultValues();
 }
 
-void CPocketParams::GetProperties(CPocket* parent, std::list<Property *> *list)
-{
-	CToolParams::eToolType tool_type = CTool::FindToolType(parent->m_tool_number);
-
-	list->push_back(new PropertyLength(_("step over"), m_step_over, parent, on_set_step_over));
-	list->push_back(new PropertyLength(_("material allowance"), m_material_allowance, parent, on_set_material_allowance));
-
-	if(CTool::IsMillingToolType(tool_type)){
-		std::list< wxString > choices;
-		choices.push_back(_("Conventional"));
-		choices.push_back(_("Climb"));
-		list->push_back(new PropertyChoice(_("cut mode"), choices, m_cut_mode, parent, on_set_cut_mode));
-	}
-
-	{
-		std::list< wxString > choices;
-		choices.push_back(_("Boundary"));
-		choices.push_back(_("Center"));
-		list->push_back(new PropertyChoice(_("starting_place"), choices, m_starting_place, parent, on_set_starting_place));
-	}
-	{
-		std::list< wxString > choices;
-		choices.push_back(_("Plunge"));
-		choices.push_back(_("Ramp"));
-		choices.push_back(_("Helical"));
-		list->push_back(new PropertyChoice(_("entry_move"), choices, m_entry_move, parent, on_set_entry_move));
-	}
-	list->push_back(new PropertyCheck(_("keep tool down"), m_keep_tool_down_if_poss, parent, on_set_keep_tool_down));
-	list->push_back(new PropertyCheck(_("use zig zag"), m_use_zig_zag, parent, on_set_use_zig_zag));
-	if(m_use_zig_zag)
-	{
-		list->push_back(new PropertyDouble(_("zig angle"), m_zig_angle, parent, on_set_zig_angle));
-		list->push_back(new PropertyCheck(_("unidirectional"), m_zig_unidirectional, parent, on_set_zig_uni));
-	}
-}
-
-void CPocketParams::WriteXMLAttributes(TiXmlNode *root)
+void CPocket::WriteXMLAttributes(TiXmlNode *root)
 {
 	TiXmlElement * element;
 	element = new TiXmlElement( "params" );
@@ -162,7 +113,7 @@ void CPocketParams::WriteXMLAttributes(TiXmlNode *root)
 	element->SetAttribute( "entry_move", (int) m_entry_move);
 }
 
-void CPocketParams::ReadFromXMLElement(TiXmlElement* pElem)
+void CPocket::ReadParamsFromXMLElement(TiXmlElement* pElem)
 {
 	pElem->Attribute("step", &m_step_over);
 	int int_for_enum;
@@ -329,20 +280,20 @@ void CPocket::WritePocketPython(Python &python)
 
 	// make a parameter of area_funcs.pocket() eventually
 	// 0..plunge, 1..ramp, 2..helical
-	python << _T("entry_style = ") <<  m_pocket_params.m_entry_move << _T("\n");
+	python << _T("entry_style = ") <<  m_entry_move << _T("\n");
 
 	// Pocket the area
 	python << _T("area_funcs.pocket(a, tool_diameter/2, ");
-	python << m_pocket_params.m_material_allowance / wxGetApp().m_program->m_units;
-	python << _T(", ") << m_pocket_params.m_step_over / wxGetApp().m_program->m_units;
+	python << m_material_allowance / wxGetApp().m_program->m_units;
+	python << _T(", ") << m_step_over / wxGetApp().m_program->m_units;
 	python << _T(", depthparams, ");
-	python << m_pocket_params.m_starting_place;
-	python << (m_pocket_params.m_keep_tool_down_if_poss ? _T(", True") : _T(", False"));
-	python << (m_pocket_params.m_use_zig_zag ? _T(", True") : _T(", False"));
-	python << _T(", ") << m_pocket_params.m_zig_angle;
-	python << _T(",") << (m_pocket_params.m_zig_unidirectional ? _T("True") : _T("False"));
+	python << m_starting_place;
+	python << (m_keep_tool_down_if_poss ? _T(", True") : _T(", False"));
+	python << (m_use_zig_zag ? _T(", True") : _T(", False"));
+	python << _T(", ") << m_zig_angle;
+	python << _T(",") << (m_zig_unidirectional ? _T("True") : _T("False"));
 	python << _T(", None"); // start point
-	python << _T(",") << ((m_pocket_params.m_cut_mode == CPocketParams::eClimb) ? _T("'climb'") : _T("'conventional'"));
+	python << _T(",") << ((m_cut_mode == CPocket::eClimb) ? _T("'climb'") : _T("'conventional'"));
 	python << _T(")\n");
 
 	// rapid back up to clearance plane
@@ -458,15 +409,15 @@ void CPocket::WriteDefaultValues()
 	CSketchOp::WriteDefaultValues();
 
 	HeeksConfig config;
-	config.Write(_T("StepOver"), m_pocket_params.m_step_over);
-	config.Write(_T("CutMode"), (int)(m_pocket_params.m_cut_mode));
-	config.Write(_T("MaterialAllowance"), m_pocket_params.m_material_allowance);
-	config.Write(_T("FromCenter"), m_pocket_params.m_starting_place);
-	config.Write(_T("KeepToolDown"), m_pocket_params.m_keep_tool_down_if_poss);
-	config.Write(_T("UseZigZag"), m_pocket_params.m_use_zig_zag);
-	config.Write(_T("ZigAngle"), m_pocket_params.m_zig_angle);
-	config.Write(_T("ZigUnidirectional"), m_pocket_params.m_zig_unidirectional);
-	config.Write(_T("DecentStrategy"), (int)(m_pocket_params.m_entry_move));
+	config.Write(_T("StepOver"), m_step_over);
+	config.Write(_T("CutMode"), (int)(m_cut_mode));
+	config.Write(_T("MaterialAllowance"), m_material_allowance);
+	config.Write(_T("FromCenter"), m_starting_place);
+	config.Write(_T("KeepToolDown"), m_keep_tool_down_if_poss);
+	config.Write(_T("UseZigZag"), m_use_zig_zag);
+	config.Write(_T("ZigAngle"), m_zig_angle);
+	config.Write(_T("ZigUnidirectional"), m_zig_unidirectional);
+	config.Write(_T("DecentStrategy"), (int)(m_entry_move));
 }
 
 void CPocket::ReadDefaultValues()
@@ -474,19 +425,19 @@ void CPocket::ReadDefaultValues()
 	CSketchOp::ReadDefaultValues();
 
 	HeeksConfig config;
-	config.Read(_T("StepOver"), &m_pocket_params.m_step_over, 1.0);
-	int int_mode = m_pocket_params.m_cut_mode;
-	config.Read(_T("CutMode"), &int_mode, CPocketParams::eConventional);
-	m_pocket_params.m_cut_mode = (CPocketParams::eCutMode)int_mode;
-	config.Read(_T("MaterialAllowance"), &m_pocket_params.m_material_allowance, 0.2);
-	config.Read(_T("FromCenter"), &m_pocket_params.m_starting_place, 1);
-	config.Read(_T("KeepToolDown"), &m_pocket_params.m_keep_tool_down_if_poss, true);
-	config.Read(_T("UseZigZag"), &m_pocket_params.m_use_zig_zag, false);
-	config.Read(_T("ZigAngle"), &m_pocket_params.m_zig_angle);
-	config.Read(_T("ZigUnidirectional"), &m_pocket_params.m_zig_unidirectional, false);
-	int int_for_entry_move = CPocketParams::ePlunge;
+	config.Read(_T("StepOver"), &m_step_over, 1.0);
+	int int_mode = m_cut_mode;
+	config.Read(_T("CutMode"), &int_mode, CPocket::eConventional);
+	m_cut_mode = (CPocket::eCutMode)int_mode;
+	config.Read(_T("MaterialAllowance"), &m_material_allowance, 0.2);
+	config.Read(_T("FromCenter"), &m_starting_place, 1);
+	config.Read(_T("KeepToolDown"), &m_keep_tool_down_if_poss, true);
+	config.Read(_T("UseZigZag"), &m_use_zig_zag, false);
+	config.Read(_T("ZigAngle"), &m_zig_angle);
+	config.Read(_T("ZigUnidirectional"), &m_zig_unidirectional, false);
+	int int_for_entry_move = CPocket::ePlunge;
 	config.Read(_T("DecentStrategy"), &int_for_entry_move);
-	m_pocket_params.m_entry_move = (CPocketParams::eEntryStyle) int_for_entry_move;
+	m_entry_move = (CPocket::eEntryStyle) int_for_entry_move;
 }
 
 void CPocket::glCommands(bool select, bool marked, bool no_color)
@@ -496,7 +447,38 @@ void CPocket::glCommands(bool select, bool marked, bool no_color)
 
 void CPocket::GetProperties(std::list<Property *> *list)
 {
-	m_pocket_params.GetProperties(this, list);
+	int tool_type = CTool::FindToolType(this->m_tool_number);
+
+	list->push_back(new PropertyLength(_("step over"), m_step_over, this, on_set_step_over));
+	list->push_back(new PropertyLength(_("material allowance"), m_material_allowance, this, on_set_material_allowance));
+
+	if (CTool::IsMillingToolType(tool_type)){
+		std::list< wxString > choices;
+		choices.push_back(_("Conventional"));
+		choices.push_back(_("Climb"));
+		list->push_back(new PropertyChoice(_("cut mode"), choices, m_cut_mode, this, on_set_cut_mode));
+	}
+
+	{
+		std::list< wxString > choices;
+		choices.push_back(_("Boundary"));
+		choices.push_back(_("Center"));
+		list->push_back(new PropertyChoice(_("starting_place"), choices, m_starting_place, this, on_set_starting_place));
+	}
+	{
+		std::list< wxString > choices;
+		choices.push_back(_("Plunge"));
+		choices.push_back(_("Ramp"));
+		choices.push_back(_("Helical"));
+		list->push_back(new PropertyChoice(_("entry_move"), choices, m_entry_move, this, on_set_entry_move));
+	}
+	list->push_back(new PropertyCheck(_("keep tool down"), m_keep_tool_down_if_poss, this, on_set_keep_tool_down));
+	list->push_back(new PropertyCheck(_("use zig zag"), m_use_zig_zag, this, on_set_use_zig_zag));
+	if (m_use_zig_zag)
+	{
+		list->push_back(new PropertyDouble(_("zig angle"), m_zig_angle, this, on_set_zig_angle));
+		list->push_back(new PropertyCheck(_("unidirectional"), m_zig_unidirectional, this, on_set_zig_uni));
+	}
 	CSketchOp::GetProperties(list);
 }
 
@@ -510,9 +492,30 @@ void CPocket::CopyFrom(const HeeksObj* object)
 	operator=(*((CPocket*)object));
 }
 
+CPocket::CPocket() :CSketchOp(0, PocketType)
+{
+	m_step_over = 0.0;
+	m_material_allowance = 0.0;
+	m_starting_place = true;
+	m_keep_tool_down_if_poss = true;
+	m_use_zig_zag = true;
+	m_zig_angle = 0.0;
+	m_zig_unidirectional = false;
+	m_entry_move = ePlunge;
+	m_cut_mode = eConventional;
+}
+
 CPocket::CPocket( const CPocket & rhs ) : CSketchOp(rhs)
 {
-	m_pocket_params = rhs.m_pocket_params;
+	m_step_over = rhs.m_step_over;
+	m_material_allowance = rhs.m_material_allowance;
+	m_starting_place = rhs.m_starting_place;
+	m_keep_tool_down_if_poss = rhs.m_keep_tool_down_if_poss;
+	m_use_zig_zag = rhs.m_use_zig_zag;
+	m_zig_angle = rhs.m_zig_angle;
+	m_zig_unidirectional = rhs.m_zig_unidirectional;
+	m_entry_move = rhs.m_entry_move;
+	m_cut_mode = rhs.m_cut_mode;
 }
 
 CPocket & CPocket::operator= ( const CPocket & rhs )
@@ -520,7 +523,15 @@ CPocket & CPocket::operator= ( const CPocket & rhs )
 	if (this != &rhs)
 	{
 		CSketchOp::operator=(rhs);
-		m_pocket_params = rhs.m_pocket_params;
+		m_step_over = rhs.m_step_over;
+		m_material_allowance = rhs.m_material_allowance;
+		m_starting_place = rhs.m_starting_place;
+		m_keep_tool_down_if_poss = rhs.m_keep_tool_down_if_poss;
+		m_use_zig_zag = rhs.m_use_zig_zag;
+		m_zig_angle = rhs.m_zig_angle;
+		m_zig_unidirectional = rhs.m_zig_unidirectional;
+		m_entry_move = rhs.m_entry_move;
+		m_cut_mode = rhs.m_cut_mode;
 	}
 
 	return(*this);
@@ -535,7 +546,7 @@ void CPocket::WriteXML(TiXmlNode *root)
 {
 	TiXmlElement * element = new TiXmlElement( "Pocket" );
 	wxGetApp().LinkXMLEndChild( root,  element );
-	m_pocket_params.WriteXMLAttributes(element);
+	WriteXMLAttributes(element);
 
 	WriteBaseXML(element);
 }
@@ -551,7 +562,7 @@ HeeksObj* CPocket::ReadFromXMLElement(TiXmlElement* element)
 	TiXmlElement* params = wxGetApp().FirstNamedXMLChildElement(element, "params");
 	if(params)
 	{
-		new_object->m_pocket_params.ReadFromXMLElement(params);
+		new_object->ReadParamsFromXMLElement(params);
 		elements_to_remove.push_back(params);
 	}
 
@@ -570,7 +581,7 @@ CPocket::CPocket(int sketch, const int tool_number )
 	: CSketchOp(sketch, tool_number, PocketType )
 {
 	ReadDefaultValues();
-	m_pocket_params.set_initial_values(tool_number);
+	set_initial_values(tool_number);
 }
 
 
@@ -612,7 +623,7 @@ void CPocket::GetTools(std::list<Tool*>* t_list, const wxPoint* p)
     CSketchOp::GetTools( t_list, p );
 }
 
-bool CPocketParams::operator==(const CPocketParams & rhs) const
+bool CPocket::operator==(const CPocket & rhs) const
 {
 	if (m_starting_place != rhs.m_starting_place) return(false);
 	if (m_material_allowance != rhs.m_material_allowance) return(false);
@@ -622,13 +633,6 @@ bool CPocketParams::operator==(const CPocketParams & rhs) const
 	if (m_zig_angle != rhs.m_zig_angle) return(false);
 	if (m_zig_unidirectional != rhs.m_zig_unidirectional) return(false);
 	if (m_entry_move != rhs.m_entry_move) return(false);
-
-	return(true);
-}
-
-bool CPocket::operator==(const CPocket & rhs) const
-{
-	if (m_pocket_params != rhs.m_pocket_params) return(false);
 
 	return(CSketchOp::operator==(rhs));
 }

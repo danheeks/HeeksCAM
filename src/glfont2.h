@@ -37,11 +37,13 @@ private:
 	//glFont header structure
 	struct
 	{
-		int tex;
+		int tex_normal;
 		int tex_width, tex_height;
 		int start_char, end_char;
 		GLFontChar *chars;
 	} header;
+
+	int m_tex_sharp;
 
 public:
 
@@ -54,8 +56,7 @@ public:
 public:
 
 	//Creates the glFont
-	bool Create (const char *file_name, int tex);
-	bool Create (const std::string &file_name, int tex);
+	bool Create(const char *file_name, int tex_normal, int tex_sharp);
 
 	//Destroys the glFont
 	void Destroy (void);
@@ -140,7 +141,7 @@ public:
 	}
 
 	//Begins text output with this font
-	void Begin (void);
+	void Begin (bool sharp);
 
 	//Template function to output a scaled character array
 	template<class T> void DrawString (const T *text, float scalar,

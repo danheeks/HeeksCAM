@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "HeeksObj.h"
+#include "ExtrudedObj.h"
 #include "HeeksColor.h"
 
-class EndedObject: public HeeksObj{
+class EndedObject : public ExtrudedObj<HeeksObj>{
 protected:
 	HeeksColor color;
 

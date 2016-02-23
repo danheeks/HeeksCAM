@@ -5,6 +5,7 @@
 #pragma once
 
 //#define USING_RIBBON
+//#define HAVE_TOOLBARS
 
 class CTreeCanvas;
 class CGraphicsCanvas;
@@ -33,6 +34,9 @@ enum{
 	ID_FIRST_POP_UP_MENU_TOOL = ID_FIRST_EXTERNAL_BUTTON + 1000,
 	ID_NEXT_ID = ID_FIRST_POP_UP_MENU_TOOL + 1000
 };
+
+
+#ifdef HAVE_TOOLBARS
 
 class CFlyOutToolBar{
 public:
@@ -70,6 +74,7 @@ public:
 	// Get the item that should appear on the main toolbar
 	const CFlyOutItem* GetMainItem()const;
 };
+#endif
 
 class CHeeksFrame : public wxFrame
 {
@@ -84,12 +89,14 @@ public:
 	COptionsCanvas* m_options;
 	CInputModeCanvas* m_input_canvas;
 	wxAuiManager* m_aui_manager;
+#ifdef HAVE_TOOLBARS
 	wxToolBar *m_toolBar;
 	wxToolBar *m_geometryBar;
 	wxToolBar *m_solidBar;
 	wxToolBar *m_viewingBar;
 	wxToolBar *m_digitizingBar;
 	wxToolBar *m_transformBar;
+#endif
 	wxMenuBar *m_menuBar;
 	wxMenu* m_recent_files_menu;
 	wxMenu *m_menuWindow;
@@ -99,27 +106,31 @@ public:
 #ifdef USING_RIBBON
 	HeeksRibbon *m_ribbon;
 #else
+#ifdef HAVE_TOOLBARS
 	CFlyOutItem* m_endof_button;
 	CFlyOutItem* m_inters_button;
 	CFlyOutItem* m_centre_button;
 	CFlyOutItem* m_midpoint_button;
 	CFlyOutItem* m_snap_button;
 #endif
+#endif
 
+	int m_objects_menu_id;
+	int m_options_menu_id;
+	int m_input_menu_id;
+	int m_properties_menu_id;
+#ifdef HAVE_TOOLBARS
 	bool m_main_toolbar_removed;
 	bool m_geometry_toolbar_removed;
 	bool m_solid_toolbar_removed;
 	bool m_viewing_toolbar_removed;
 	bool m_transform_toolbar_removed;
-	int m_objects_menu_id;
-	int m_options_menu_id;
-	int m_input_menu_id;
-	int m_properties_menu_id;
 	int m_main_toolbar_menu_id;
 	int m_solids_toolbar_menu_id;
 	int m_geometry_toolbar_menu_id;
 	int m_viewing_toolbar_menu_id;
 	int m_transform_toolbar_menu_id;
+#endif
 
 	CHeeksFrame( const wxString& title, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize );
 	virtual ~CHeeksFrame();
@@ -134,9 +145,11 @@ public:
 	void OnMove( wxMoveEvent& evt );
 	void OnKeyDown(wxKeyEvent& event);
 	void OnKeyUp(wxKeyEvent& event);
-	wxToolBarToolBase* AddToolBarTool(wxToolBar* toolbar, const wxString& title, const wxBitmap& bitmap, const wxString& caption, void(*onButtonFunction)(wxCommandEvent&), void(*onUpdateButtonFunction)(wxUpdateUIEvent&) = NULL);
-	void AddToolBarTool(wxToolBar* toolbar, Tool* tool);
+#ifdef HAVE_TOOLBARS
 	void AddToolBarFlyout(wxToolBar* toolbar, const CFlyOutList& flyout, bool disappears_on_click = true);
+#endif
+	void AddToolBarTool(wxToolBar* toolbar, Tool* tool);
+	wxToolBarToolBase* AddToolBarTool(wxToolBar* toolbar, const wxString& title, const wxBitmap& bitmap, const wxString& caption, void(*onButtonFunction)(wxCommandEvent&), void(*onUpdateButtonFunction)(wxUpdateUIEvent&) = NULL);
 	int MakeNextIDForTool(void(*onButtonFunction)(wxCommandEvent&), void(*onUpdateButtonFunction)(wxUpdateUIEvent&));
 	void SetToolFunctions(int Id, void(*onButtonFunction)(wxCommandEvent&), void(*onUpdateButtonFunction)(wxUpdateUIEvent&));
 	void ClearToolBar(wxToolBar* m_toolBar);
@@ -151,8 +164,10 @@ public:
 #endif
 	void LoadPerspective(const wxString& str);
 	void SetDefaultLayout(const wxString& str); // call this from dll's OnStartUp
+#ifdef HAVE_TOOLBARS
 	void SetToolBarsToLeft();
 	void SetToolBarsSize();
+#endif
 	void RefreshInputCanvas();
 	void RefreshProperties();
 	void RefreshOptions();

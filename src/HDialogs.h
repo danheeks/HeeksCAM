@@ -19,37 +19,6 @@ public:
 	wxSizerItem* AddToSizer(wxSizer* s);
 };
 
-class HTypeObjectDropDown: public wxComboBox
-{
-public:
-	int m_object_type;
-	HeeksObj* m_obj_list;
-	std::vector< std::pair< int, wxString > > m_ids_for_combo;
-
-	HTypeObjectDropDown(wxWindow *parent, wxWindowID id, int object_type, HeeksObj* obj_list);
-	int GetSelectedId();
-	void SelectById(int id);
-	void Recreate();
-
-	static wxArrayString GetObjectArrayString(int object_type, HeeksObj* obj_list, std::vector< std::pair< int, wxString > > &ids_for_combo);
-};
-
-class CLengthCtrl;
-class HDialog;
-
-class XYZBoxes: public wxStaticBoxSizer
-{
-public:
-	CLengthCtrl *m_lgthX;
-	CLengthCtrl *m_lgthY;
-	CLengthCtrl *m_lgthZ;
-	wxStaticText *m_sttcX;
-	wxStaticText *m_sttcY;
-	wxStaticText *m_sttcZ;
-
-	XYZBoxes(HDialog *dlg, const wxString& label, const wxString &xstr, const wxString &ystr, const wxString &zstr);
-};
-
 class HDialog : public wxDialog
 {
 public:
@@ -59,8 +28,8 @@ public:
 
 	HControl MakeLabelAndControl(const wxString& label, wxWindow* control, wxStaticText** static_text = NULL);
 	HControl MakeLabelAndControl(const wxString& label, wxWindow* control1, wxWindow* control2, wxStaticText** static_text = NULL);
-	wxStaticText *AddLabelAndControl(wxBoxSizer* sizer, const wxString& label, wxWindow* control);
-	HControl MakeOkAndCancel(int orient);
+	wxStaticText *AddLabelAndControl(wxBoxSizer* sizer, const wxString& label, wxWindow* control, wxWindow* control2 = NULL);
+	HControl MakeOkAndCancel(int orient, bool help = true);
 
 	HDialog(wxWindow *parent, wxWindowID id = wxID_ANY, const wxString& title = wxString(_T("")), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxDialogNameStr);
 };

@@ -6,6 +6,7 @@
 #include "HeeksObjDlg.h"
 #include "PictureFrame.h"
 #include "NiceTextCtrl.h"
+#include <CTool.h>
 
 BEGIN_EVENT_TABLE(HeeksObjDlg, HDialog)
     EVT_CHILD_FOCUS(HeeksObjDlg::OnChildFocus)
@@ -140,4 +141,66 @@ void HeeksObjDlg::AddControlsAndCreate()
 	m_ignore_event_functions = false;
 
 	HeeksObjDlg::SetPicture();
+}
+
+std::vector< std::pair< int, wxString > > global_ids_for_combo;
+
+HTypeObjectDropDown::HTypeObjectDropDown(wxWindow *parent, wxWindowID id, int object_type, HeeksObj* obj_list)
+:wxComboBox(parent, id, _T(""), wxDefaultPosition, wxDefaultSize, GetObjectArrayString(object_type, obj_list, global_ids_for_combo)),
+m_object_type(object_type),
+m_obj_list(obj_list),
+m_ids_for_combo(global_ids_for_combo)
+{
+}
+
+void HTypeObjectDropDown::Recreate()
+{
+	Clear();
+	Append(GetObjectArrayString(m_object_type, m_obj_list, m_ids_for_combo));
+	global_ids_for_combo.clear();
+}
+
+wxArrayString HTypeObjectDropDown::GetObjectArrayString(int object_type, HeeksObj* obj_list, std::vector< std::pair< int, wxString > > &ids_for_combo)
+{
+	ids_for_combo.clear();
+	wxArrayString str_array;
+
+	// Always add a value of zero to allow for an absense of object use.
+	ids_for_combo.push_back(std::make_pair(0, _("None")));
+	str_array.Add(_("None"));
+
+	for (HeeksObj* ob = obj_list->GetFirstChild(); ob; ob = obj_list->GetNextChild())
+	{
+		if (ob->GetIDGroupType() != object_type) continue;
+
+		int number = ob->GetID();
+		if (object_type == ToolType)number = ((CTool*)ob)->m_tool_number;
+
+		ids_for_combo.push_back(std::make_pair(number, ob->GetShortString()));
+		str_array.Add(ob->GetShortString());
+	} // End for
+
+	return str_array;
+}
+
+int HTypeObjectDropDown::GetSelectedId()
+{
+	int sel = GetSelection();
+	if (sel < 0)return 0;
+	return m_ids_for_combo[sel].first;
+}
+
+void HTypeObjectDropDown::SelectById(int id)
+{
+	// set the combo to the correct item
+	for (unsigned int i = 0; i < m_ids_for_combo.size(); i++)
+	{
+		if (m_ids_for_combo[i].first == id)
+		{
+			SetSelection(i);
+			return;
+		}
+	}
+
+	SetSelection(0);
 }

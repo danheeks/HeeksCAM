@@ -15,65 +15,59 @@
 class CProfile;
 class CTags;
 
-class CProfileParams{
+class CProfile: public CSketchOp{
+private:
+	CTags* m_tags;				// Access via Tags() method
+
 public:
 	typedef enum {
 		eRightOrInside = -1,
 		eOn = 0,
 		eLeftOrOutside = +1
 	}eSide;
-	eSide m_tool_on_side;
+
 
 	typedef enum {
 		eConventional,
 		eClimb
 	}eCutMode;
-	eCutMode m_cut_mode;
 
 	// these are only used when m_sketches.size() == 1
+	int m_tool_on_side;
+	int m_cut_mode;
 	bool m_auto_roll_on;
 	bool m_auto_roll_off;
 	double m_auto_roll_radius;
-    double m_lead_in_line_len;
-    double m_lead_out_line_len;
-	double m_roll_on_point[3];
-	double m_roll_off_point[3];
+	double m_lead_in_line_len;
+	double m_lead_out_line_len;
+	double m_roll_on_point_x;
+	double m_roll_on_point_y;
+	double m_roll_on_point_z;
+	double m_roll_off_point_x;
+	double m_roll_off_point_y;
+	double m_roll_off_point_z;
 	bool m_start_given;
 	bool m_end_given;
-	double m_start[3];
-	double m_end[3];
-    double m_extend_at_start; 
-    double m_extend_at_end;
+	double m_start_x;
+	double m_start_y;
+	double m_start_z;
+	double m_end_x;
+	double m_end_y;
+	double m_end_z;
+	double m_extend_at_start;
+	double m_extend_at_end;
 	bool m_end_beyond_full_profile;
 	int m_sort_sketches;
-
 	double m_offset_extra; // in mm
 	bool m_do_finishing_pass;
 	bool m_only_finishing_pass; // don't do roughing pass
 	double m_finishing_h_feed_rate;
-	eCutMode m_finishing_cut_mode;
+	int m_finishing_cut_mode;
 	double m_finishing_step_down;
-
-	CProfileParams();
-
-	void GetProperties(CProfile* parent, std::list<Property *> *list);
-	void WriteXMLAttributes(TiXmlNode* pElem);
-	void ReadFromXMLElement(TiXmlElement* pElem);
-
-	bool operator==(const CProfileParams & rhs ) const;
-	bool operator!=(const CProfileParams & rhs ) const { return(! (*this == rhs)); }
-};
-
-class CProfile: public CSketchOp{
-private:
-	CTags* m_tags;				// Access via Tags() method
-
-public:
-	CProfileParams m_profile_params;
 
 	static double max_deviation_for_spline_to_arc;
 
-	CProfile():CSketchOp(0, ProfileType), m_tags(NULL) {}
+	CProfile();
 	CProfile(int sketch, const int tool_number );
 
 	CProfile( const CProfile & rhs );
@@ -84,6 +78,8 @@ public:
 
 	bool IsDifferent( HeeksObj *other ) { return(*this != (*(CProfile *)other)); }
 
+	void WriteXMLAttributes(TiXmlNode* pElem);
+	void ReadParamsFromXMLElement(TiXmlElement* pElem);
 
 	// HeeksObj's virtual functions
 	int GetType()const{return ProfileType;}
@@ -108,7 +104,7 @@ public:
 	CTags* Tags(){return m_tags;}
 
 	Python WriteSketchDefn(HeeksObj* sketch, bool reversed );
-	Python AppendTextForSketch(HeeksObj* object, CProfileParams::eCutMode cut_mode);
+	Python AppendTextForSketch(HeeksObj* object, int cut_mode);
 
 	// COp's virtual functions
 	Python AppendTextToProgram();

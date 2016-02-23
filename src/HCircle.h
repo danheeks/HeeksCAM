@@ -5,9 +5,10 @@
 #pragma once
 
 #include "IdNamedObj.h"
+#include "ExtrudedObj.h"
 #include "HeeksColor.h"
 
-class HCircle: public IdNamedObj{
+class HCircle: public ExtrudedObj<IdNamedObj>{
 private:
 	HeeksColor color;
 
@@ -18,6 +19,7 @@ public:
 	~HCircle(void);
 	HCircle(const gp_Circ &c, const HeeksColor* col);
 	HCircle(const HCircle &c);
+	HCircle(){}
 
 	const HCircle& operator=(const HCircle &c);
 
@@ -57,4 +59,5 @@ public:
 
 	void SetCircle(gp_Circ c);
 	gp_Circ GetCircle() const;
+	double GetDiameter()const;
 };

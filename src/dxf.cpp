@@ -353,6 +353,8 @@ bool CDxfRead::ReadPoint()
 {
 	double s[3] = {0, 0, 0};
 
+	ResetExtrusionAndThickness();
+
 	while(!((*m_ifs).eof()))
 	{
 		get_line();
@@ -438,7 +440,9 @@ bool CDxfRead::ReadArc()
 	double radius = 0.0;
 	double c[3]; // centre
 	bool hidden = false;
-    
+
+	ResetExtrusionAndThickness();
+
 	while(!((*m_ifs).eof()))
 	{
 		get_line();
@@ -718,6 +722,8 @@ bool CDxfRead::ReadCircle()
 	double c[3]; // centre
 	bool hidden = false;
 
+	ResetExtrusionAndThickness();
+
 	while(!((*m_ifs).eof()))
 	{
 		get_line();
@@ -802,6 +808,8 @@ bool CDxfRead::ReadText()
 	int hj = 0;
 	int vj = 0;
 	double scale_x = 1.0;
+
+	ResetExtrusionAndThickness();
 
 	memset( c, 0, sizeof(c) );
 
@@ -902,6 +910,8 @@ bool CDxfRead::ReadMText()
 	double height = 0.03082;
 	int hj = 0;
 	int vj = 0;
+
+	ResetExtrusionAndThickness();
 
 	memset( c, 0, sizeof(c) );
 
@@ -1040,6 +1050,8 @@ bool CDxfRead::ReadRText()
 	double height = 0.03082;
 	int hj = 0;
 	int vj = 0;
+
+	ResetExtrusionAndThickness();
 
 	memset(c, 0, sizeof(c));
 
@@ -2097,7 +2109,7 @@ bool CDxfRead::ReadDimension()
 
 void CDxfRead::OnReadArc(double start_angle, double end_angle, double radius, const double* c, bool hidden){
 	double s[3], e[3], temp[3] ;
-    if (m_extrusion_vector[2]==1.0)
+    if (m_extrusion_vector[2]>0.0)
   {
     temp[0] =c[0];
     temp[1] =c[1];
@@ -2127,13 +2139,20 @@ void CDxfRead::OnReadArc(double start_angle, double end_angle, double radius, co
 }
 
 void CDxfRead::OnReadCircle(const double* c, double radius, bool hidden){
-	double s[3];
+	double s[3], c2[3];
     double start_angle = 0;
 	s[0] = c[0] + radius * cos(start_angle * Pi/180);
 	s[1] = c[1] + radius * sin(start_angle * Pi/180);
 	s[2] = c[2];
 
-	OnReadCircle(s, c, false, hidden); //false to change direction because otherwise the arc length is zero
+	for (int i = 0; i < 3; i++)c2[i] = c[i];
+	if (m_extrusion_vector[2] < 0)
+	{
+		c2[0] = -c2[0];
+		s[0] = -s[0];
+	}
+
+	OnReadCircle(s, c2, false, hidden); //false to change direction because otherwise the arc length is zero
 }
 
 void CDxfRead::OnReadEllipse(const double* c, const double* m, double ratio, double start_angle, double end_angle){

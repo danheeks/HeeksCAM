@@ -1,8 +1,8 @@
 Source: heekscam
 Section: editors
 Priority: extra
-Maintainer: Romuald Conty <neomilium@gmail.com>
-Build-Depends: debhelper (>= 7.0.0), cmake, libopencascade-visualization-dev | liboce-visualization-dev, libwxgtk2.8-dev, libgtkglext1-dev, python-dev, libarea-dev
+Maintainer: Dan Heeks <danheeks@gmail.com>
+Build-Depends: debhelper (>= 7.0.0), cmake, libopencascade-visualization-dev | liboce-visualization-dev, libwxgtk2.8-dev, libgtkglext1-dev, python-dev
 Standards-Version: 3.9.3
 Homepage: https://github.com/danheeks/heekscam
 Vcs-Svn: https://github.com/danheeks/heekscam/trunk/

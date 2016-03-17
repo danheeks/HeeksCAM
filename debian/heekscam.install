@@ -1,8 +1,8 @@
-usr/bin/heekscad
-usr/bin/heekscad-1.0.0
+usr/bin/heekscam
+usr/bin/heekscam-1.0.0
 usr/lib/libheeksintf.so*
-usr/share/applications/HeeksCAD.desktop
-usr/share/heekscad/bitmaps/*
-usr/share/heekscad/icons/*
-usr/share/icons/hicolor/scalable/apps/HeeksCAD.svg
+usr/share/applications/HeeksCAM.desktop
+usr/share/heekscam/bitmaps/*
+usr/share/heekscam/icons/*
+usr/share/icons/hicolor/scalable/apps/HeeksCAM.svg
 usr/share/locale

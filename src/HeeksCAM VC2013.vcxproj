@@ -189,7 +189,6 @@
     <ClCompile Include="DepthOpDlg.cpp" />
     <ClCompile Include="Drilling.cpp" />
     <ClCompile Include="DrillingDlg.cpp" />
-    <ClCompile Include="DropCutter.cpp" />
     <ClCompile Include="ExtrudedObj.cpp" />
     <ClCompile Include="Finite.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
@@ -456,7 +455,6 @@
     <ClInclude Include="DepthOpDlg.h" />
     <ClInclude Include="Drilling.h" />
     <ClInclude Include="DrillingDlg.h" />
-    <ClInclude Include="DropCutter.h" />
     <ClInclude Include="ExtrudedObj.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="GTri.h" />

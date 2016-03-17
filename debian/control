@@ -1,0 +1,25 @@
+Source: heekscam
+Section: editors
+Priority: extra
+Maintainer: Romuald Conty <neomilium@gmail.com>
+Build-Depends: debhelper (>= 7.0.0), cmake, libopencascade-visualization-dev | liboce-visualization-dev, libwxgtk2.8-dev, libgtkglext1-dev, python-dev, libarea-dev
+Standards-Version: 3.9.3
+Homepage: https://github.com/danheeks/heekscam
+Vcs-Svn: https://github.com/danheeks/heekscam/trunk/
+
+Package: heekscam
+Architecture: any
+Depends: ${shlibs:Depends}, python (>= 2.5)
+Recommends: wx2.8-i18n
+Description: Computer-aided design application based on OCE
+ HeeksCAM is a CAD application which features:
+  * Import solid models from STEP and IGES files;
+  * Draw construction geomtery and lines and arcs;
+  * Create new primitive solids;
+  * Make solids by extruding a sketch or by making a lofted solid between
+  sketches;
+  * Modify solids using blending, or boolean operations;
+  * Save IGES, STEP and STL;
+  * Printer plot the 2D geometry;
+  * Import and export DXF files.
+

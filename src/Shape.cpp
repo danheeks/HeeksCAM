@@ -845,15 +845,28 @@ bool CShape::ImportSolidsFile(const wxChar* filepath, bool undoably, std::map<in
 		if ( status == IFSelect_RetDone )
 		{
 			int num = Reader.NbRootsForTransfer();
-				int shapes_added_for_sewing = 0;
-				BRepOffsetAPI_Sewing face_sewing (0.001);
-				std::list<TopoDS_Shape> shapes_readed;
+			int shapes_added_for_sewing = 0;
+			BRepOffsetAPI_Sewing face_sewing(wxGetApp().m_iges_sewing_tolerance);
+			std::list<TopoDS_Shape> shapes_readed;
 
 			for(int i = 1; i<=num; i++)
 			{
 				Handle_Standard_Transient root = Reader.RootForTransfer(i);
 				Reader.TransferEntity(root);
 				TopoDS_Shape rShape = Reader.Shape(i);
+
+				TopAbs_ShapeEnum shape_type = rShape.ShapeType();
+
+				if (shape_type == TopAbs_COMPOUND)
+				{
+					for (TopExp_Explorer explorer(rShape, TopAbs_SOLID); explorer.More(); explorer.Next())
+					{
+						TopoDS_Shape shape = explorer.Current();
+						TopAbs_ShapeEnum shape_type2 = shape.ShapeType();
+						shape_type = shape_type2;
+					}
+				}
+
 				shapes_readed.push_back(rShape);
 
 				for (TopExp_Explorer explorer(rShape, TopAbs_FACE); explorer.More(); explorer.Next())
@@ -863,47 +876,126 @@ bool CShape::ImportSolidsFile(const wxChar* filepath, bool undoably, std::map<in
 				}
 			}
 
-				bool sewed_shape_added = false;
-				try{
-					if(shapes_added_for_sewing > 0)
+			bool sewed_shape_added = false;
+			std::list<TopoDS_Edge> free_edges;
+			std::list<TopoDS_Edge> too_many_face_edges;
+
+			try{
+				if(shapes_added_for_sewing > 0)
+				{
+					face_sewing.Perform();
+					TopoDS_Shape sewed_shape = face_sewing.SewedShape();
+
+					if (!sewed_shape.IsNull())
 					{
-						const TopoDS_Shape& sewed_shape = face_sewing.SewedShape();
-						if (!sewed_shape.IsNull())
+						std::list<TopoDS_Shell> shells;
+
+						TopAbs_ShapeEnum sewed_shape_type = sewed_shape.ShapeType();
+						if (sewed_shape_type == TopAbs_SHELL)
 						{
-							BRepBuilderAPI_MakeSolid solid_maker;
+							shells.push_back(TopoDS::Shell(sewed_shape));
+						}
+						else if (sewed_shape_type == TopAbs_COMPOUND)
+						{
+							for (TopExp_Explorer explorer(sewed_shape, TopAbs_SHELL); explorer.More(); explorer.Next())
+							{
+								shells.push_back(TopoDS::Shell(explorer.Current()));
+							}
+						}
+
+						BRepBuilderAPI_MakeSolid solid_maker;
+
+						for (std::list<TopoDS_Shell>::iterator It = shells.begin(); It != shells.end(); It++)
+						{
+							TopoDS_Shell shell = *It;
+							bool shell_added = false;
 							try{
-								solid_maker.Add(TopoDS::Shell(sewed_shape));
+								solid_maker.Add(shell);
 								TopoDS_Shape solid = solid_maker.Solid();
 
 								if (GetVolume(solid) < 0.0) solid.Reverse();
 
 								HeeksObj* new_object = MakeObject(solid, _("sewed IGES solid"), SOLID_TYPE_UNKNOWN, HeeksColor(191, 191, 191), 1.0f);
-								add_to->Add(new_object, NULL);
-								sewed_shape_added = true;
+								if (undoably)wxGetApp().AddUndoably(new_object, add_to, NULL);
+								else add_to->Add(new_object, NULL);
+								shell_added = true;
+							}
+							catch (Standard_Failure) {
+								Handle_Standard_Failure e = Standard_Failure::Caught();
+								wxMessageBox(wxString(_("Error making solid from sewn shell")) + _T(": ") + Ctt(e->GetMessageString()));
 							}
 							catch (...)
 							{
-								HeeksObj* new_object = MakeObject(sewed_shape, _("sewed IGES shape"), SOLID_TYPE_UNKNOWN, HeeksColor(191, 191, 191), 1.0f);
-								add_to->Add(new_object, NULL);
-								sewed_shape_added = true;
+							}
+
+							if (!shell_added)
+							{
+								HeeksObj* new_object = MakeObject(shell, _("sew failed IGES shell"), SOLID_TYPE_UNKNOWN, HeeksColor(191, 128, 128), 1.0f);
+								if (undoably)wxGetApp().AddUndoably(new_object, add_to, NULL);
+								else add_to->Add(new_object, NULL);
+							}
+							sewed_shape_added = true;
+					}
+
+					}
+
+					if (face_sewing.NbFreeEdges() > 0)
+					{
+						if (wxMessageBox(_("There were disconnected edges! Do you want them created as edges?"), _("IGES import"), wxYES_NO) == wxID_YES)
+						{
+							for (int i = 0; i < face_sewing.NbFreeEdges(); i++)
+							{
+								HeeksObj* new_object = MakeObject(face_sewing.FreeEdge(i + 1), _("free edge from IGES import"), SOLID_TYPE_UNKNOWN, HeeksColor(255, 0, 0), 1.0f);
+								if (undoably)wxGetApp().AddUndoably(new_object, add_to, NULL);
+								else add_to->Add(new_object, NULL);
 							}
 						}
 					}
-				}
-				catch(...)
-				{
-				}
-				if(!sewed_shape_added)
-				{
-					// add the originals
-					for(std::list<TopoDS_Shape>::iterator It = shapes_readed.begin(); It != shapes_readed.end(); It++)
+					if (face_sewing.NbMultipleEdges() > 0)
 					{
-						TopoDS_Shape rShape = *It;
-						HeeksObj* new_object = MakeObject(rShape, _("IGES shape"), SOLID_TYPE_UNKNOWN, HeeksColor(191, 191, 191), 1.0f);
-						if(undoably)wxGetApp().AddUndoably(new_object, add_to, NULL);
-						else add_to->Add(new_object, NULL);
+						if (wxMessageBox(_("There were edges connected more than twice! Do you want them created as edges?"), _("IGES import"), wxYES_NO) == wxID_YES)
+						{
+							for (int i = 0; i < face_sewing.NbMultipleEdges(); i++)
+							{
+								HeeksObj* new_object = MakeObject(face_sewing.MultipleEdge(i + 1), _("multiple edge from IGES import"), SOLID_TYPE_UNKNOWN, HeeksColor(255, 128, 0), 1.0f);
+								if (undoably)wxGetApp().AddUndoably(new_object, add_to, NULL);
+								else add_to->Add(new_object, NULL);
+							}
+						}
 					}
+					if (face_sewing.NbDegeneratedShapes() > 0)
+					{
+						if (wxMessageBox(_("There were degenerate shapes! Do you want them created?"), _("IGES import"), wxYES_NO) == wxID_YES)
+						{
+							for (int i = 0; i < face_sewing.NbDegeneratedShapes(); i++)
+							{
+								HeeksObj* new_object = MakeObject(face_sewing.DegeneratedShape(i + 1), _("degenerate shape from IGES import"), SOLID_TYPE_UNKNOWN, HeeksColor(255, 128, 0), 1.0f);
+								if (undoably)wxGetApp().AddUndoably(new_object, add_to, NULL);
+								else add_to->Add(new_object, NULL);
+							}
+						}
+					}
+
 				}
+			}
+			catch (Standard_Failure) {
+				Handle_Standard_Failure e = Standard_Failure::Caught();
+				wxMessageBox(wxString(_("Error sewing")) + _T(": ") + Ctt(e->GetMessageString()));
+			}
+			catch (...)
+			{
+			}
+			if(!sewed_shape_added)
+			{
+				// add the originals
+				for(std::list<TopoDS_Shape>::iterator It = shapes_readed.begin(); It != shapes_readed.end(); It++)
+				{
+					TopoDS_Shape rShape = *It;
+					HeeksObj* new_object = MakeObject(rShape, _("IGES shape"), SOLID_TYPE_UNKNOWN, HeeksColor(191, 191, 191), 1.0f);
+					if(undoably)wxGetApp().AddUndoably(new_object, add_to, NULL);
+					else add_to->Add(new_object, NULL);
+				}
+			}
 
 		}
 		else{
@@ -926,7 +1018,8 @@ bool CShape::ImportSolidsFile(const wxChar* filepath, bool undoably, std::map<in
 		if(result)
 		{
 			HeeksObj* new_object = MakeObject(shape, _("BREP solid"), SOLID_TYPE_UNKNOWN, HeeksColor(191, 191, 191), 1.0f);
-			add_to->Add(new_object, NULL);
+			if (undoably)wxGetApp().AddUndoably(new_object, add_to, NULL);
+			else add_to->Add(new_object, NULL);
 		}
 		else{
 			wxMessageBox(_("STEP import not done!"));

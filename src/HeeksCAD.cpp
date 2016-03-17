@@ -246,6 +246,7 @@ HeeksCADapp::HeeksCADapp(): ObjList()
 	m_dragging_moves_objects = false;
 	m_no_creation_mode = false;
 	m_stl_solid_random_colors = false;
+	m_iges_sewing_tolerance = 0.001;
 
 #ifndef WIN32
 	m_font_paths = _T("/usr/share/qcad/fonts");
@@ -461,7 +462,8 @@ bool HeeksCADapp::OnInit()
 	}
 	config.Read(_T("SketchReorderTolerance"), &m_sketch_reorder_tol, 0.01);
 	config.Read(_T("StlSolidRandomColors"), &m_stl_solid_random_colors, false);
-
+	config.Read(_T("IgesSewingTolerance"), &m_iges_sewing_tolerance, 0.001);
+	
 	HDimension::ReadFromConfig(config);
 
 	m_ruler->ReadFromConfig(config);
@@ -640,6 +642,8 @@ void HeeksCADapp::WriteConfig()
 	config.Write(_T("MouseMoveHighlighting"), m_mouse_move_highlighting);
 	config.Write(_T("HighlightColor"), m_highlight_color.COLORREF_color());
 	config.Write(_T("StlSolidRandomColors"), m_stl_solid_random_colors);
+
+	config.Write(_T("IgesSewingTolerance"), m_iges_sewing_tolerance);
 
 	HDimension::WriteToConfig(config);
 
@@ -3294,6 +3298,14 @@ void on_stl_solid_random_colors(bool value, HeeksObj* object)
 	wxGetApp().Repaint();
 }
 
+
+void on_iges_sewing_tolerance(const double value, HeeksObj* object)
+{
+	wxGetApp().m_iges_sewing_tolerance = value;
+	HeeksConfig config;
+	config.Write(_T("IgesSewingTolerance"), wxGetApp().m_iges_sewing_tolerance);
+}
+
 void on_set_solid_view_mode(int value, HeeksObj* object, bool from_undo_redo)
 {
 	wxGetApp().m_solid_view_mode = (SolidViewMode)value;
@@ -3501,12 +3513,17 @@ void HeeksCADapp::GetOptions(std::list<Property *> *list)
 	dxf_options->m_list.push_back(new PropertyCheck(_("read points"), HeeksDxfRead::m_read_points, NULL, on_dxf_read_points));
 	dxf_options->m_list.push_back( new PropertyString(_("Layer Name Suffixes To Discard"), HeeksDxfRead::m_layer_name_suffixes_to_discard, this, on_edit_layer_name_suffixes_to_discard));
 	dxf_options->m_list.push_back(new PropertyCheck(_("add uninstanced blocks"), HeeksDxfRead::m_add_uninstanced_blocks, NULL, on_add_uninstanced_blocks));
-
 	file_options->m_list.push_back(dxf_options);
+
 	PropertyList* stl_options = new PropertyList(_("STL"));
 	stl_options->m_list.push_back(new PropertyDouble(_("stl save facet tolerance"), m_stl_facet_tolerance, NULL, on_stl_facet_tolerance));
 	stl_options->m_list.push_back( new PropertyCheck(_("STL save binary"), m_stl_save_as_binary, NULL, on_set_stl_save_binary));
 	file_options->m_list.push_back(stl_options);
+
+	PropertyList* iges_options = new PropertyList(_("IGES"));
+	iges_options->m_list.push_back(new PropertyDouble(_("face sewing tolerance"), m_iges_sewing_tolerance, NULL, on_iges_sewing_tolerance));
+	file_options->m_list.push_back(iges_options);
+
 	file_options->m_list.push_back(new PropertyInt(_("auto save interval (in minutes)"), m_auto_save_interval, NULL, on_set_auto_save_interval));
 	list->push_back(file_options);
 

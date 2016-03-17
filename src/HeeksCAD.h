@@ -151,6 +151,7 @@ public:
 	bool m_mouse_move_highlighting;
 	HeeksColor m_highlight_color;
 	bool m_stl_solid_random_colors;
+	double m_iges_sewing_tolerance;
 
 	//gp_Trsf digitizing_matrix;
 	CoordinateSystem *m_current_coordinate_system;

@@ -8,10 +8,18 @@
 
 void GetSolidMenuTools(std::list<Tool*>* t_list);
 
-class SaveSolids: public Tool {
+class SaveSolids : public Tool {
 public:
 
-    virtual void Run();
-	const wxChar* GetTitle(){return _("Save Solids");}
-	wxString BitmapPath(){return _T("saveas");}
+	virtual void Run();
+	const wxChar* GetTitle(){ return _("Save Solids"); }
+	wxString BitmapPath(){ return _T("saveas"); }
+};
+
+class OutlineSolids : public Tool {
+public:
+
+	virtual void Run();
+	const wxChar* GetTitle(){ return _("Make Outline Sketch Around Solids"); }
+	wxString BitmapPath(){ return _T("outline"); }
 };

@@ -1,13 +1,6 @@
 project( heekscam )
 cmake_minimum_required( VERSION 2.6 )
 
-if( ${CMAKE_VERSION} STREQUAL "2.8.2" )
-  # bug http://vtk.org/Bug/view.php?id=11020
-  message( WARNING "CMake/CPack version 2.8.2 will not create working .deb packages!")
-endif( ${CMAKE_VERSION} STREQUAL "2.8.2" )
-
-
-
 add_definitions ( -Wall -DUSE_GENERIC_TREECTRL -DUNICODE -DTIXML_USE_STL )
 
 # this figures out the Python include directories and adds them to the
@@ -445,38 +438,33 @@ set( heekscad_SRCS
     XYZBoxes.cpp
     )
 
-# CMake summary
-message (STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-message (STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+add_executable( heekscam ${heekscam_SRCS} ${platform_SRCS} )
+target_link_libraries( heekscam
+                       ${wxWidgets_LIBRARIES} ${OpenCASCADE_LIBRARIES}
+                       ${OPENGL_LIBRARIES} ${PYTHON_LIBRARIES} ${OSX_LIBS}
+                        )
+message(STATUS "wxWidgets_LIBRARIES: ${wxWidgets_LIBRARIES}")
+message(STATUS "wxWidgets_ROOT_DIR: ${wxWidgets_ROOT_DIR}")
+message(STATUS "wxWidgets_INCLUDE_DIRS: ${wxWidgets_INCLUDE_DIRS}")
 
-#-------------------- package generation -------------------------
-if( CMAKE_SIZEOF_VOID_P EQUAL 4 )
-  set(PKG_ARCH i386)
-else( CMAKE_SIZEOF_VOID_P EQUAL 4 )
-  set(PKG_ARCH amd64)
-endif( CMAKE_SIZEOF_VOID_P EQUAL 4 )
+set_target_properties( heekscam PROPERTIES VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH} )
+install( TARGETS heekscam DESTINATION bin )
 
-set(CPACK_GENERATOR "DEB")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Dan Heeks <danheeks@gmail.com>")
-set(CPACK_PACKAGE_NAME "heekscam")
-set(CPACK_PACKAGE_VERSION_MAJOR 1)
-set(CPACK_PACKAGE_VERSION_MINOR 0)
-set(CPACK_PACKAGE_VERSION_PATCH 0)
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}_beta-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}_${PKG_ARCH}")
+# Bitmaps, fonts, etc.
+foreach( bitmap_relpath "" "angle" "cuboid" )
+  file( GLOB bitmaps_${bitmap_relpath} "${CMAKE_CURRENT_SOURCE_DIR}/../bitmaps/${bitmap_relpath}/*.png"
+                   "${CMAKE_CURRENT_SOURCE_DIR}/../bitmaps/${bitmap_relpath}/*.svg"
+                   "${CMAKE_CURRENT_SOURCE_DIR}/../bitmaps/${bitmap_relpath}/*.glf"
+    )
+  install( FILES ${bitmaps_${bitmap_relpath}} DESTINATION share/heekscad/bitmaps/${bitmap_relpath} )
+endforeach()
 
-#newlines in the summary MUST be followed by a space, or dpkg will refuse to install!
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "HeeksCAM, CAD CAM based on Open CASCADE")
-set(CPACK_DEBIAN_PACKAGE_SECTION "science")
-set(CPACK_DEBIAN_PACKAGE_VERSION "")
+file( GLOB icons "${CMAKE_CURRENT_SOURCE_DIR}/../icons/*.png" )
+install( FILES ${icons} DESTINATION share/heekscad/icons )
 
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libwxbase2.8-0 (>= 2.8.5), libwxgtk2.8-0 (>= 2.8.5), libgtkglext1 (>= 1.2), python (>= 2.5), libboost-python1.49.0 | libboost-python1.48.0 | libboost-python1.46.1 | libboost-python1.42.0 | libboost-python1.40.0")
-set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "libopencascade-ocaf-6.3.0 | libopencascade-ocaf-6.5.0 | oce" )
+file( GLOB menu_icon "${CMAKE_CURRENT_SOURCE_DIR}/../icons/HeeksCAm.svg" )
+install( FILES ${menu_icon} DESTINATION share/icons/hicolor/scalable/apps ) # freedesktop.org standard location
 
-include(CPack)
-
-#---------- put subdirs down here so that the package version vars above are visible to them -----------
-add_subdirectory( interface )
-add_subdirectory( tinyxml )
-add_subdirectory( translations )
-add_subdirectory( src )  #needs libraries from other subdirs, so it goes last
+file( GLOB desktop "${CMAKE_CURRENT_SOURCE_DIR}/../HeeksCAM.desktop" )
+install( FILES ${desktop} DESTINATION share/applications )
 

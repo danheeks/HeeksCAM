@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "AboutBox.h"
 #include "HeeksFrame.h"
+#include "HDialogs.h"
 
 BEGIN_EVENT_TABLE( CAboutBox, wxDialog )
 EVT_BUTTON( wxID_OK, CAboutBox::OnButtonOK )
@@ -18,7 +19,7 @@ CAboutBox::CAboutBox(wxWindow *parent):wxDialog(parent, wxID_ANY, _T(""), wxDefa
 
     wxBoxSizer *mainsizer = new wxBoxSizer( wxVERTICAL );
 
-	wxTextCtrl* text_ctrl = new wxTextCtrl( this, wxID_ANY, _T(""),	wxDefaultPosition, wxSize(800,600), wxTE_READONLY | wxTE_MULTILINE);
+	wxTextCtrl* text_ctrl = new wxTextCtrl( panel, wxID_ANY, _T(""),	wxDefaultPosition, wxSize(800,600), wxTE_READONLY | wxTE_MULTILINE);
 
 	wxString str = wxString(_T("HeeksCAD\n see http://heeks.net, or for source code: http://code.google.com/p/heekscad/\n\nusing Open CASCADE solid modeller - http://www.opencascade.org"))
 		+ wxString(_T("\n\nwindows made with wxWidgets 2.8.9 - http://wxwidgets.org"))
@@ -32,13 +33,10 @@ CAboutBox::CAboutBox(wxWindow *parent):wxDialog(parent, wxID_ANY, _T(""), wxDefa
 
 	this->SetTitle(version_str);
 
-	text_ctrl->WriteText(str + wxGetApp().m_frame->m_extra_about_box_str);
+	text_ctrl->SetValue(str + wxGetApp().m_frame->m_extra_about_box_str);
 
-    //mainsizer->Add( text_ctrl, wxSizerFlags().Align(wxALIGN_CENTER).Border(wxALL, 10).Expand() );
-    //mainsizer->Add( ok_button, wxSizerFlags().Align(wxALIGN_CENTER) );
-	mainsizer->Add( text_ctrl );
-	mainsizer->Add( ok_button );
-	mainsizer->RecalcSizes();
+	mainsizer->Add(text_ctrl, 1, wxALL | wxGROW, HDialog::control_border);
+	mainsizer->Add(ok_button, 0, wxALL | wxGROW, HDialog::control_border);
 
     // tell frame to make use of sizer
     panel->SetAutoLayout( true );

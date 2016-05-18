@@ -124,7 +124,7 @@
       <ProgramDataBaseFileName>vc_msw\HeeksCAM.pdb</ProgramDataBaseFileName>
       <WarningLevel>Level4</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <ResourceCompile>
@@ -136,8 +136,8 @@
       <AdditionalDependencies>opengl32.lib;glu32.lib;TKVrml.lib;TKStl.lib;TKBRep.lib;TKIGES.lib;TKShHealing.lib;TKSTEP.lib;TKSTEP209.lib;TKSTEPAttr.lib;TKSTEPBase.lib;TKXSBase.lib;TKShapeSchema.lib;FWOSPlugin.lib;PTKernel.lib;TKBool.lib;TKCAF.lib;TKCDF.lib;TKDraw.lib;TKernel.lib;TKFeat.lib;TKFillet.lib;TKG2d.lib;TKG3d.lib;TKGeomAlgo.lib;TKGeomBase.lib;TKHLR.lib;TKMath.lib;TKOffset.lib;TKPCAF.lib;TKPrim.lib;TKPShape.lib;TKService.lib;TKTopAlgo.lib;TKV3d.lib;TKMesh.lib;TKBO.lib;TKXDESTEP.lib;TKXCAF.lib;TKXCAFSchema.lib;TKDCAF.lib;TKLCAF.lib;TKPLCAF.lib;wxmsw30u_core.lib;wxmsw30u_aui.lib;wxmsw30u_gl.lib;wxbase30u.lib;wxmsw30u_ribbon.lib;$(PYTHON3_LIB);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>..\x64\HeeksCAM.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(WXWIN30)\lib\vc_dll;$(CASROOT69)\win64\vc12\lib;$(BOOST57_PYTHON_PATH)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(WXWIN30)\lib\vc_dllx64;$(CASROOT69)\win64\vc12\lib;$(BOOST57_PYTHON_PATH)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\vc_msw/HeeksCAM.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>

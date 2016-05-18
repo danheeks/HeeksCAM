@@ -244,7 +244,6 @@ public:
 	int m_icon_texture_number;
 	bool m_extrude_to_solid;
 	double m_revolve_angle;
-	wxWindow* m_window;
 
 	typedef void(*FileOpenHandler_t)(const wxChar *path);
 	typedef std::map<wxString, FileOpenHandler_t> FileOpenHandlers_t;
@@ -330,7 +329,7 @@ public:
 	void OnNewButton();
 	void OnOpenButton();
 	bool OpenFile(const wxChar *filepath, bool import_not_open = false, HeeksObj* paste_into = NULL, HeeksObj* paste_before = NULL, bool retain_filename = true );
-	void SaveDXFFile(const wxChar *filepath);
+	void SaveDXFFile(const std::list<HeeksObj*>& objects, const wxChar *filepath);
 	void SaveSTLFileBinary(const std::list<HeeksObj*>& objects, const wxChar *filepath, double facet_tolerance = -1.0, double* scale = NULL);
 	void SaveSTLFileAscii(const std::list<HeeksObj*>& objects, const wxChar *filepath, double facet_tolerance = -1.0, double* scale = NULL);
 	void SaveOBJFileAscii(const std::list<HeeksObj*>& objects, const wxChar *filepath, double facet_tolerance = -1.0, double* scale = NULL);

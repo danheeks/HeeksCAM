@@ -258,7 +258,6 @@ HeeksCADapp::HeeksCADapp(): ObjList()
 	m_icon_texture_number = 0;
 	m_extrude_to_solid = true;
 	m_revolve_angle = 360.0;
-	m_window = NULL;
 	m_stl_save_as_binary = true;
 	m_mouse_move_highlighting = true;
 	m_highlight_color = HeeksColor(128, 255, 0);
@@ -1392,7 +1391,7 @@ static void WriteDXFEntity(HeeksObj* object, CDxfWrite& dxf_file, const wxString
 	}
 }
 
-void HeeksCADapp::SaveDXFFile(const wxChar *filepath)
+void HeeksCADapp::SaveDXFFile(const std::list<HeeksObj*>& objects, const wxChar *filepath)
 {
 	CDxfWrite dxf_file(Ttc(filepath));
 	if(dxf_file.Failed())
@@ -1403,7 +1402,7 @@ void HeeksCADapp::SaveDXFFile(const wxChar *filepath)
 	}
 
 	// write all the objects
-	for(std::list<HeeksObj*>::iterator It = m_objects.begin(); It != m_objects.end(); It++)
+	for (std::list<HeeksObj*>::const_iterator It = objects.begin(); It != objects.end(); It++)
 	{
 		HeeksObj* object = *It;
 		// At this level, don't assign each element to its own layer.  We only want sketch objects
@@ -1891,7 +1890,7 @@ bool HeeksCADapp::SaveFile(const wxChar *filepath, bool use_dialog, bool update_
 	}
 	else if(wf.EndsWith(_T(".dxf")))
 	{
-		SaveDXFFile(filepath);
+		SaveDXFFile(m_objects, filepath);
 	}
 	else if(wf.EndsWith(_T(".stl")))
 	{

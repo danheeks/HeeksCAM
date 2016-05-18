@@ -26,6 +26,7 @@
 #include "ProgramCanvas.h"
 #include "OutputCanvas.h"
 #include "HArc.h"
+#include "StlSolid.h"
 #include <set>
 
 #ifdef _DEBUG
@@ -96,57 +97,88 @@ void AddMenu(std::wstring str)
 {
 	wxMenu *newMenu = new wxMenu;
 	currentMenu = newMenu;
-	wxGetApp().m_frame->GetMenuBar()->Append(newMenu, str.c_str());
+	wxGetApp().m_frame->GetMenuBar()->Insert(wxGetApp().m_frame->GetMenuBar()->GetMenuCount() - 1, newMenu, str.c_str());
 }
+
+std::map<int, wxWindow*> window_id_map;
 
 void OnWindow(wxCommandEvent& event)
 {
-	wxAuiManager* aui_manager = wxGetApp().m_frame->m_aui_manager;
-	wxAuiPaneInfo& pane_info = aui_manager->GetPane(wxGetApp().m_window);
-	if (pane_info.IsOk()){
-		pane_info.Show(event.IsChecked());
-		aui_manager->Update();
+	int id = event.GetId();
+	std::map<int, wxWindow*>::iterator FindIt = window_id_map.find(id);
+	if (FindIt != window_id_map.end())
+	{
+		wxWindow* window = FindIt->second;
+		wxAuiManager* aui_manager = wxGetApp().m_frame->m_aui_manager;
+		wxAuiPaneInfo& pane_info = aui_manager->GetPane(window);
+		if (pane_info.IsOk()){
+			pane_info.Show(event.IsChecked());
+			aui_manager->Update();
+		}
 	}
 }
 
 void OnUpdateWindow(wxUpdateUIEvent& event)
 {
-	wxAuiManager* aui_manager = wxGetApp().m_frame->m_aui_manager;
-	event.Check(aui_manager->GetPane(wxGetApp().m_window).IsShown());
+	int id = event.GetId();
+	std::map<int, wxWindow*>::iterator FindIt = window_id_map.find(id);
+	if (FindIt != window_id_map.end())
+	{
+		wxWindow* window = FindIt->second;
+		wxAuiManager* aui_manager = wxGetApp().m_frame->m_aui_manager;
+		event.Check(aui_manager->GetPane(window).IsShown());
+	}
 }
 
-void AddWindow(std::wstring str, int hwnd)
+std::map<HWND, wxWindow*> hwnd_map;
+
+void AddHideableWindow(std::wstring str, int hwnd)
 {
-	if (wxGetApp().m_window == NULL)
+	std::map<HWND, wxWindow*>::iterator FindIt = hwnd_map.find((HWND)hwnd);
+	if (FindIt == hwnd_map.end())
 	{
-		wxGetApp().m_window = new wxWindow;
-		wxGetApp().m_window->SetHWND((HWND)hwnd);
-		wxGetApp().m_window->Reparent(wxGetApp().m_frame);
-		//wxGetApp().m_window = new wxWindow(wxID_ANY);
-		wxGetApp().m_frame->m_aui_manager->AddPane(wxGetApp().m_window, wxAuiPaneInfo().Name(str.c_str()).Caption(str.c_str()).Left().Layer(0).BestSize(wxSize(300, 400)));
-		wxGetApp().RegisterHideableWindow(wxGetApp().m_window);
+		wxWindow* window = new wxWindow;
+		window->SetHWND((HWND)hwnd);
+		window->Reparent(wxGetApp().m_frame);
+		wxGetApp().m_frame->m_aui_manager->AddPane(window, wxAuiPaneInfo().Name(str.c_str()).Caption(str.c_str()).Left().Layer(0).BestSize(wxSize(300, 400)));
+		wxGetApp().RegisterHideableWindow(window);
+		hwnd_map.insert(std::make_pair((HWND)hwnd, window));
 
 		// add tick box on the window menu
 		wxMenu* window_menu = wxGetApp().m_frame->m_menuWindow;
 		window_menu->AppendSeparator();
-		wxGetApp().m_frame->AddMenuItem(window_menu, str, wxBitmap(), OnWindow, OnUpdateWindow, NULL, true);
+		int id = wxGetApp().m_frame->AddMenuItem(window_menu, str, wxBitmap(), OnWindow, OnUpdateWindow, NULL, true);
+		window_id_map.insert(std::make_pair(id, window));
 		wxGetApp().m_frame->m_aui_manager->Update();
 	}
+}
 
-//	return (int)(wxGetApp().m_window->GetHWND());
+void ShowHideableWindow(int hwnd, int show_not_hide)
+{
+	// show one of the added external windows
+	std::map<HWND, wxWindow*>::iterator FindIt = hwnd_map.find((HWND)hwnd);
+	if (FindIt != hwnd_map.end())
+	{
+		wxWindow* window = FindIt->second;
+		wxGetApp().m_frame->m_aui_manager->GetPane(window).Show();
+		wxGetApp().m_frame->m_aui_manager->Update();
+	}
 }
 
 void AttachWindowToWindow(int hwnd)
 {
-	::SetParent((HWND)hwnd, wxGetApp().m_window->GetHWND());
+	::SetParent((HWND)hwnd, wxGetApp().m_frame->GetHWND());
 }
 
 int GetWindowHandle()
 {
-	return (int)(wxGetApp().m_window->GetHWND());
+	return (int)(wxGetApp().m_frame->GetHWND());
 }
 
-
+void CadImport(std::wstring fp)
+{
+	wxGetApp().OpenFile(fp.c_str(), true);
+}
 
 void MessageBoxPythonError()
 {
@@ -347,6 +379,13 @@ void SolidWriteSTL(CSolid& solid, double tolerance, std::wstring filepath)
 	wxGetApp().SaveSTLFileAscii(list, filepath.c_str(), tolerance);
 }
 
+void StlSolidWriteSTL(CStlSolid& solid, double tolerance, std::wstring filepath)
+{
+	std::list<HeeksObj*> list;
+	list.push_back(&solid);
+	wxGetApp().SaveSTLFileAscii(list, filepath.c_str(), tolerance);
+}
+
 int HeeksTypeToObjectType(long type)
 {
 	switch (type)
@@ -358,6 +397,7 @@ int HeeksTypeToObjectType(long type)
 	case VertexType:
 		return OBJECT_TYPE_VERTEX;
 	case SolidType:
+	case StlSolidType:
 		return OBJECT_TYPE_SOLID;
 	case SketchType:
 		return OBJECT_TYPE_SKETCH;
@@ -375,6 +415,9 @@ void AddObjectToPythonList(HeeksObj* object, boost::python::list& list)
 		break;
 	case SolidType:
 		list.append(boost::python::pointer_wrapper<CSolid*>((CSolid*)object));
+		break;
+	case StlSolidType:
+		list.append(boost::python::pointer_wrapper<CStlSolid*>((CStlSolid*)object));
 		break;
 	case CircleType:
 		list.append(boost::python::pointer_wrapper<HCircle*>((HCircle*)object));
@@ -412,10 +455,16 @@ int GetTypeFromHeeksObj(HeeksObj* object)
 	case CircleType:
 		return (int)OBJECT_TYPE_CIRCLE;
 	case SolidType:
+	case StlSolidType:
 		return (int)OBJECT_TYPE_SOLID;
 	default:
 		return 0;
 	}
+}
+
+std::wstring GetTitleFromHeeksObj(HeeksObj* object)
+{
+	return std::wstring(object->GetShortString());
 }
 
 boost::python::list SketchSplit(CSketch& sketch) {
@@ -469,6 +518,13 @@ bp::tuple SketchGetCircleCentre(CSketch& sketch)
 	}
 
 	return bp::make_tuple(NULL);
+}
+
+void SketchWriteDXF(CSketch& sketch, std::wstring filepath)
+{
+	std::list<HeeksObj*> objects;
+	objects.push_back(&sketch);
+	wxGetApp().SaveDXFFile(objects, filepath.c_str());
 }
 
 void ObjectAddObject(HeeksObj* parent, HeeksObj* object)
@@ -545,6 +601,7 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::class_<HeeksObj>("Object")
 		.def(bp::init<HeeksObj>())
 		.def("GetType", &GetTypeFromHeeksObj) ///function GetType///return Object///returns the object's type
+		.def("GetTitle", &GetTitleFromHeeksObj)
 		.def("GetId", &GetId)
 		.def("AddObject", &ObjectAddObject)
 		;
@@ -574,6 +631,7 @@ BOOST_PYTHON_MODULE(cad) {
 		.def("Split", &SketchSplit)
 		.def("GetCircleDiameter", &SketchGetCircleDiameter)
 		.def("GetCircleCentre", &SketchGetCircleCentre)
+		.def("WriteDXF", &SketchWriteDXF)
 		;
 
 	bp::class_<CShape, bp::bases<IdNamedObjList>>("Shape")
@@ -583,6 +641,11 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::class_<CSolid, bp::bases<CShape>>("Solid")
 		.def(bp::init<CSolid>())
 		.def("WriteSTL", &SolidWriteSTL) ///function WriteSTL///params float tolerance, string filepath///writes an STL file for the body to the given tolerance
+		;
+
+	bp::class_<CStlSolid, bp::bases<HeeksObj>>("StlSolid")
+		.def(bp::init<CStlSolid>())
+		.def("WriteSTL", &StlSolidWriteSTL) ///function WriteSTL///params float tolerance, string filepath///writes an STL file for the body to the given tolerance
 		;
 
 	bp::class_<COp, bp::bases<IdNamedObjList>>("Op")
@@ -738,9 +801,11 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::def("NewPocket", NewPocket, bp::return_value_policy<bp::reference_existing_object>());
 	bp::def("NewTool", NewTool, bp::return_value_policy<bp::reference_existing_object>());
 	bp::def("GetProgram", GetProgram, bp::return_value_policy<bp::reference_existing_object>());
-	bp::def("AddWindow", AddWindow);///function AddWindow///params str title///adds a window to the CAD software
+	bp::def("AddHideableWindow", AddHideableWindow);///function AddHideableWindow///params str title///adds a window to the CAD software
+	bp::def("ShowHideableWindow", ShowHideableWindow);
 	bp::def("AttachWindowToWindow", AttachWindowToWindow);///function AttachWindowToWindow///params int hwnd///attaches given window to the CAD window
 	bp::def("GetWindowHandle", GetWindowHandle);
+	bp::def("Import", CadImport);
 
 	bp::scope().attr("OBJECT_TYPE_UNKNOWN") = (int)OBJECT_TYPE_UNKNOWN;
 	bp::scope().attr("OBJECT_TYPE_BODY") = (int)OBJECT_TYPE_BODY;

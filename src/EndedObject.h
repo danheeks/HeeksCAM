@@ -6,13 +6,14 @@
 
 #include "ExtrudedObj.h"
 #include "HeeksColor.h"
+#include "geometry.h"
 
 class EndedObject : public ExtrudedObj<HeeksObj>{
 protected:
 	HeeksColor color;
 
 public:
-	gp_Pnt A, B;
+	geoff_geometry::Point3d A, B;
 
 	~EndedObject(void);
 	EndedObject(void);

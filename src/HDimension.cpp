@@ -14,6 +14,7 @@
 
 bool HDimension::DrawFlat = true;
 
+#ifdef USING_OCC
 HDimension::HDimension(const gp_Trsf &trsf, const gp_Pnt &p0, const gp_Pnt &p1, const gp_Pnt &p2, DimensionMode mode, DimensionUnits units, const HeeksColor* col): EndedObject(), m_trsf(trsf), m_mode(mode),  m_units(units),  m_scale(1.0)
 {
 	m_p2 = p2;
@@ -586,3 +587,5 @@ void HDimension::ReadFromConfig(HeeksConfig& config)
 {
 	config.Read(_T("DimensionDrawFlat"), &DrawFlat, false);
 }
+
+#endif

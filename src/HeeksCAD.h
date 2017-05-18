@@ -120,6 +120,7 @@ protected:
 
 public:
 	HeeksCADapp();
+	HeeksCADapp(const HeeksCADapp& app);
 	~HeeksCADapp();
 
 	wxPoint cur_mouse_pos;
@@ -513,6 +514,7 @@ public:
 
 		// this code was in HeeksPython
 		void OnPythonStartUp();
+		void PythonOnNewOrOpen(bool open, int res);
 };
 
 void ExitMainLoop();

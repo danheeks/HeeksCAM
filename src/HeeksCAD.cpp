@@ -290,6 +290,14 @@ HeeksCADapp::HeeksCADapp(): ObjList()
 
 }
 
+HeeksCADapp::HeeksCADapp(const HeeksCADapp& app)
+{
+	// don't come here please
+	int a = 3;
+	a = 4;
+	a++;
+}
+
 HeeksCADapp::~HeeksCADapp()
 {
 	delete m_marked_list;
@@ -2593,12 +2601,15 @@ void HeeksCADapp::ReverseUndoably(HeeksObj *object)
 void HeeksCADapp::EditUndoably(HeeksObj *object)
 {
 	HeeksObj* copy_object = object->MakeACopyWithID();
-	if(copy_object->Edit())
+	if (copy_object)
 	{
-		wxGetApp().CopyUndoably(object, copy_object);
+		if (copy_object->Edit())
+		{
+			wxGetApp().CopyUndoably(object, copy_object);
+		}
+		else
+			delete copy_object;
 	}
-	else
-		delete copy_object;
 }
 
 void HeeksCADapp::Transform(std::list<HeeksObj*> objects,double *m)
@@ -4074,6 +4085,8 @@ void HeeksCADapp::OnNewOrOpen(bool open, int res)
 {
 	// cnc onneworopen
 	OnCNCNewOrOpen(open, res);
+
+	PythonOnNewOrOpen(open, res);
 
 	ObserversOnChange(&m_objects, NULL, NULL);
 }

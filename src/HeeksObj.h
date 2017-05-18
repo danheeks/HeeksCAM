@@ -141,7 +141,7 @@ public:
 	virtual bool GetMidPoint(double* pos){return false;}
 	virtual bool GetScaleAboutMatrix(double *m);
 	virtual void GetProperties(std::list<Property *> *list); // use GetDialog instead of this, if you have time to code one.
-	virtual void GetOnEdit(bool(**callback)(HeeksObj*)){} // returns a function for doing edit with a dialog
+	virtual void GetOnEdit(bool(**callback)(HeeksObj*)){ *callback = NULL; } // returns a function for doing edit with a dialog
 	bool Edit(){bool(*fn)(HeeksObj*) = NULL;GetOnEdit(&fn);if(fn){if((*fn)(this)){WriteDefaultValues();return true;}}return false;}  // do edit with a dialog
 	virtual void OnApplyProperties(){}
 	virtual bool ValidateProperties(){return true;}

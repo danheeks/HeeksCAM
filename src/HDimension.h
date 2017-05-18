@@ -26,6 +26,8 @@ enum DimensionUnits
 
 class HeeksConfig;
 
+#ifdef USING_OCC
+
 class HDimension: public EndedObject{
 private:
 	gp_Pnt GetB2(); // return B, possibly flattened
@@ -72,3 +74,5 @@ public:
 	static void WriteToConfig(HeeksConfig& config);
 	static void ReadFromConfig(HeeksConfig& config);
 };
+
+#endif

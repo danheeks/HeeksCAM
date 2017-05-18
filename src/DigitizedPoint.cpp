@@ -12,12 +12,12 @@
 DigitizedPoint::DigitizedPoint()
 {
 	m_type = DigitizeNoItemType;
-	m_point = gp_Pnt(0, 0, 0);
+	m_point = geoff_geometry::Point3d(0, 0, 0);
 	m_object1 = NULL;
 	m_object2 = NULL;
 }
 
-DigitizedPoint::DigitizedPoint(gp_Pnt point, DigitizeType t, HeeksObj* object1, HeeksObj* object2)
+DigitizedPoint::DigitizedPoint(const geoff_geometry::Point3d &point, DigitizeType t, HeeksObj* object1, HeeksObj* object2)
 {
 	m_point = point;
 	m_type = t;
@@ -49,6 +49,8 @@ int DigitizedPoint::importance(){
 		return 0;
 	}
 }
+
+#ifdef USING_OCC
 
 static PointLineOrCircle GetLineOrCircleType(const DigitizedPoint& d)
 {
@@ -379,3 +381,4 @@ bool DigitizedPoint::GetTangentCircle(const DigitizedPoint& d1, const DigitizedP
 	return false;
 }
 
+#endif

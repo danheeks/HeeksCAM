@@ -701,7 +701,10 @@ void CTreeCanvas::RenderObject(bool expanded, HeeksObj* prev_object, bool prev_o
 
 	int label_start_x = m_xpos;
 	// find icon info
-	if(!render_just_for_calculation)m_dc->DrawBitmap(object->GetIcon(), m_xpos, m_ypos);
+	if (!render_just_for_calculation)
+	{
+		m_dc->DrawBitmap(object->GetIcon(), m_xpos, m_ypos);
+	}
 	m_xpos += 16;
 
 	wxString str(object->GetShortStringOrTypeString());

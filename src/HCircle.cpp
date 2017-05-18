@@ -574,6 +574,7 @@ static const two_points* find_best_points_pair(const std::list<two_points>& poin
 	return best_pair;
 }
 
+#ifdef USING_OCC
 // static
 bool HCircle::GetArcTangentPoints(const gp_Circ& c1, const gp_Circ &c2, const gp_Pnt& a, const gp_Pnt& b, double radius, gp_Pnt& p1, gp_Pnt& p2, gp_Pnt& centre, gp_Dir& axis)
 {
@@ -869,6 +870,7 @@ void HCircle::SetCircle(gp_Circ c)
 	m_radius = c.Radius();
 	m_axis = c.Axis();
 }
+#endif
 
 static HCircle *object_for_tools = NULL;
 
@@ -882,7 +884,7 @@ public:
 		double centre[3];
 		box.Centre(centre);
 
-		wxGetApp().m_digitizing->digitized_point = DigitizedPoint(gp_Pnt(centre[0], centre[1], centre[2]), DigitizeInputType);
+		wxGetApp().m_digitizing->digitized_point = DigitizedPoint(geoff_geometry::Point3d(centre[0], centre[1], centre[2]), DigitizeInputType);
 		Drawing *pDrawingMode = dynamic_cast<Drawing *>(wxGetApp().input_mode_object);
 		if (pDrawingMode != NULL)
 		{
@@ -907,7 +909,7 @@ public:
 		double centre[3];
 		box.Centre(centre);		
 
-		wxGetApp().m_digitizing->digitized_point = DigitizedPoint(gp_Pnt(centre[0], box.MaxY(), centre[2]), DigitizeInputType);
+		wxGetApp().m_digitizing->digitized_point = DigitizedPoint(geoff_geometry::Point3d(centre[0], box.MaxY(), centre[2]), DigitizeInputType);
 		Drawing *pDrawingMode = dynamic_cast<Drawing *>(wxGetApp().input_mode_object);
 		if (pDrawingMode != NULL)
 		{
@@ -931,7 +933,7 @@ public:
 		double centre[3];
 		box.Centre(centre);		
 
-		wxGetApp().m_digitizing->digitized_point = DigitizedPoint(gp_Pnt(centre[0], box.MinY(), centre[2]), DigitizeInputType);
+		wxGetApp().m_digitizing->digitized_point = DigitizedPoint(geoff_geometry::Point3d(centre[0], box.MinY(), centre[2]), DigitizeInputType);
 		Drawing *pDrawingMode = dynamic_cast<Drawing *>(wxGetApp().input_mode_object);
 		if (pDrawingMode != NULL)
 		{
@@ -955,7 +957,7 @@ public:
 		double centre[3];
 		box.Centre(centre);		
 
-		wxGetApp().m_digitizing->digitized_point = DigitizedPoint(gp_Pnt(box.MaxX(), centre[1], centre[2]), DigitizeInputType);
+		wxGetApp().m_digitizing->digitized_point = DigitizedPoint(geoff_geometry::Point3d(box.MaxX(), centre[1], centre[2]), DigitizeInputType);
 		Drawing *pDrawingMode = dynamic_cast<Drawing *>(wxGetApp().input_mode_object);
 		if (pDrawingMode != NULL)
 		{
@@ -979,7 +981,7 @@ public:
 		double centre[3];
 		box.Centre(centre);		
 
-		wxGetApp().m_digitizing->digitized_point = DigitizedPoint(gp_Pnt(box.MinX(), centre[1], centre[2]), DigitizeInputType);
+		wxGetApp().m_digitizing->digitized_point = DigitizedPoint(geoff_geometry::Point3d(box.MinX(), centre[1], centre[2]), DigitizeInputType);
 		Drawing *pDrawingMode = dynamic_cast<Drawing *>(wxGetApp().input_mode_object);
 		if (pDrawingMode != NULL)
 		{
@@ -1009,8 +1011,10 @@ void HCircle::GetTools(std::list<Tool*>* t_list, const wxPoint* p)
 	}
 }
 
+#ifdef USING_OCC
 double HCircle::GetDiameter()const
 {
 	gp_Circ c = GetCircle();
 	return 2 * c.Radius();
 }
+#endif

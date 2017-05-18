@@ -13,11 +13,20 @@ private:
 	HeeksColor color;
 
 public:
+#ifdef USING_OCC
 	gp_Ax1 m_axis;
+#else
+	geoff_geometry::Point3d m_location;
+	geoff_geometry::Vector3d m_axis;
+#endif
 	double m_radius;
 
 	~HCircle(void);
+#ifdef USING_OCC
 	HCircle(const gp_Circ &c, const HeeksColor* col);
+#else
+	HCircle(const geoff_geometry::Point3d &l, geoff_geometry::Vector3d& a, const HeeksColor* col);
+#endif
 	HCircle(const HCircle &c);
 	HCircle(){}
 
@@ -49,6 +58,7 @@ public:
 	void GetTools(std::list<Tool*>* t_list, const wxPoint* p);
 
 	static HeeksObj* ReadFromXMLElement(TiXmlElement* pElem);
+#ifdef USING_OCC
 	static bool GetLineTangentPoints(const gp_Circ& c1, const gp_Circ& c2, const gp_Pnt& a, const gp_Pnt& b, gp_Pnt& p1, gp_Pnt& p2);
 	static bool GetLineTangentPoint(const gp_Circ& c, const gp_Pnt& a, const gp_Pnt& b, gp_Pnt& p);
 	static bool GetArcTangentPoints(const gp_Circ& c, const gp_Lin &line, const gp_Pnt& p, double radius, gp_Pnt& p1, gp_Pnt& p2, gp_Pnt& centre, gp_Dir& axis);
@@ -60,4 +70,5 @@ public:
 	void SetCircle(gp_Circ c);
 	gp_Circ GetCircle() const;
 	double GetDiameter()const;
+#endif
 };

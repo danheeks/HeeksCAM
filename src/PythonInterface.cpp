@@ -180,6 +180,18 @@ void CadImport(std::wstring fp)
 	wxGetApp().OpenFile(fp.c_str(), true);
 }
 
+void AppendAboutString(std::wstring str)
+{
+	wxGetApp().m_frame->m_extra_about_box_str.Append(str);
+}
+
+static std::list<PyObject*> new_or_open_callbacks;
+
+void RegisterNewOrOpen(PyObject *callback)
+{
+	new_or_open_callbacks.push_back(callback);
+}
+
 void MessageBoxPythonError()
 {
 	std::wstring error_string;
@@ -440,7 +452,7 @@ boost::python::list GetObjects() {
 	boost::python::list olist;
 	for (HeeksObj *object = wxGetApp().GetFirstChild(); object; object = wxGetApp().GetNextChild())
 	{
-		olist.append(object);
+		olist.append(boost::python::pointer_wrapper<HeeksObj*>(object));
 		AddObjectToPythonList(object, olist);
 	}
 	return olist;
@@ -537,6 +549,11 @@ void CadAddObject(HeeksObj* object)
 	wxGetApp().AddUndoably(object, NULL, NULL);
 }
 
+void PyIncRef(PyObject* object)
+{
+	Py_INCREF(object);
+}
+
 HeeksObj* NewPoint(double x, double y, double z)
 {
 	HeeksObj* new_object = new HPoint(gp_Pnt(x, y, z), &wxGetApp().current_color);
@@ -595,6 +612,76 @@ void ToolResetTitle(CTool& tool)
 	tool.ResetTitle();
 }
 
+class HBitmap : public wxBitmap
+{
+public:
+	HBitmap() :wxBitmap(0, 0){}
+	HBitmap(const wxBitmap& b) :wxBitmap(b){}
+	HBitmap(const std::wstring &str) :wxBitmap(wxImage(wxGetApp().GetResFolder() + str.c_str())){}
+};
+
+std::wstring str_for_base_object;
+HBitmap hbitmap_for_base_object;
+
+#define BASE_OBJECT_DEFINED
+
+#ifdef BASE_OBJECT_DEFINED
+class BaseObject : public HeeksObj, public bp::wrapper<HeeksObj>
+{
+public:
+	int m_some_variable;
+	BaseObject():HeeksObj(){}
+	int GetType()const override
+	{
+		if (bp::override f = this->get_override("GetType"))
+			return f();
+		return HeeksObj::GetType();
+	}
+
+	const wxBitmap &GetIcon() override
+	{
+		if (bp::override f = this->get_override("GetIcon"))
+		{
+			hbitmap_for_base_object = HBitmap(f());
+			return hbitmap_for_base_object;
+		}
+		return HeeksObj::GetIcon();
+	}
+
+	const wxChar* GetShortString()const override
+	{
+		if (bp::override f = this->get_override("GetTitle"))
+		{
+			// to do uncomment next line and fix compiler error
+			//str_for_base_object = std::wstring(f());
+			return str_for_base_object.c_str();
+		}
+		return HeeksObj::GetShortString();
+	}
+};
+
+int BaseObjectGetType(const BaseObject& object)
+{
+	return object.GetType();
+}
+
+HBitmap BaseObjectGetIcon(BaseObject& object)
+{
+	return object.GetIcon();
+}
+
+std::wstring BaseObjectGetTitle(const BaseObject& object)
+{
+	return object.GetShortString();
+}
+
+HeeksObj* BaseObjectObject(BaseObject* object)
+{
+	return object;
+}
+
+#endif
+
 BOOST_PYTHON_MODULE(cad) {
 	/// class Object
 	/// interface to a solid
@@ -606,6 +693,14 @@ BOOST_PYTHON_MODULE(cad) {
 		.def("AddObject", &ObjectAddObject)
 		;
 
+#ifdef BASE_OBJECT_DEFINED
+	bp::class_<BaseObject, boost::noncopyable >("Object")
+//		.def(bp::init<BaseObject>())
+		.def("GetType", &BaseObjectGetType)
+		.def("GetIcon", &BaseObjectGetIcon)
+		.def("GetTitle", &BaseObjectGetTitle)
+		;
+#endif
 	bp::class_<HCircle, bp::bases<HeeksObj> >("Circle")
 		.def(bp::init<HCircle>())
 		.def("GetDiameter", &HCircle::GetDiameter)
@@ -753,6 +848,11 @@ BOOST_PYTHON_MODULE(cad) {
 		.def_readwrite("cut_mode", &CPocket::m_cut_mode)
 		;
 
+	bp::class_<HBitmap>("Bitmap")
+		.def(bp::init<HBitmap>())
+		.def(bp::init<std::wstring>())
+		;
+
 	bp::class_<CProfile, bp::bases<CSketchOp>>("Profile")
 		.def(bp::init<CProfile>())
 		.def_readwrite("tool_on_side", &CProfile::m_tool_on_side)
@@ -795,17 +895,24 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::def("GetSelectedObjects", GetSelectedObjects);
 	bp::def("GetObjects", GetObjects);
 	bp::def("AddObject", CadAddObject);
+	bp::def("PyIncRef", PyIncRef);
 	bp::def("NewPoint", NewPoint, bp::return_value_policy<bp::reference_existing_object>());
 	bp::def("NewDrilling", NewDrilling, bp::return_value_policy<bp::reference_existing_object>());
 	bp::def("NewProfile", NewProfile, bp::return_value_policy<bp::reference_existing_object>());
 	bp::def("NewPocket", NewPocket, bp::return_value_policy<bp::reference_existing_object>());
 	bp::def("NewTool", NewTool, bp::return_value_policy<bp::reference_existing_object>());
 	bp::def("GetProgram", GetProgram, bp::return_value_policy<bp::reference_existing_object>());
-	bp::def("AddHideableWindow", AddHideableWindow);///function AddHideableWindow///params str title///adds a window to the CAD software
+	bp::def("AddHideableWindow", AddHideableWindow, "adds a window to the CAD software");///function AddHideableWindow///params str title///adds a window to the CAD software
 	bp::def("ShowHideableWindow", ShowHideableWindow);
 	bp::def("AttachWindowToWindow", AttachWindowToWindow);///function AttachWindowToWindow///params int hwnd///attaches given window to the CAD window
 	bp::def("GetWindowHandle", GetWindowHandle);
 	bp::def("Import", CadImport);
+	bp::def("AppendAboutString", AppendAboutString);
+	bp::def("RegisterNewOrOpen", RegisterNewOrOpen);
+#ifdef BASE_OBJECT_DEFINED
+	//bp::def("BaseToObject", BaseObjectObject, bp::return_value_policy<bp::reference_existing_object>());
+#endif
+
 
 	bp::scope().attr("OBJECT_TYPE_UNKNOWN") = (int)OBJECT_TYPE_UNKNOWN;
 	bp::scope().attr("OBJECT_TYPE_BODY") = (int)OBJECT_TYPE_BODY;
@@ -862,6 +969,27 @@ void HeeksCADapp::OnPythonStartUp()
 
 	if (PyErr_Occurred())
 		MessageBoxPythonError();
+}
+
+void HeeksCADapp::PythonOnNewOrOpen(bool open, int res)
+{
+	// loop through call back functions calling them
+	for (std::list<PyObject*>::iterator It = new_or_open_callbacks.begin(); It != new_or_open_callbacks.end(); It++)
+	{
+		PyObject* python_callback = *It;
+
+		PyObject *main_module, *globals;
+		BeforePythonCall(&main_module, &globals);
+
+		// Execute the python function
+		PyObject* result = PyObject_CallFunction(python_callback, 0);
+
+		AfterPythonCall(main_module);
+
+		// Release the python objects we still have
+		if (result)Py_DECREF(result);
+		else PyErr_Print();
+	}
 }
 
 static bool write_python_file(const wxString& python_file_path)

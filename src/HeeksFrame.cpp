@@ -43,6 +43,7 @@
 #include "HGear.h"
 #include "HPoint.h"
 #include "HCircle.h"
+#include "HOctree.h"
 #ifdef USING_RIBBON
 #include "HeeksRibbon.h"
 #endif
@@ -912,6 +913,8 @@ void OnCubeButton( wxCommandEvent& event )
 {
 	gp_Trsf mat = wxGetApp().GetDrawMatrix(false);
 	CCuboid* new_object = new CCuboid(gp_Ax2(gp_Pnt(0, 0, 0).Transformed(mat), gp_Dir(0, 0, 1).Transformed(mat), gp_Dir(1, 0, 0).Transformed(mat)), 10, 10, 10, NULL, HeeksColor(191, 240, 191), 1.0f);
+// 	CBox test_box(-100, -100, -100, 100, 100, 100);
+//	HOctree* new_object = new HOctree(test_box);
 	AddObjectFromButton(new_object);
 }
 

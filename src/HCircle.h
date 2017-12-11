@@ -8,42 +8,33 @@
 #include "ExtrudedObj.h"
 #include "HeeksColor.h"
 
-class HCircle: public ExtrudedObj<IdNamedObj>{
+class HCircle : public ExtrudedObj<IdNamedObj>{
 private:
 	HeeksColor color;
 
 public:
-#ifdef USING_OCC
 	gp_Ax1 m_axis;
-#else
-	geoff_geometry::Point3d m_location;
-	geoff_geometry::Vector3d m_axis;
-#endif
 	double m_radius;
 
 	~HCircle(void);
-#ifdef USING_OCC
 	HCircle(const gp_Circ &c, const HeeksColor* col);
-#else
-	HCircle(const geoff_geometry::Point3d &l, geoff_geometry::Vector3d& a, const HeeksColor* col);
-#endif
 	HCircle(const HCircle &c);
 	HCircle(){}
 
 	const HCircle& operator=(const HCircle &c);
 
 	// HeeksObj's virtual functions
-	int GetType()const{return CircleType;}
-	long GetMarkingMask()const{return MARKING_FILTER_CIRCLE;}
+	int GetType()const{ return CircleType; }
+	long GetMarkingMask()const{ return MARKING_FILTER_CIRCLE; }
 	void glCommands(bool select, bool marked, bool no_color);
 	void GetBox(CBox &box);
-	const wxChar* GetTypeString(void)const{return _("Circle");}
-	int GetIDGroupType()const{return SketchType;}
+	const wxChar* GetTypeString(void)const{ return _("Circle"); }
+	int GetIDGroupType()const{ return SketchType; }
 	HeeksObj *MakeACopy(void)const;
 	const wxBitmap &GetIcon();
 	void ModifyByMatrix(const double *mat);
-	void SetColor(const HeeksColor &col){color = col;}
-	const HeeksColor* GetColor()const{return &color;}
+	void SetColor(const HeeksColor &col){ color = col; }
+	const HeeksColor* GetColor()const{ return &color; }
 	void GetGripperPositions(std::list<GripData> *list, bool just_for_endof);
 	void GetProperties(std::list<Property *> *list);
 	bool FindNearPoint(const double* ray_start, const double* ray_direction, double *point);
@@ -53,12 +44,11 @@ public:
 	bool GetCentrePoint(double* pos);
 	void WriteXML(TiXmlNode *root);
 	int Intersects(const HeeksObj *object, std::list< double > *rl)const;
-	bool DescendForUndo(){return false;}
+	bool DescendForUndo(){ return false; }
 	bool IsDifferent(HeeksObj* other);
 	void GetTools(std::list<Tool*>* t_list, const wxPoint* p);
 
 	static HeeksObj* ReadFromXMLElement(TiXmlElement* pElem);
-#ifdef USING_OCC
 	static bool GetLineTangentPoints(const gp_Circ& c1, const gp_Circ& c2, const gp_Pnt& a, const gp_Pnt& b, gp_Pnt& p1, gp_Pnt& p2);
 	static bool GetLineTangentPoint(const gp_Circ& c, const gp_Pnt& a, const gp_Pnt& b, gp_Pnt& p);
 	static bool GetArcTangentPoints(const gp_Circ& c, const gp_Lin &line, const gp_Pnt& p, double radius, gp_Pnt& p1, gp_Pnt& p2, gp_Pnt& centre, gp_Dir& axis);
@@ -70,5 +60,4 @@ public:
 	void SetCircle(gp_Circ c);
 	gp_Circ GetCircle() const;
 	double GetDiameter()const;
-#endif
 };

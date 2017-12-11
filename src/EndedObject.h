@@ -6,14 +6,13 @@
 
 #include "ExtrudedObj.h"
 #include "HeeksColor.h"
-#include "geometry.h"
 
 class EndedObject : public ExtrudedObj<HeeksObj>{
 protected:
 	HeeksColor color;
 
 public:
-	geoff_geometry::Point3d A, B;
+	gp_Pnt A, B;
 
 	~EndedObject(void);
 	EndedObject(void);
@@ -26,9 +25,9 @@ public:
 	void ModifyByMatrix(const double* m);
 	bool GetStartPoint(double* pos);
 	bool GetEndPoint(double* pos);
-	void CopyFrom(const HeeksObj* object){operator=(*((EndedObject*)object));}
-	void SetColor(const HeeksColor &col){color = col;}
-	const HeeksColor* GetColor()const{return &color;}
+	void CopyFrom(const HeeksObj* object){ operator=(*((EndedObject*)object)); }
+	void SetColor(const HeeksColor &col){ color = col; }
+	const HeeksColor* GetColor()const{ return &color; }
 	void GetGripperPositions(std::list<GripData> *list, bool just_for_endof);
 	HeeksObj* MakeACopyWithID();
 	bool IsDifferent(HeeksObj* other);

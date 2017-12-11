@@ -141,5 +141,26 @@ public:
 
 		}
 	}
+	bool Contains(const CBox& b)const
+	{
+		if (b.MinX() < MinX())return false;
+		if (b.MinY() < MinY())return false;
+		if (b.MinZ() < MinZ())return false;
+		if (b.MaxX() > MaxX())return false;
+		if (b.MaxY() > MaxY())return false;
+		if (b.MaxZ() > MaxZ())return false;
+		return true;
+	}
+
+	bool Intersects(const CBox& b)const
+	{
+		if (b.MinX() > MaxX())return false;
+		if (b.MinY() > MaxY())return false;
+		if (b.MinZ() > MaxZ())return false;
+		if (b.MaxX() < MinX())return false;
+		if (b.MaxY() < MinY())return false;
+		if (b.MaxZ() < MinZ())return false;
+		return true;
+	}
 };
 

@@ -6,6 +6,7 @@
 #include "Face.h"
 #include "Solid.h"
 #include "Gripper.h"
+#include "BRepTools_ReShape.hxx"
 
 HVertex::HVertex(const TopoDS_Vertex &vertex):m_topods_vertex(vertex){
 	gp_Pnt pos = BRep_Tool::Pnt(vertex);
@@ -44,6 +45,26 @@ void HVertex::glCommands(bool select, bool marked, bool no_color){
 
 void HVertex::GetGripperPositions(std::list<GripData> *list, bool just_for_endof){
 	list->push_back(GripData(GripperTypeTranslate,m_point[0],m_point[1],m_point[2],NULL));
+}
+
+void HVertex::ModifyByMatrix(const double* m)
+{
+#if 1
+	TopLoc_Location loc(make_matrix(m));
+	m_topods_vertex.Move(loc);
+#else
+	gp_Trsf trans = make_matrix(m);
+	BRepBuilderAPI_Transform brepTrans(m_topods_vertex, trans);
+	TopoDS_Vertex newVertex = TopoDS::Vertex(brepTrans.Shape());
+
+	BRepTools_ReShape reshape;
+	reshape.Replace(m_topods_vertex, newVertex);
+	reshape.Apply(m_topods_vertex);
+
+	//BRepTools_ReShape::Apply(oldEdge);
+	//BRepTools_ReShape::Replace(oldEdge, newEdge);
+	//BRepTools_ReShape::Apply(oldCompund);
+#endif
 }
 
 CEdge* HVertex::GetFirstEdge()

@@ -141,7 +141,7 @@ void OutlineSolids::Run(){
 				new_area.append(curve);
 		}
 
-		if (save_fit_arcs)
+		if (wxGetApp().m_fit_arcs_on_solid_outline)
 			new_area.FitArcs();
 		wxGetApp().AddUndoably(MakeNewSketchFromArea(new_area), NULL, NULL);
 	}

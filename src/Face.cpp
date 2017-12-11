@@ -10,6 +10,8 @@
 #include "HeeksFrame.h"
 #include "InputModeCanvas.h"
 #include "HPoint.h"
+#include "ShapeBuild_ReShape.hxx"
+#include "Vertex.h"
 
 CFace::CFace():m_temp_attr(0)
 {
@@ -255,17 +257,17 @@ public:
 
 static ExtrudeFace extrude_face;
 
-class RotateToFace:public Tool
+class RotateToFace :public Tool
 {
 public:
-	const wxChar* GetTitle(){return _("Rotate to Face");}
-	wxString BitmapPath(){return _T("rotface");}
+	const wxChar* GetTitle(){ return _("Rotate to Face"); }
+	wxString BitmapPath(){ return _T("rotface"); }
 	void Run(){
 		gp_Pln plane;
 		face_for_tools->GetPlaneParams(plane);
 		gp_Dir x_direction = plane.XAxis().Direction();
 		gp_Dir y_direction = plane.YAxis().Direction();
-		if(face_for_tools->Face().Orientation()== TopAbs_REVERSED)
+		if (face_for_tools->Face().Orientation() == TopAbs_REVERSED)
 		{
 			// swap the axes to invert the normal
 			y_direction = plane.XAxis().Direction();
@@ -278,9 +280,9 @@ public:
 		double m[16];
 		extract(face_matrix.Inverted(), m);
 		// if any objects are selected, move them
-		if(wxGetApp().m_marked_list->list().size() > 0)
+		if (wxGetApp().m_marked_list->list().size() > 0)
 		{
-			for(std::list<HeeksObj *>::iterator It = wxGetApp().m_marked_list->list().begin(); It != wxGetApp().m_marked_list->list().end(); It++)
+			for (std::list<HeeksObj *>::iterator It = wxGetApp().m_marked_list->list().begin(); It != wxGetApp().m_marked_list->list().end(); It++)
 			{
 				HeeksObj* object = *It;
 				wxGetApp().TransformUndoably(object, m);
@@ -290,13 +292,171 @@ public:
 		{
 			// move the solid
 			HeeksObj* parent_body = face_for_tools->GetParentBody();
-			if(parent_body)wxGetApp().TransformUndoably(parent_body, m);
+			if (parent_body)wxGetApp().TransformUndoably(parent_body, m);
 		}
 		wxGetApp().EndHistory();
 	}
 };
 
 static RotateToFace rotate_to_face;
+
+#define USE_BREP_UPDATE
+
+
+class PullFace1mm :public Tool
+{
+public:
+	const wxChar* GetTitle(){ return _("Pull Face 1mm"); }
+	wxString BitmapPath(){ return _T("rotface"); }
+	void Run(){
+		Handle(Geom_Surface) surface = BRep_Tool::Surface(face_for_tools->Face());
+		Handle(Geom_Plane) plane = Handle(Geom_Plane)::DownCast(surface);
+
+		gp_Trsf trsf;
+		trsf.SetTranslationPart(gp_Vec(1.0, 0.0, 0.0));
+		surface->Transform(trsf);
+
+#ifdef USE_BREP_UPDATE
+#else
+
+		BRepTools_ReShape reshape;
+#endif
+
+		std::set<HVertex*> face_vertex_set;
+		std::set<CEdge*> face_edge_set;
+		std::set<CEdge*> neighbour_edge_set;
+		std::set<CFace*> neighbour_face_set;
+
+		for (CEdge* edge = face_for_tools->GetFirstEdge(); edge != NULL; edge = face_for_tools->GetNextEdge())
+		{
+			face_edge_set.insert(edge);
+			face_vertex_set.insert(edge->GetVertex0());
+			face_vertex_set.insert(edge->GetVertex1());
+			for (CFace* face = edge->GetFirstFace(); face != NULL; face = edge->GetNextFace())
+			{
+				if (face != face_for_tools)
+					neighbour_face_set.insert(face);
+			}
+		}
+
+		for (std::set<HVertex*>::iterator It = face_vertex_set.begin(); It != face_vertex_set.end(); It++)
+		{
+			HVertex* vertex = *It;
+			for (CEdge* edge = vertex->GetFirstEdge(); edge != NULL; edge = vertex->GetNextEdge())
+			{
+				if (face_edge_set.find(edge) == face_edge_set.end())
+				{
+					neighbour_edge_set.insert(edge);
+				}
+			}
+		}
+
+		for (std::set<HVertex*>::iterator It = face_vertex_set.begin(); It != face_vertex_set.end(); It++)
+		{
+			HVertex* vertex = *It;
+#ifdef USE_BREP_UPDATE
+			BRep_Builder aBuilder;
+			//aBuilder.UpdateVertex()
+#else
+			BRepBuilderAPI_Transform brepTrans((*It)->Vertex(), trsf);
+			TopoDS_Vertex newVertex = TopoDS::Vertex(brepTrans.Shape());
+			reshape.Replace((*It)->Vertex(), newVertex);
+#endif
+		}
+
+		for (CEdge* edge = face_for_tools->GetFirstEdge(); edge != NULL; edge = face_for_tools->GetNextEdge())
+		{
+#ifdef USE_BREP_UPDATE
+			BRep_Builder aBuilder;
+#else
+			BRepBuilderAPI_Transform brepTrans(edge->Edge(), trsf);
+			TopoDS_Edge newEdge = TopoDS::Edge(brepTrans.Shape());
+			reshape.Replace(edge->Edge(), newEdge);
+#endif
+		}
+
+		for (std::set<CEdge*>::iterator It = neighbour_edge_set.begin(); It != neighbour_edge_set.end(); It++)
+		{
+			CEdge* edge = *It;
+			HVertex* face_vertex = edge->GetVertex0();
+			HVertex* other_vertex = edge->GetVertex1();
+			bool forwards = true;
+			if (face_vertex_set.find(face_vertex) == face_vertex_set.end())
+			{
+				face_vertex = edge->GetVertex1();
+				other_vertex = edge->GetVertex0();
+				forwards = false;
+			}
+			if (face_vertex_set.find(face_vertex) == face_vertex_set.end())
+			{
+				// neither vertex was on the face!  shouldn't happen
+				continue;
+			}
+
+#ifdef USE_BREP_UPDATE
+			BRep_Builder aBuilder;
+#else
+			TopAbs_Orientation orientation1 = face_vertex->Vertex().Orientation();
+			TopAbs_Orientation orientation2 = other_vertex->Vertex().Orientation();
+
+			// remake the edge
+			BRep_Builder aBuilder;
+			TopoDS_Vertex start, end;
+			aBuilder.MakeVertex(start, gp_Pnt(face_vertex->m_point[0] + 1.0, face_vertex->m_point[1], face_vertex->m_point[2]), wxGetApp().m_geom_tol);
+			start.Orientation(orientation1);
+			//aBuilder.MakeVertex(end, gp_Pnt(other_vertex->m_point[0] + 1.0, other_vertex->m_point[1], other_vertex->m_point[2]), wxGetApp().m_geom_tol);
+			//end.Orientation(orientation2);
+
+			if (forwards)
+			{
+				BRepBuilderAPI_MakeEdge E(start, other_vertex->Vertex());
+				if (!E.IsDone())
+				{
+					continue;
+				}
+				reshape.Replace(edge->Edge(), E.Edge());
+			}
+			else
+			{
+				BRepBuilderAPI_MakeEdge E(other_vertex->Vertex(), start);
+				if (!E.IsDone())
+				{
+					continue;
+				}
+				reshape.Replace(edge->Edge(), E.Edge());
+			}
+#endif
+		}
+
+#ifdef USE_BREP_UPDATE
+#else
+		for (std::set<CFace*>::iterator It = neighbour_face_set.begin(); It != neighbour_face_set.end(); It++)
+		{
+			CFace* face = *It;
+			gp_Pln pln;
+			face->GetPlaneParams(pln);
+			BRepBuilderAPI_MakeFace F(pln);
+			reshape.Replace(face->Face(), F.Face());
+		}
+#endif
+
+#ifdef USE_BREP_UPDATE
+		BRep_Builder aBuilder;
+		const TopLoc_Location &loc = face_for_tools->Face().Location();
+		aBuilder.UpdateFace(face_for_tools->Face(), surface, loc, wxGetApp().m_geom_tol);
+		//aBuilder.UpdateVertex((*(face_vertex_set.begin()))->Vertex());
+#else
+		BRepBuilderAPI_Transform brepTrans(face_for_tools->Face(), trsf);
+		TopoDS_Face newFace = TopoDS::Face(brepTrans.Shape());
+		reshape.Replace(face_for_tools->Face(), newFace);
+		TopoDS_Shape new_shape = reshape.Apply(face_for_tools->GetParentBody()->Shape());
+
+		wxGetApp().AddUndoably(new CSolid(*((TopoDS_Solid*)(&new_shape)), _("Solid with edge blend"), *(face_for_tools->GetParentBody()->GetColor()), 1.0), NULL, NULL);
+#endif
+	}
+};
+
+static PullFace1mm pull_face_1mm;
 
 void CFace::GetTools(std::list<Tool*>* t_list, const wxPoint* p){
 	face_for_tools = this;
@@ -305,6 +465,7 @@ void CFace::GetTools(std::list<Tool*>* t_list, const wxPoint* p){
 	{
 		if(!wxGetApp().m_no_creation_mode)t_list->push_back(&make_coordsys);
 		t_list->push_back(&rotate_to_face);
+		t_list->push_back(&pull_face_1mm);
 	}
 	if(!wxGetApp().m_no_creation_mode)t_list->push_back(&extrude_face);
 	//t_list->push_back(&intersector);

@@ -175,6 +175,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="CNCPoint.cpp" />
+    <ClCompile Include="colorshaderclass.cpp" />
     <ClCompile Include="CTool.cpp" />
     <ClCompile Include="CToolDlg.cpp" />
     <ClCompile Include="Curve.cpp">
@@ -195,6 +196,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="HeeksCNC.cpp" />
+    <ClCompile Include="HOctree.cpp" />
     <ClCompile Include="kurve.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
@@ -204,6 +206,15 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NCCode.cpp" />
+    <ClCompile Include="OctCube.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Octree.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="OctSphere.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="offset.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
@@ -308,6 +319,9 @@
     </ClCompile>
     <ClCompile Include="Op.cpp" />
     <ClCompile Include="OpDlg.cpp" />
+    <ClCompile Include="openglclass.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Operations.cpp" />
     <ClCompile Include="OptionsCanvas.cpp" />
     <ClCompile Include="OrientationModifier.cpp" />
@@ -448,6 +462,7 @@
     <ClInclude Include="Circle.h" />
     <ClInclude Include="clipper.hpp" />
     <ClInclude Include="CNCPoint.h" />
+    <ClInclude Include="colorshaderclass.h" />
     <ClInclude Include="CTool.h" />
     <ClInclude Include="CToolDlg.h" />
     <ClInclude Include="Curve.h" />
@@ -458,9 +473,15 @@
     <ClInclude Include="ExtrudedObj.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="GTri.h" />
+    <ClInclude Include="HOctree.h" />
     <ClInclude Include="NCCode.h" />
+    <ClInclude Include="OctCube.h" />
+    <ClInclude Include="Octree.h" />
+    <ClInclude Include="OctSolid.h" />
+    <ClInclude Include="OctSphere.h" />
     <ClInclude Include="Op.h" />
     <ClInclude Include="OpDlg.h" />
+    <ClInclude Include="openglclass.h" />
     <ClInclude Include="Operations.h" />
     <ClInclude Include="OutputCanvas.h" />
     <ClInclude Include="Pattern.h" />

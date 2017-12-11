@@ -32,8 +32,9 @@ public:
 	const wxBitmap &GetIcon();
 	const wxChar* GetTypeString(void)const{return _("Vertex");}
 	bool UsesID(){return true;}
+	void ModifyByMatrix(const double* m);
 
-	const TopoDS_Shape &Vertex(){return m_topods_vertex;}
+	const TopoDS_Vertex &Vertex(){ return m_topods_vertex; }
 	CEdge* GetFirstEdge();
 	CEdge* GetNextEdge();
 	CShape* GetParentBody();

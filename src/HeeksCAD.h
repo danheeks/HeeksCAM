@@ -245,6 +245,7 @@ public:
 	int m_icon_texture_number;
 	bool m_extrude_to_solid;
 	double m_revolve_angle;
+	bool m_fit_arcs_on_solid_outline;
 
 	typedef void(*FileOpenHandler_t)(const wxChar *path);
 	typedef std::map<wxString, FileOpenHandler_t> FileOpenHandlers_t;

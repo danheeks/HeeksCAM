@@ -149,12 +149,7 @@ int MyAllocHook( int allocType, void *userData, size_t size, int blockType, long
 #endif
 #endif
 
-#ifdef PYHEEKSCAD
-HeeksCADapp wxGetApp();
-HeeksCADapp &wxGetApp(){return wxGetApp();}
-#else
 IMPLEMENT_APP(HeeksCADapp)
-#endif
 
 
 static unsigned int DecimalPlaces( const double value )
@@ -258,6 +253,7 @@ HeeksCADapp::HeeksCADapp(): ObjList()
 	m_icon_texture_number = 0;
 	m_extrude_to_solid = true;
 	m_revolve_angle = 360.0;
+	m_fit_arcs_on_solid_outline = false;
 	m_stl_save_as_binary = true;
 	m_mouse_move_highlighting = true;
 	m_highlight_color = HeeksColor(128, 255, 0);
@@ -335,10 +331,6 @@ bool HeeksCADapp::OnInit()
 #endif
 #endif
 
-#ifdef PYHEEKSCAD
-    m_printData = NULL;
-    m_pageSetupData = NULL;
-#else
     m_printData = new wxPrintData;
     m_pageSetupData = new wxPageSetupDialogData;
     // copy over initial paper size from print record
@@ -346,7 +338,6 @@ bool HeeksCADapp::OnInit()
     // Set some initial page margins in mm.
     m_pageSetupData->SetMarginTopLeft(wxPoint(15, 15));
     m_pageSetupData->SetMarginBottomRight(wxPoint(15, 15));
-#endif
 
 	int width = 996;
 	int height = 691;
@@ -456,6 +447,7 @@ bool HeeksCADapp::OnInit()
 	} // End if - then
 	config.Read(_T("ExtrudeToSolid"), &m_extrude_to_solid);
 	config.Read(_T("RevolveAngle"), &m_revolve_angle);
+	config.Read(_T("FitArcsOnSolidOutline"), &m_fit_arcs_on_solid_outline);
 	config.Read(_T("SolidViewMode"), (int*)(&m_solid_view_mode), 0);
 
 	config.Read(_T("InputUsesModalDialog"), &m_input_uses_modal_dialog, true);
@@ -479,9 +471,6 @@ bool HeeksCADapp::OnInit()
 
 	wxImage::AddHandler(new wxPNGHandler);
 	m_current_viewport = NULL;
-#ifdef PYHEEKSCAD
-	m_frame = NULL;
-#else
 	m_frame = new CHeeksFrame( wxT( "HeeksCAD free Solid Modelling software based on Open CASCADE" ), wxPoint(posx, posy), wxSize(width, height));
 
 // wxWidgets uses .xpm as icons, except under Windows where .ico are used
@@ -492,7 +481,6 @@ bool HeeksCADapp::OnInit()
 #endif
 
 	m_frame->SetIcon(wxICON(HeeksCAD));
-#endif
 
 	// NOTE: A side-effect of calling the SetInputMode() method is
 	// that the GetOptions() method is called.  To that end, all
@@ -504,18 +492,14 @@ bool HeeksCADapp::OnInit()
 		SetTopWindow(m_frame);
 	}
 
-	OnNewOrOpen(false,wxNO);
-	ClearHistory();
-	SetLikeNewFile();
-	SetFrameTitle();
-
-#ifndef PYHEEKSCAD
 	if ((m_pAutoSave.get() != NULL) && (m_pAutoSave->AutoRecoverRequested()))
 	{
 		m_pAutoSave->Recover();
 	}
 	else
 	{
+		bool file_open_done = false;
+
 		// Open the file passed in the command line argument
 		wxCmdLineEntryDesc cmdLineDesc[2];
 		cmdLineDesc[0].kind = wxCMD_LINE_PARAM;
@@ -549,8 +533,17 @@ bool HeeksCADapp::OnInit()
 					OnBeforeNewOrOpen(true, wxOK);
 					OpenFile(parser.GetParam(i));
 					OnNewOrOpen(true, wxOK);
+					file_open_done = true;
 				}
 			}
+		}
+
+		if (!file_open_done)
+		{
+			OnNewOrOpen(false, wxNO);
+			ClearHistory();
+			SetLikeNewFile();
+			SetFrameTitle();
 		}
 	}
 	//#define USE_DEBUG_WXPATH  
@@ -578,7 +571,6 @@ bool HeeksCADapp::OnInit()
 		wprintf(_T("user-dependent application data directory: ") + sp.GetUserDataDir()  + _T("\n"));
 		wprintf(_T("user local data directory: ") + sp.GetUserLocalDataDir()  + _T("\n"));
 	#endif
-#endif
 	
 	return TRUE;
 }
@@ -643,6 +635,7 @@ void HeeksCADapp::WriteConfig()
 	config.Write(_T("AutoSaveInterval"), m_auto_save_interval);
 	config.Write(_T("ExtrudeToSolid"), m_extrude_to_solid);
 	config.Write(_T("RevolveAngle"), m_revolve_angle);
+	config.Write(_T("FitArcsOnSolidOutline"), m_fit_arcs_on_solid_outline);
 	config.Write(_T("SolidViewMode"), (int)m_solid_view_mode);
 	config.Write(_T("STLSaveBinary"), m_stl_save_as_binary);
 
@@ -1939,16 +1932,8 @@ bool HeeksCADapp::SaveFile(const wxChar *filepath, bool use_dialog, bool update_
 
 void HeeksCADapp::Repaint(bool soon)
 {
-#ifdef PYHEEKSCAD
-	if(m_current_viewport)
-	{
-		m_current_viewport->m_need_refresh = true;
-		if(soon)m_current_viewport->m_need_update = true;
-	}
-#else
 	if(soon)m_frame->m_graphics->RefreshSoon();
 	else m_frame->m_graphics->Refresh();
-#endif
 }
 
 void HeeksCADapp::RecalculateGLLists()
@@ -2348,10 +2333,8 @@ void HeeksCADapp::GetDropDownTools(std::list<Tool*> &f_list, const wxPoint &poin
 
 	if(m_current_coordinate_system)f_list.push_back(&coord_system_unset);
 
-#ifndef PYHEEKSCAD
 	// exit full screen
 	if(m_frame->IsFullScreen() && point.x>=0 && point.y>=0)temp_f_list.push_back(new CFullScreenTool);
-#endif
 
 	AddToolListWithSeparator(f_list, temp_f_list);
 }
@@ -2848,6 +2831,11 @@ static void on_extrude_to_solid(bool onoff, HeeksObj* object)
 static void on_revolve_angle(double value, HeeksObj* object)
 {
 	wxGetApp().m_revolve_angle = value;
+}
+
+static void on_outline_fit_arcs(bool value, HeeksObj* object)
+{
+	wxGetApp().m_fit_arcs_on_solid_outline = value;
 }
 
 void on_set_min_correlation_factor(double value, HeeksObj* object)
@@ -3483,6 +3471,7 @@ void HeeksCADapp::GetOptions(std::list<Property *> *list)
 	drawing->m_list.push_back(new PropertyCheck(_("Use old solid fuse ( to prevent coplanar faces )"), useOldFuse, NULL, on_useOldFuse));
 	drawing->m_list.push_back(new PropertyCheck(_("Extrude makes a solid"), m_extrude_to_solid, NULL, on_extrude_to_solid));
 	drawing->m_list.push_back(new PropertyDouble(_("Solid revolution angle"), m_revolve_angle, NULL, on_revolve_angle));
+	drawing->m_list.push_back(new PropertyCheck(_("Fit arcs on solid outline"), m_fit_arcs_on_solid_outline, NULL, on_outline_fit_arcs));
 	list->push_back(drawing);
 
 	for(std::list<Plugin>::iterator It = m_loaded_libraries.begin(); It != m_loaded_libraries.end(); It++){
@@ -3697,12 +3686,12 @@ public:
 		else{
 			wxGetApp().m_marked_list->Clear(true);
 			wxGetApp().m_marked_list->Add(m_marked_object->GetObject(), true);
-#ifndef PYHEEKSCAD
+
 			if(wxGetApp().m_frame->m_properties && !(wxGetApp().m_frame->m_properties->IsShown())){
 				wxGetApp().m_frame->m_aui_manager->GetPane(wxGetApp().m_frame->m_properties).Show();
 				wxGetApp().m_frame->m_aui_manager->Update();
 			}
-#endif
+
 		}
 		if(m_point.x >= 0){
 			gp_Lin ray = wxGetApp().m_current_viewport->m_view_point.SightLine(m_point);

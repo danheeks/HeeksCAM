@@ -341,7 +341,7 @@ inline bool FNEZ(double a, double tolerance = TIGHT_TOLERANCE) {return fabs(a) >
 		inline	void	puty(double y){dy = y;}
 		double	normalise()
 		{double m = magnitude(); if(m < TIGHT_TOLERANCE) {dx=dy=0; return 0;} dx/=m; dy/=m; return m;}				// normalise & returns magnitude
-		inline	double	magnitudesqd(void)const{return(dx * dx + dy * dy);}									// magnitude squared
+		inline	double	magnitudesqd(void)const{ return(dx * dx + dy * dy); }									// magnitude squared
 		inline	double	magnitude(void)const{return(sqrt(magnitudesqd()));}									// magnitude
 		void	Rotate(double cosa, double sina){															// rotate vector by angle
 			double temp = -dy * sina + dx * cosa;
@@ -410,7 +410,9 @@ inline bool FNEZ(double a, double tolerance = TIGHT_TOLERANCE) {return fabs(a) >
 		inline	void putz(double z){dz = z;}
 		double normalise(){double m = magnitude(); if(m < 1.0e-09) {dx=dy=dz=0; return 0;} dx/=m; dy/=m; dz/=m;		// normalise & returns magnitude
 		return m;}
-		inline	double magnitude(void)const{return(sqrt(dx * dx + dy * dy + dz * dz));}								// magnitude
+		double Normalize(){ double m = magnitude(); if (m < 1.0e-09) { dx = dy = dz = 0; return 0; } dx /= m; dy /= m; dz /= m;	return m; }
+		const Vector3d Normalized()const{ double m = magnitude(); if (m < 1.0e-09) { return Vector3d(0, 0, 0); } return Vector3d(dx / m, dy / m, dz / m); }
+		inline	double magnitude(void)const{ return(sqrt(dx * dx + dy * dy + dz * dz)); }								// magnitude
 		inline	double magnitudeSq(void)const{return(dx * dx + dy * dy + dz * dz);}								    // magnitude squared
 		void Transform( const Matrix& m);																					// transform vector
 		void arbitrary_axes(Vector3d& x, Vector3d& y);

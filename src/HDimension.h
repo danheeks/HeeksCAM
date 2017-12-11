@@ -26,9 +26,7 @@ enum DimensionUnits
 
 class HeeksConfig;
 
-#ifdef USING_OCC
-
-class HDimension: public EndedObject{
+class HDimension : public EndedObject{
 private:
 	gp_Pnt GetB2(); // return B, possibly flattened
 	gp_Pnt GetC2(); // return m_p2, possibly flattened
@@ -48,19 +46,19 @@ public:
 	const HDimension& operator=(const HDimension &b);
 
 	// HeeksObj's virtual functions
-	int GetType()const{return DimensionType;}
-	long GetMarkingMask()const{return MARKING_FILTER_DIMENSION;}
+	int GetType()const{ return DimensionType; }
+	long GetMarkingMask()const{ return MARKING_FILTER_DIMENSION; }
 	void glCommands(bool select, bool marked, bool no_color);
-	bool DrawAfterOthers(){return true;}
+	bool DrawAfterOthers(){ return true; }
 	void GetBox(CBox &box);
-	const wxChar* GetTypeString(void)const{return _("Dimension");}
+	const wxChar* GetTypeString(void)const{ return _("Dimension"); }
 	HeeksObj *MakeACopy(void)const;
 	const wxBitmap &GetIcon();
 	void ModifyByMatrix(const double *mat);
 	void GetGripperPositions(std::list<GripData> *list, bool just_for_endof);
 	void GetProperties(std::list<Property *> *list);
 	bool Stretch(const double *p, const double* shift, void* data);
-	void CopyFrom(const HeeksObj* object){operator=(*((HDimension*)object));}
+	void CopyFrom(const HeeksObj* object){ operator=(*((HDimension*)object)); }
 	void WriteXML(TiXmlNode *root);
 	void GetTools(std::list<Tool*>* t_list, const wxPoint* p);
 	bool IsDifferent(HeeksObj* other);
@@ -74,5 +72,3 @@ public:
 	static void WriteToConfig(HeeksConfig& config);
 	static void ReadFromConfig(HeeksConfig& config);
 };
-
-#endif

@@ -960,6 +960,7 @@ void HeeksCADapp::OnPythonStartUp()
 
 	// start Python
 	PyImport_AppendInittab("cad", &PyInit_cad);
+	Py_SetPythonHome(_T("C:\\Python34(32bit)"));
 	Py_Initialize();
 	PyEval_InitThreads();
 

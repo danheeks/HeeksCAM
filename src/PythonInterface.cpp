@@ -27,6 +27,7 @@
 #include "OutputCanvas.h"
 #include "HArc.h"
 #include "StlSolid.h"
+#include "PropertyInt.h"
 #include <set>
 
 #ifdef _DEBUG
@@ -626,16 +627,21 @@ HBitmap hbitmap_for_base_object;
 #define BASE_OBJECT_DEFINED
 
 #ifdef BASE_OBJECT_DEFINED
-class BaseObject : public HeeksObj, public bp::wrapper<HeeksObj>
+
+#define BASE_OBJECT_CLASS HeeksObj
+
+class BaseObject : public BASE_OBJECT_CLASS, public bp::wrapper<BASE_OBJECT_CLASS>
 {
 public:
-	int m_some_variable;
-	BaseObject():HeeksObj(){}
+	BaseObject() :BASE_OBJECT_CLASS(){}
 	int GetType()const override
 	{
 		if (bp::override f = this->get_override("GetType"))
-			return f();
-		return HeeksObj::GetType();
+		{
+			int t = f();
+			return t;
+		}
+		return BASE_OBJECT_CLASS::GetType();
 	}
 
 	const wxBitmap &GetIcon() override
@@ -645,20 +651,86 @@ public:
 			hbitmap_for_base_object = HBitmap(f());
 			return hbitmap_for_base_object;
 		}
-		return HeeksObj::GetIcon();
+		return BASE_OBJECT_CLASS::GetIcon();
 	}
 
 	const wxChar* GetShortString()const override
 	{
 		if (bp::override f = this->get_override("GetTitle"))
 		{
-			// to do uncomment next line and fix compiler error
-			//str_for_base_object = std::wstring(f());
+			std::string s = f();
+			str_for_base_object = Ctt(s.c_str());
 			return str_for_base_object.c_str();
 		}
-		return HeeksObj::GetShortString();
+		return BASE_OBJECT_CLASS::GetShortString();
+	}
+
+	const wxChar* GetTypeString()const override
+	{
+		if (bp::override f = this->get_override("GetTypeString"))
+		{
+			std::string s = f();
+			str_for_base_object = Ctt(s.c_str());
+			return str_for_base_object.c_str();
+		}
+		return BASE_OBJECT_CLASS::GetTypeString();
+	}
+
+	static bool in_glCommands;
+	static bool triangles_begun;
+	static bool lines_begun;
+	static HeeksColor color_set;
+	static bool this_no_color;
+
+	void glCommands(bool select, bool marked, bool no_color) override
+	{
+		if (in_glCommands)
+			return; // shouldn't be needed
+
+		if (bp::override f = this->get_override("OnRender"))
+		{
+			in_glCommands = true;
+			this_no_color = no_color;
+			f();
+
+			if (triangles_begun)
+			{
+				glEnd();
+				glDisable(GL_LIGHTING);
+				triangles_begun = false;
+			}
+
+			if(lines_begun)
+			{
+				glEnd();
+				lines_begun = false;
+			}
+			in_glCommands = false;
+		}
+	}
+
+	void GetProperties(std::list<Property *> *list) override
+	{
+		if (bp::override f = this->get_override("GetProperties"))
+		{
+			boost::python::list plist = f();
+			for (int i = 0; i < len(plist); ++i)
+			{
+				Property* p = boost::python::extract<Property*>(plist[i]);
+				list->push_back(p);
+			}
+		}
 	}
 };
+
+// static definitions
+bool BaseObject::in_glCommands = false;
+bool BaseObject::triangles_begun = false;
+bool BaseObject::lines_begun = false;
+HeeksColor BaseObject::color_set(0, 0, 0);
+bool BaseObject::this_no_color = false;
+
+
 
 int BaseObjectGetType(const BaseObject& object)
 {
@@ -675,9 +747,102 @@ std::wstring BaseObjectGetTitle(const BaseObject& object)
 	return object.GetShortString();
 }
 
-HeeksObj* BaseObjectObject(BaseObject* object)
+unsigned int BaseObjectGetID(BaseObject& object)
 {
-	return object;
+	return object.GetID();
+}
+
+void DrawTriangle(double x0, double x1, double x2, double x3, double x4, double x5, double x6, double x7, double x8)
+{
+	if (!BaseObject::triangles_begun)
+	{
+		if (BaseObject::lines_begun)
+		{
+			glEnd();
+			BaseObject::lines_begun = false;
+		}
+		if (!BaseObject::this_no_color)
+		{
+			Material m(BaseObject::color_set);
+			m.glMaterial(1.0);
+			glEnable(GL_LIGHTING);
+		}
+		glBegin(GL_TRIANGLES);
+		BaseObject::triangles_begun = true;
+	}
+
+	gp_Pnt p0(x0, x1, x2);
+	gp_Pnt p1(x3, x4, x5);
+	gp_Pnt p2(x6, x7, x8);
+	gp_Vec v1(p0, p1);
+	gp_Vec v2(p0, p2);
+	try
+	{
+		gp_Vec norm = (v1 ^ v2).Normalized();
+		glNormal3d(norm.X(), norm.Y(), norm.Z());
+	}
+	catch (...)
+	{
+	}
+	glVertex3d(x0, x1, x2);
+	glVertex3d(x3, x4, x5);
+	glVertex3d(x6, x7, x8);
+
+}
+
+void DrawLine(double x0, double x1, double x2, double x3, double x4, double x5)
+{
+	if (!BaseObject::lines_begun)
+	{
+		if (BaseObject::triangles_begun)
+		{
+			glEnd();
+			BaseObject::triangles_begun = false;
+		}
+		glBegin(GL_LINES);
+		BaseObject::lines_begun = true;
+	}
+	if (!BaseObject::this_no_color)
+	{
+		BaseObject::color_set.glColor();
+	}
+	glVertex3d(x0, x1, x2);
+	glVertex3d(x3, x4, x5);
+}
+
+void DrawColor(unsigned char r, unsigned char g, unsigned char b)
+{
+	BaseObject::color_set = HeeksColor(r, g, b);
+}
+
+static void on_set_property_int(int index, int value, HeeksObj* object)
+{
+		if (bp::override f = this->get_override("GetType"))
+		{
+			int t = f();
+			return t;
+		}
+		return BASE_OBJECT_CLASS::GetType();
+
+}
+
+static void on_set_property_int0(int value, HeeksObj* object){ on_set_property_int(0, value, object); }
+{
+	((COp*)object)->m_pattern = value;
+}
+
+class PyPropertyInt : public PropertyInt, public bp::wrapper<PropertyInt>
+{
+public:
+	PyPropertyInt() :PropertyInt(_T("empty"), 0, NULL){}
+	PyPropertyInt(std::wstring str, int initial_value, HeeksObj* object, PyObject *callback) :PropertyInt(str.c_str(), initial_value, on_set_property_int){}
+
+	std::wstring m_str;
+	PyObject *m_callback;
+
+	int GetType()const override
+	{
+	}
 }
 
 #endif
@@ -699,6 +864,7 @@ BOOST_PYTHON_MODULE(cad) {
 		.def("GetType", &BaseObjectGetType)
 		.def("GetIcon", &BaseObjectGetIcon)
 		.def("GetTitle", &BaseObjectGetTitle)
+		.def("GetID", &BaseObjectGetID)
 		;
 #endif
 	bp::class_<HCircle, bp::bases<HeeksObj> >("Circle")
@@ -888,6 +1054,15 @@ BOOST_PYTHON_MODULE(cad) {
 		.def_readwrite("finishing_step_down", &CProfile::m_finishing_step_down)
 		;
 
+	bp::class_<Property>("Property")
+		.def(bp::init<Property>())
+		;
+
+	bp::class_<PropertyInt, bp::bases<Property> >("PropertyInt")
+		.def(bp::init<PropertyInt>())
+		.def(bp::init<double, double, double, double, double, double>())
+		;
+
 	bp::def("AddMenu", AddMenu);///function AddMenu///params str title///adds a menu to the CAD software
 	bp::def("AddMenuItem", AddMenuItem);///function AddMenuItem///params str title, function callback///adds a menu item to the last added menu
 	bp::def("MessageBox", CadMessageBox);
@@ -909,9 +1084,9 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::def("Import", CadImport);
 	bp::def("AppendAboutString", AppendAboutString);
 	bp::def("RegisterNewOrOpen", RegisterNewOrOpen);
-#ifdef BASE_OBJECT_DEFINED
-	//bp::def("BaseToObject", BaseObjectObject, bp::return_value_policy<bp::reference_existing_object>());
-#endif
+	bp::def("DrawTriangle", &DrawTriangle);
+	bp::def("DrawLine", &DrawLine);
+	bp::def("DrawColor", &DrawColor);
 
 
 	bp::scope().attr("OBJECT_TYPE_UNKNOWN") = (int)OBJECT_TYPE_UNKNOWN;

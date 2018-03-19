@@ -99,11 +99,12 @@ wxString CCuboid::StretchedName(){ return _("Stretched Cuboid");}
 
 void CCuboid::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	CoordinateSystem::GetAx2Properties(list, m_pos, this);
 	list->push_back(new PropertyLength(_("width ( x )"), m_x, this, on_set_x));
 	list->push_back(new PropertyLength(_("height( y )"), m_y, this, on_set_y));
 	list->push_back(new PropertyLength(_("depth ( z )"), m_z, this, on_set_z));
-
+#endif
 	CSolid::GetProperties(list);
 }
 

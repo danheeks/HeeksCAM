@@ -97,7 +97,7 @@ static void on_set_sketch_rotates_text(bool value, HeeksObj* object)
 
 void COrientationModifierParams::GetProperties(COrientationModifier * parent, std::list<Property *> *list)
 {
-
+#if 0 // to do
 	{
 		int choice = int(m_spacing);
 		std::list< wxString > choices;
@@ -130,6 +130,7 @@ void COrientationModifierParams::GetProperties(COrientationModifier * parent, st
 
 		list->push_back(new PropertyChoice(_("Justification"), choices, choice, parent, on_set_justification));
 	}
+#endif
 }
 
 bool COrientationModifier::SketchIsClosed()

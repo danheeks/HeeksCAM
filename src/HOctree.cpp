@@ -91,8 +91,9 @@ void HOctree::GetGripperPositions(std::list<GripData> *list, bool just_for_endof
 
 void HOctree::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyInt(_("triangle_count"), m_octree.m_triangle_count, this));
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 

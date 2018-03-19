@@ -90,11 +90,15 @@ void CPropertiesCanvas::ClearProperties()
 	pmap.clear();
 	delete m_map;
 	m_map = new PropertyMapItem(NULL);
+
+	// i think these live in the undo now
+#if 0
 	for(std::set<Property*>::iterator It = pset.begin(); It != pset.end(); It++)
 	{
-		Property* p = *It;
+		Property* p = *It; 
 		delete p;
 	}
+#endif
 	pset.clear();
 }
 
@@ -152,84 +156,99 @@ void CPropertiesCanvas::AddProperty(Property* p, wxPGProperty* parent_prop)
 	switch(p->get_property_type()){
 	case StringPropertyType:
 		{
-			wxPGProperty *new_prop = wxStringProperty(p->GetShortString(),wxPG_LABEL, ((PropertyString*)p)->m_initial_value);
-			if(!p->property_editable())new_prop->SetFlag(wxPG_PROP_READONLY);
+			wxPGProperty *new_prop = wxStringProperty(p->GetShortString(),wxPG_LABEL, ((PropertyString*)p)->GetString());
+			if(!p->m_editable)new_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( parent_prop, new_prop, p);
 			if(p->m_highlighted)m_pg->SetPropertyBackgroundColour(new_prop->GetId(), wxColour(71, 141, 248));
 		}
 		break;
 	case DoublePropertyType:
+		{
+			wxPGProperty *new_prop = wxFloatProperty(p->GetShortString(), wxPG_LABEL, ((PropertyDouble*)p)->GetDouble());
+			if (!p->m_editable)new_prop->SetFlag(wxPG_PROP_READONLY);
+			Append(parent_prop, new_prop, p);
+		}
+		break;
 	case LengthPropertyType:
 		{
-			wxPGProperty *new_prop = wxFloatProperty(p->GetShortString(),wxPG_LABEL, ((PropertyDouble*)p)->m_initial_value);
-			if(!p->property_editable())new_prop->SetFlag(wxPG_PROP_READONLY);
+			wxPGProperty *new_prop = wxFloatProperty(p->GetShortString(), wxPG_LABEL, ((PropertyDouble*)p)->GetDouble() / wxGetApp().m_view_units);
+			if (!p->m_editable)new_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( parent_prop, new_prop, p);
 		}
 		break;
 	case IntPropertyType:
 		{
-			wxPGProperty *new_prop = wxIntProperty(p->GetShortString(),wxPG_LABEL, ((PropertyInt*)p)->m_initial_value);
-			if(!p->property_editable())new_prop->SetFlag(wxPG_PROP_READONLY);
+			wxPGProperty *new_prop = wxIntProperty(p->GetShortString(),wxPG_LABEL, ((PropertyInt*)p)->GetInt());
+			if (!p->m_editable)new_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( parent_prop, new_prop, p);
 		}
 		break;
 	case ColorPropertyType:
 		{
-			HeeksColor& col = ((PropertyColor*)p)->m_initial_value;
+			HeeksColor& col = ((PropertyColor*)p)->GetColor();
 			wxColour wcol(col.red, col.green, col.blue);
 			wxPGProperty *new_prop = wxColourProperty(p->GetShortString(),wxPG_LABEL, wcol);
-			if(!p->property_editable())new_prop->SetFlag(wxPG_PROP_READONLY);
+			if (!p->m_editable)new_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( parent_prop, new_prop, p);
 		}
 		break;
 	case ChoicePropertyType:
 		{
 			wxArrayString array_string;
+			std::list< wxString > choices;
+			((PropertyChoice*)p)->GetChoices(choices);
 			std::list< wxString >::iterator It;
-			for(It = ((PropertyChoice*)p)->m_choices.begin(); It != ((PropertyChoice*)p)->m_choices.end(); It++){
+			for (It = choices.begin(); It != choices.end(); It++){
 				array_string.Add(wxString(It->c_str()));
 			}
-			wxPGProperty *new_prop = wxEnumProperty(p->GetShortString(),wxPG_LABEL,array_string, ((PropertyChoice*)p)->m_initial_index);
-			if(!p->property_editable())new_prop->SetFlag(wxPG_PROP_READONLY);
+			wxPGProperty *new_prop = wxEnumProperty(p->GetShortString(),wxPG_LABEL,array_string, ((PropertyChoice*)p)->GetIndex());
+			if (!p->m_editable)new_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( parent_prop, new_prop, p );
 		}
 		break;
 	case VertexPropertyType:
 		{
+#if 0
 			wxPGProperty* new_prop = wxParentProperty(p->GetShortString(),wxPG_LABEL);
 			Append( parent_prop, new_prop, p );
-			double x[3];
-			unsigned int number_of_axes = 3;
-			if(((PropertyVertex*)p)->xyOnly())number_of_axes = 2;
-			memcpy(x, ((PropertyVertex*)p)->m_x, number_of_axes*sizeof(double));
-			if(((PropertyVertex*)p)->m_affected_by_view_units)
-			{
-				for(unsigned int i = 0; i<number_of_axes; i++)x[i] /= wxGetApp().m_view_units;
-			}
-			wxPGProperty* x_prop = wxFloatProperty(_("x"),wxPG_LABEL, x[0]);
-			if(!p->property_editable())x_prop->SetFlag(wxPG_PROP_READONLY);
+			if (!p->m_editable)new_prop->SetFlag(wxPG_PROP_READONLY);
+
+			// X
+			double x = ((PropertyVertex*)p)->GetX();
+			if (((PropertyVertex*)p)->AffectedByViewUnits()) x /= wxGetApp().m_view_units;
+			wxPGProperty* x_prop = wxFloatProperty(_("x"),wxPG_LABEL, x);
+			if (!p->m_editable)x_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( new_prop, x_prop, p );
-			wxPGProperty* y_prop = wxFloatProperty(_("y"),wxPG_LABEL, x[1]);
-			if(!p->property_editable())y_prop->SetFlag(wxPG_PROP_READONLY);
+
+			// Y
+			double y = ((PropertyVertex*)p)->GetY();
+			if (((PropertyVertex*)p)->AffectedByViewUnits()) y /= wxGetApp().m_view_units;
+			wxPGProperty* y_prop = wxFloatProperty(_("y"), wxPG_LABEL, y);
+			if (!p->m_editable)y_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( new_prop, y_prop, p );
+
 			if(!((PropertyVertex*)p)->xyOnly())
 			{
-				wxPGProperty* z_prop = wxFloatProperty(_("z"),wxPG_LABEL, x[2]);
-				if(!p->property_editable())z_prop->SetFlag(wxPG_PROP_READONLY);
-				new_prop->SetFlag(wxPG_PROP_READONLY);
+				// Z
+				double z = ((PropertyVertex*)p)->GetZ();
+				if (((PropertyVertex*)p)->AffectedByViewUnits()) y /= wxGetApp().m_view_units;
+				wxPGProperty* z_prop = wxFloatProperty(_("z"), wxPG_LABEL, z);
+				if (!p->m_editable)z_prop->SetFlag(wxPG_PROP_READONLY);
 				Append( new_prop, z_prop, p );
 			}
+#endif
 		}
 		break;
 	case TrsfPropertyType:
 		{
 			double x[3];
-			extract(((PropertyTrsf*)p)->m_trsf.TranslationPart(), x);
+			gp_Trsf trsf = ((PropertyTrsf*)p)->GetTrsf();
+			extract(trsf.TranslationPart(), x);
 
 			gp_Dir xaxis(1, 0, 0);
-			xaxis.Transform(((PropertyTrsf*)p)->m_trsf);
+			xaxis.Transform(trsf);
 			gp_Dir yaxis(0, 1, 0);
-			yaxis.Transform(((PropertyTrsf*)p)->m_trsf);
+			yaxis.Transform(trsf);
 
 			double vertical_angle = 0;
 			double horizontal_angle = 0;
@@ -239,30 +258,30 @@ void CPropertiesCanvas::AddProperty(Property* p, wxPGProperty* parent_prop)
 			wxPGProperty* new_prop = wxParentProperty(p->GetShortString(),wxPG_LABEL);
 			Append( parent_prop, new_prop, p );
 			wxPGProperty* x_prop = wxFloatProperty(_("x"),wxPG_LABEL,x[0]);
-			if(!p->property_editable())x_prop->SetFlag(wxPG_PROP_READONLY);
+			if (!p->m_editable)x_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( new_prop, x_prop, p );
 			wxPGProperty* y_prop = wxFloatProperty(_("y"),wxPG_LABEL,x[1]);
-			if(!p->property_editable())y_prop->SetFlag(wxPG_PROP_READONLY);
+			if (!p->m_editable)y_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( new_prop, y_prop, p );
 			wxPGProperty* z_prop = wxFloatProperty(_("z"),wxPG_LABEL,x[2]);
-			if(!p->property_editable())z_prop->SetFlag(wxPG_PROP_READONLY);
+			if (!p->m_editable)z_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( new_prop, z_prop, p );
 			wxPGProperty* v_prop = wxFloatProperty(_("vertical angle"),wxPG_LABEL,vertical_angle);
-			if(!p->property_editable())v_prop->SetFlag(wxPG_PROP_READONLY);
+			if (!p->m_editable)v_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( new_prop, v_prop, p );
 			wxPGProperty* h_prop = wxFloatProperty(_("horizontal angle"),wxPG_LABEL,horizontal_angle);
-			if(!p->property_editable())h_prop->SetFlag(wxPG_PROP_READONLY);
+			if (!p->m_editable)h_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( new_prop, h_prop, p );
 			wxPGProperty* t_prop = wxFloatProperty(_("twist angle"),wxPG_LABEL,twist_angle);
-			if(!p->property_editable())t_prop->SetFlag(wxPG_PROP_READONLY);
+			if (!p->m_editable)t_prop->SetFlag(wxPG_PROP_READONLY);
 			new_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( new_prop, t_prop, p );
 		}
 		break;
 	case CheckPropertyType:
 		{
-			wxPGProperty* new_prop = wxBoolProperty(p->GetShortString(),wxPG_LABEL, ((PropertyCheck*)p)->m_initial_value);
-			if(!p->property_editable())new_prop->SetFlag(wxPG_PROP_READONLY);
+			wxPGProperty* new_prop = wxBoolProperty(p->GetShortString(),wxPG_LABEL, ((PropertyCheck*)p)->GetBool());
+			if (!p->m_editable)new_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( parent_prop, new_prop, p );
 			m_pg->SetPropertyAttribute(new_prop, wxPG_BOOL_USE_CHECKBOX, true);
 		}
@@ -270,10 +289,12 @@ void CPropertiesCanvas::AddProperty(Property* p, wxPGProperty* parent_prop)
 	case ListOfPropertyType:
 		{
 			wxPGProperty* new_prop = wxParentProperty(p->GetShortString(),wxPG_LABEL);
-			if(!p->property_editable())new_prop->SetFlag(wxPG_PROP_READONLY);
+			if (!p->m_editable)new_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( parent_prop, new_prop, p );
+			std::list< Property* > list;
+			((PropertyList*)p)->GetList(list);
 			std::list< Property* >::iterator It;
-			for(It = ((PropertyList*)p)->m_list.begin(); It != ((PropertyList*)p)->m_list.end(); It++){
+			for (It = list.begin(); It != list.end(); It++){
 				Property* p2 = *It;
 				AddProperty(p2, new_prop);
 			}
@@ -281,8 +302,8 @@ void CPropertiesCanvas::AddProperty(Property* p, wxPGProperty* parent_prop)
 		break;
 	case FilePropertyType:
 		{
-			wxPGProperty *new_prop = wxFileProperty(p->GetShortString(),wxPG_LABEL, ((PropertyFile*)p)->m_initial_value);
-			if(!p->property_editable())new_prop->SetFlag(wxPG_PROP_READONLY);
+			wxPGProperty *new_prop = wxFileProperty(p->GetShortString(),wxPG_LABEL, ((PropertyFile*)p)->GetString());
+			if (!p->m_editable)new_prop->SetFlag(wxPG_PROP_READONLY);
 			Append( parent_prop, new_prop, p);
 			if(p->m_highlighted)m_pg->SetPropertyBackgroundColour(new_prop->GetId(), wxColour(71, 141, 248));
 		}
@@ -345,32 +366,40 @@ void CPropertiesCanvas::OnPropertyGridChange( wxPropertyGridEvent& event ) {
 		break;
 	case VertexPropertyType:
 		{
+#if 0
 			if(p->GetName()[0] == 'x'){
-				((PropertyVertex*)property)->m_x[0] = event.GetPropertyValue().GetDouble();
-				if(((PropertyVertex*)property)->m_affected_by_view_units)((PropertyVertex*)property)->m_x[0] *= wxGetApp().m_view_units;
+				double d = event.GetPropertyValue().GetDouble();
+				if (((PropertyVertex*)property)->AffectedByViewUnits()) d *= wxGetApp().m_view_units;
+				((PropertyVertex*)property)->SetX(d);
 			}
 			else if(p->GetName()[0] == 'y'){
-				((PropertyVertex*)property)->m_x[1] = event.GetPropertyValue().GetDouble();
-				if(((PropertyVertex*)property)->m_affected_by_view_units)((PropertyVertex*)property)->m_x[1] *= wxGetApp().m_view_units;
+				double d = event.GetPropertyValue().GetDouble();
+				if (((PropertyVertex*)property)->AffectedByViewUnits()) d *= wxGetApp().m_view_units;
+				((PropertyVertex*)property)->SetY(d);
 			}
 			else if(p->GetName()[0] == 'z'){
-				((PropertyVertex*)property)->m_x[2] = event.GetPropertyValue().GetDouble();
-				if(((PropertyVertex*)property)->m_affected_by_view_units)((PropertyVertex*)property)->m_x[2] *= wxGetApp().m_view_units;
+				double d = event.GetPropertyValue().GetDouble();
+				if (((PropertyVertex*)property)->AffectedByViewUnits()) d *= wxGetApp().m_view_units;
+				((PropertyVertex*)property)->SetZ(d);
 			}
 
-			PropertyChangeVertex* changer = new PropertyChangeVertex(((PropertyVertex*)property)->m_x, (PropertyVertex*)property);
+			// to do, make vertex done with a property list
+
+			PropertyChangeVertex* changer = new PropertyChangeVertex(0, 0, 0, (PropertyVertex*)property);
 			changers.push_back(changer);
+#endif
 		}
 		break;
 	case TrsfPropertyType:
 		{
 			double pos[3];
-			extract(((PropertyTrsf*)property)->m_trsf.TranslationPart(), pos);
+			gp_Trsf trsf = ((PropertyTrsf*)property)->GetTrsf();
+			extract(trsf.TranslationPart(), pos);
 
 			gp_Dir xaxis(1, 0, 0);
-			xaxis.Transform(((PropertyTrsf*)p)->m_trsf);
+			xaxis.Transform(trsf);
 			gp_Dir yaxis(0, 1, 0);
-			yaxis.Transform(((PropertyTrsf*)p)->m_trsf);
+			yaxis.Transform(trsf);
 
 			double vertical_angle = 0;
 			double horizontal_angle = 0;
@@ -398,9 +427,9 @@ void CPropertiesCanvas::OnPropertyGridChange( wxPropertyGridEvent& event ) {
 
 			CoordinateSystem::AnglesToAxes(vertical_angle, horizontal_angle, twist_angle, xaxis, yaxis);
 
-			((PropertyTrsf*)property)->m_trsf = make_matrix(make_point(pos), xaxis, yaxis);
+			trsf = make_matrix(make_point(pos), xaxis, yaxis);
 
-			PropertyChangeTrsf* changer = new PropertyChangeTrsf(((PropertyTrsf*)property)->m_trsf, (PropertyTrsf*)property);
+			PropertyChangeTrsf* changer = new PropertyChangeTrsf(trsf, (PropertyTrsf*)property);
 			changers.push_back(changer);
 		}
 		break;
@@ -424,8 +453,8 @@ void CPropertiesCanvas::OnPropertyGridChange( wxPropertyGridEvent& event ) {
 		break;
 	case FilePropertyType:
 		{
-			// to do
-			(*(((PropertyFile*)property)->m_callbackfunc))(event.GetPropertyValue().GetString(), ((PropertyFile*)property)->m_object);
+			PropertyChangeString* changer = new PropertyChangeString(event.GetPropertyValue().GetString(), (PropertyString*)property);
+			changers.push_back(changer);
 		}
 		break;
 	}
@@ -441,6 +470,7 @@ void CPropertiesCanvas::OnPropertyGridChange( wxPropertyGridEvent& event ) {
 }
 
 void CPropertiesCanvas::OnPropertyGridSelect( wxPropertyGridEvent& event ) {
+#if 0
 	wxPGProperty* p = event.GetPropertyPtr();
 
 	std::list<Property*>* properties = GetProperties(p);
@@ -453,6 +483,7 @@ void CPropertiesCanvas::OnPropertyGridSelect( wxPropertyGridEvent& event ) {
 		if(property->m_selectcallback)
 			(*(property->m_selectcallback))(((PropertyChoice*)property)->m_object);
 	}
+#endif
 }
 
 void CPropertiesCanvas::DeselectProperties()

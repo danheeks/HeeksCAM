@@ -462,6 +462,7 @@ static void on_set_tool_number(const int value, HeeksObj* object){((CTool*)objec
  */
 void CTool::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyInt(_("tool_number"), m_tool_number, this, on_set_tool_number));
 
 	{
@@ -504,6 +505,7 @@ void CTool::GetProperties(std::list<Property *> *list)
 		list->push_back(new PropertyDouble(_("cutting_edge_angle"), m_cutting_edge_angle, this, on_set_cutting_edge_angle));
 		list->push_back(new PropertyLength(_("cutting_edge_height"), m_cutting_edge_height, this, on_set_cutting_edge_height));
 	}
+#endif
 	HeeksObj::GetProperties(list);
 }
 

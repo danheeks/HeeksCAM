@@ -258,8 +258,9 @@ const wxBitmap &CStlSolid::GetIcon()
 
 void CStlSolid::GetProperties(std::list<Property *> *list)
 {
+#if 0
 	list->push_back(new PropertyInt(_("Number of Triangles"), (int)(m_list.size()), this));
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 

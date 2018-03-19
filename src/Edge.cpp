@@ -288,8 +288,9 @@ void CEdge::Blend(double radius,  bool chamfer_not_fillet){
 
 void CEdge::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyLength(_("length"), Length(), NULL));
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 

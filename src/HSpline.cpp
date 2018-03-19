@@ -229,6 +229,7 @@ void OnSetPole(const double *v, HeeksObj* obj, int i)
 
 
 void HSpline::GetProperties(std::list<Property *> *list){
+#if 0 // to do
 	wxChar str[512];
 	for(int i=1; i <= m_spline->NbKnots(); i++)
 	{
@@ -248,6 +249,7 @@ void HSpline::GetProperties(std::list<Property *> *list){
 		wxSprintf(str,_T("%s %d"), _("Weight"), i);
 		list->push_back(new PropertyDouble(str,m_spline->Weight(i),this,OnSetWeight,i));
 	}
+#endif
 	EndedObject::GetProperties(list); 
 }
 

@@ -492,6 +492,7 @@ const wxChar* RegularShapesDrawing::GetTitle()
 }
 
 void RegularShapesDrawing::GetProperties(std::list<Property *> *list){
+#if 0 // to do
 	// add drawing mode
 	std::list< wxString > choices;
 	choices.push_back ( wxString ( _("draw rectangles") ) );
@@ -512,7 +513,7 @@ void RegularShapesDrawing::GetProperties(std::list<Property *> *list){
             polygonChoices.push_back ( wxString ( _("inscribed circle") ) );
         list->push_back ( new PropertyChoice ( _("polygon mode"),  polygonChoices, p_mode, NULL, on_set_polygon_mode ) );
 	}
-
+#endif
 	Drawing::GetProperties(list);
 }
 

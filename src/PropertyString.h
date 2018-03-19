@@ -7,21 +7,4 @@
 
 #include "Property.h"
 
-class PropertyString:public Property{
-private:
-	wxString m_title;
-
-public:
-	wxString m_initial_value;
-	void(*m_callbackfunc)(const wxChar*, HeeksObj*);
-
-	PropertyString(const wxChar* t, const wxChar* v, HeeksObj* object, void(*callbackfunc)(const wxChar*, HeeksObj*) = NULL, void(*selectcallback)(HeeksObj*) = NULL);
-
-	// Property's virtual functions
-	int get_property_type(){return StringPropertyType;}
-	bool property_editable()const{return m_callbackfunc != NULL;}
-	Property *MakeACopy(void)const;
-	const wxChar* GetShortString(void)const;
-};
-
 #endif

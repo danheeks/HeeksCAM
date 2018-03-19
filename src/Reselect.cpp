@@ -133,7 +133,9 @@ wxString GetIntListString(const std::list<int> &list)
 
 void AddSolidsProperties(std::list<Property *> *list, const std::list<int> &solids)
 {
+#if 0
 	if(solids.size() == 0)list->push_back(new PropertyString(_("solids"), _("None"), NULL));
 	else if(solids.size() == 1)list->push_back(new PropertyInt(_("solid id"), solids.front(), NULL));
 	else list->push_back(new PropertyString(_("solids"), GetIntListString(solids), NULL));
+#endif
 }

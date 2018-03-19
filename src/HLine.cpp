@@ -215,6 +215,7 @@ static void on_set_end(const double *vt, HeeksObj* object){
 }
 
 void HLine::GetProperties(std::list<Property *> *list){
+#if 0 // to do
 	double a[3], b[3];
 	extract(A, a);
 	extract(B, b);
@@ -222,7 +223,7 @@ void HLine::GetProperties(std::list<Property *> *list){
 	list->push_back(new PropertyVertex(_("end"), b, this, on_set_end));
 	double length = A.Distance(B);
 	list->push_back(new PropertyLength(_("Length"), length, this, NULL));
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 

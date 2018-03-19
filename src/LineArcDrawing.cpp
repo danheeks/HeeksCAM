@@ -680,6 +680,7 @@ static void on_set_circle_radius(double value, HeeksObj* object)
 }
 
 void LineArcDrawing::GetProperties(std::list<Property *> *list){
+#if 0 // to do
 	line_drawing_for_GetProperties = this;
 
 	// add drawing mode
@@ -717,6 +718,7 @@ void LineArcDrawing::GetProperties(std::list<Property *> *list){
 	}
 
 	Drawing::GetProperties(list);
+#endif
 }
 
 void LineArcDrawing::GetTools(std::list<Tool*> *f_list, const wxPoint *p){

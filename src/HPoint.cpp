@@ -111,10 +111,11 @@ static void on_set_point(const double *vt, HeeksObj* object){
 
 void HPoint::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	double p[3];
 	extract(m_p, p);
 	list->push_back(new PropertyVertex(_("position"), p, this, on_set_point));
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 

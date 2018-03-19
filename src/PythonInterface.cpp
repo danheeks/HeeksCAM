@@ -27,7 +27,7 @@
 #include "OutputCanvas.h"
 #include "HArc.h"
 #include "StlSolid.h"
-#include "PropertyInt.h"
+#include "Property.h"
 #include <set>
 
 #ifdef _DEBUG
@@ -624,16 +624,64 @@ public:
 std::wstring str_for_base_object;
 HBitmap hbitmap_for_base_object;
 
-#define BASE_OBJECT_DEFINED
 
-#ifdef BASE_OBJECT_DEFINED
+std::list<Property *> *property_list = NULL;
 
-#define BASE_OBJECT_CLASS HeeksObj
 
-class BaseObject : public BASE_OBJECT_CLASS, public bp::wrapper<BASE_OBJECT_CLASS>
+
+
+/*
+This RAII structure ensures that threads created on the native C side
+adhere to the laws of Python and ensure they grab the GIL lock when
+calling into python
+*/
+struct PyLockGIL
+{
+
+	PyLockGIL()
+		: gstate(PyGILState_Ensure())
+	{
+	}
+
+	~PyLockGIL()
+	{
+		PyGILState_Release(gstate);
+	}
+
+	PyLockGIL(const PyLockGIL&) = delete;
+	PyLockGIL& operator=(const PyLockGIL&) = delete;
+
+	PyGILState_STATE gstate;
+};
+
+
+
+
+bp::detail::method_result Call_Override(bp::override &f)
+{
+	PyObject *main_module, *globals;
+	BeforePythonCall(&main_module, &globals);
+
+	// Execute the python function
+	PyLockGIL lock;
+	try
+	{
+		return f();
+	}
+	catch (const bp::error_already_set&)
+	{
+		AfterPythonCall(main_module);
+	}
+
+}
+
+
+
+
+class BaseObject : public HeeksObj, public bp::wrapper<HeeksObj>
 {
 public:
-	BaseObject() :BASE_OBJECT_CLASS(){}
+	BaseObject() :HeeksObj(){}
 	int GetType()const override
 	{
 		if (bp::override f = this->get_override("GetType"))
@@ -641,7 +689,7 @@ public:
 			int t = f();
 			return t;
 		}
-		return BASE_OBJECT_CLASS::GetType();
+		return HeeksObj::GetType();
 	}
 
 	const wxBitmap &GetIcon() override
@@ -651,7 +699,7 @@ public:
 			hbitmap_for_base_object = HBitmap(f());
 			return hbitmap_for_base_object;
 		}
-		return BASE_OBJECT_CLASS::GetIcon();
+		return HeeksObj::GetIcon();
 	}
 
 	const wxChar* GetShortString()const override
@@ -662,7 +710,7 @@ public:
 			str_for_base_object = Ctt(s.c_str());
 			return str_for_base_object.c_str();
 		}
-		return BASE_OBJECT_CLASS::GetShortString();
+		return HeeksObj::GetShortString();
 	}
 
 	const wxChar* GetTypeString()const override
@@ -673,7 +721,7 @@ public:
 			str_for_base_object = Ctt(s.c_str());
 			return str_for_base_object.c_str();
 		}
-		return BASE_OBJECT_CLASS::GetTypeString();
+		return HeeksObj::GetTypeString();
 	}
 
 	static bool in_glCommands;
@@ -681,6 +729,7 @@ public:
 	static bool lines_begun;
 	static HeeksColor color_set;
 	static bool this_no_color;
+
 
 	void glCommands(bool select, bool marked, bool no_color) override
 	{
@@ -691,7 +740,8 @@ public:
 		{
 			in_glCommands = true;
 			this_no_color = no_color;
-			f();
+			
+			Call_Override(f);
 
 			if (triangles_begun)
 			{
@@ -713,12 +763,8 @@ public:
 	{
 		if (bp::override f = this->get_override("GetProperties"))
 		{
-			boost::python::list plist = f();
-			for (int i = 0; i < len(plist); ++i)
-			{
-				Property* p = boost::python::extract<Property*>(plist[i]);
-				list->push_back(p);
-			}
+			property_list = list;
+			Property* p = Call_Override(f);
 		}
 	}
 };
@@ -750,6 +796,11 @@ std::wstring BaseObjectGetTitle(const BaseObject& object)
 unsigned int BaseObjectGetID(BaseObject& object)
 {
 	return object.GetID();
+}
+
+int PropertyGetInt(Property& property)
+{
+	return property.GetInt();
 }
 
 void DrawTriangle(double x0, double x1, double x2, double x3, double x4, double x5, double x6, double x7, double x8)
@@ -815,37 +866,40 @@ void DrawColor(unsigned char r, unsigned char g, unsigned char b)
 	BaseObject::color_set = HeeksColor(r, g, b);
 }
 
-static void on_set_property_int(int index, int value, HeeksObj* object)
+void Proptest(HeeksObj* object)
 {
-		if (bp::override f = this->get_override("GetType"))
-		{
-			int t = f();
-			return t;
-		}
-		return BASE_OBJECT_CLASS::GetType();
-
-}
-
-static void on_set_property_int0(int value, HeeksObj* object){ on_set_property_int(0, value, object); }
-{
-	((COp*)object)->m_pattern = value;
-}
-
-class PyPropertyInt : public PropertyInt, public bp::wrapper<PropertyInt>
-{
-public:
-	PyPropertyInt() :PropertyInt(_T("empty"), 0, NULL){}
-	PyPropertyInt(std::wstring str, int initial_value, HeeksObj* object, PyObject *callback) :PropertyInt(str.c_str(), initial_value, on_set_property_int){}
-
-	std::wstring m_str;
-	PyObject *m_callback;
-
-	int GetType()const override
+	std::list<Property *> list;
+	object->GetProperties(&list);
+	if (list.size() > 0)
 	{
+		int a = list.front()->GetInt();
+		int b = a;
 	}
 }
 
-#endif
+void AddProperty(Property* property)
+{
+	property_list->push_back(property);
+}
+
+
+class PropertyWrap : public Property, public bp::wrapper<Property>
+{
+public:
+	PropertyWrap() :Property(){}
+	int GetInt()const override
+	{
+		if (bp::override f = this->get_override("GetInt"))return Call_Override(f);
+		return Property::GetInt();
+	}
+	Property *MakeACopy(void)const{ return new PropertyWrap(*this); }
+};
+
+
+int PropertyWrapGetInt(PropertyWrap& property)
+{
+	return property.GetInt();
+}
 
 BOOST_PYTHON_MODULE(cad) {
 	/// class Object
@@ -858,15 +912,22 @@ BOOST_PYTHON_MODULE(cad) {
 		.def("AddObject", &ObjectAddObject)
 		;
 
-#ifdef BASE_OBJECT_DEFINED
+	bp::class_<Property>("Property")
+		.def(bp::init<Property>())
+		.def("GetInt", &PropertyGetInt)
+		;
+
+	bp::class_<PropertyWrap, boost::noncopyable >("Property")
+		.def("GetInt", &PropertyWrapGetInt)
+		;
+
 	bp::class_<BaseObject, boost::noncopyable >("Object")
-//		.def(bp::init<BaseObject>())
 		.def("GetType", &BaseObjectGetType)
 		.def("GetIcon", &BaseObjectGetIcon)
 		.def("GetTitle", &BaseObjectGetTitle)
 		.def("GetID", &BaseObjectGetID)
 		;
-#endif
+
 	bp::class_<HCircle, bp::bases<HeeksObj> >("Circle")
 		.def(bp::init<HCircle>())
 		.def("GetDiameter", &HCircle::GetDiameter)
@@ -1054,15 +1115,6 @@ BOOST_PYTHON_MODULE(cad) {
 		.def_readwrite("finishing_step_down", &CProfile::m_finishing_step_down)
 		;
 
-	bp::class_<Property>("Property")
-		.def(bp::init<Property>())
-		;
-
-	bp::class_<PropertyInt, bp::bases<Property> >("PropertyInt")
-		.def(bp::init<PropertyInt>())
-		.def(bp::init<double, double, double, double, double, double>())
-		;
-
 	bp::def("AddMenu", AddMenu);///function AddMenu///params str title///adds a menu to the CAD software
 	bp::def("AddMenuItem", AddMenuItem);///function AddMenuItem///params str title, function callback///adds a menu item to the last added menu
 	bp::def("MessageBox", CadMessageBox);
@@ -1087,6 +1139,8 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::def("DrawTriangle", &DrawTriangle);
 	bp::def("DrawLine", &DrawLine);
 	bp::def("DrawColor", &DrawColor);
+	bp::def("Proptest", &Proptest);
+	bp::def("AddProperty", AddProperty);
 
 
 	bp::scope().attr("OBJECT_TYPE_UNKNOWN") = (int)OBJECT_TYPE_UNKNOWN;
@@ -1114,6 +1168,19 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::scope().attr("TOOL_TYPE_BALL_CUTTER") = (int)CTool::eBallEndMill;
 	bp::scope().attr("TOOL_TYPE_CHAMFER") = (int)CTool::eChamfer;
 	bp::scope().attr("TOOL_TYPE_UNDEFINED") = (int)CTool::eUndefinedToolType;
+
+	bp::scope().attr("PROPERTY_TYPE_INVALID") = (int)InvalidPropertyType;
+	bp::scope().attr("PROPERTY_TYPE_STRING") =	(int)StringPropertyType;
+	bp::scope().attr("PROPERTY_TYPE_DOUBLE") =	(int)DoublePropertyType;
+	bp::scope().attr("PROPERTY_TYPE_LENGTH") =	(int)LengthPropertyType;
+	bp::scope().attr("PROPERTY_TYPE_INT") =		(int)IntPropertyType;
+	bp::scope().attr("PROPERTY_TYPE_VERTEX") =	(int)VertexPropertyType;
+	bp::scope().attr("PROPERTY_TYPE_CHOICE") =	(int)ChoicePropertyType;
+	bp::scope().attr("PROPERTY_TYPE_COLOR") =	(int)ColorPropertyType;
+	bp::scope().attr("PROPERTY_TYPE_CHECK") =	(int)CheckPropertyType;
+	bp::scope().attr("PROPERTY_TYPE_LIST") =	(int)ListOfPropertyType;
+	bp::scope().attr("PROPERTY_TYPE_TRS") =		(int)TrsfPropertyType;
+	bp::scope().attr("PROPERTY_TYPE_FILE") =	(int)FilePropertyType;
 }
 
 

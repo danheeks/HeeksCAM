@@ -101,12 +101,13 @@ static void on_set_same_for_position(bool value, HeeksObj* object){((CSurface*)o
 
 void CSurface::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	AddSolidsProperties(list, m_solids);
 
 	list->push_back(new PropertyLength(_("tolerance"), m_tolerance, this, on_set_tolerance));
 	list->push_back(new PropertyLength(_("material allowance"), m_material_allowance, this, on_set_material_allowance));
 	list->push_back(new PropertyCheck(_("same for each pattern position"), m_same_for_each_pattern_position, this, on_set_same_for_position));
-
+#endif
 	IdNamedObj::GetProperties(list);
 }
 

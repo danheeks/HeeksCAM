@@ -330,6 +330,7 @@ static void on_set_axis(const double *vt, HeeksObj* object){
 }
 
 void HArc::GetProperties(std::list<Property *> *list){
+#if 0 // to do
 	double a[3], b[3];
 	double c[3], ax[3];
 	extract(A, a);
@@ -343,7 +344,7 @@ void HArc::GetProperties(std::list<Property *> *list){
 	double length = A.Distance(B);
 	list->push_back(new PropertyLength(_("length"), length, NULL));
 	list->push_back(new PropertyLength(_("radius"), m_radius, this, NULL));
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 

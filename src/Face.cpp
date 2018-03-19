@@ -199,8 +199,9 @@ void CFace::WriteXML(TiXmlNode *root)
 
 void CFace::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyString(_("surface type"), GetSurfaceTypeStr(), NULL));
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 

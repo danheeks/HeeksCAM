@@ -656,6 +656,7 @@ void on_set_feed_color		(HeeksColor value, HeeksObj* object)	{CNCCode::Color(Col
 // static
 void CNCCode::GetOptions(std::list<Property *> *list)
 {
+#if 0 // to do
 	PropertyList* nc_options = new PropertyList(_("nc options"));
 
 	PropertyList* text_colors = new PropertyList(_("text colors"));
@@ -673,6 +674,7 @@ void CNCCode::GetOptions(std::list<Property *> *list)
 	nc_options->m_list.push_back(text_colors);
 
 	list->push_back(nc_options);
+#endif
 }
 
 CNCCode::CNCCode() :m_highlighted_block(NULL), m_gl_list(0), m_select_gl_list(0), m_user_edited(false)
@@ -760,8 +762,10 @@ void on_set_arc_interpolation_count(int value, HeeksObj*object)
 
 void CNCCode::GetProperties(std::list<Property *> *list)
 {
-	list->push_back( new PropertyInt(_("Arc Interpolation Count"), CNCCode::s_arc_interpolation_count, this, on_set_arc_interpolation_count) );
+#if 0 // to do
+	list->push_back(new PropertyInt(_("Arc Interpolation Count"), CNCCode::s_arc_interpolation_count, this, on_set_arc_interpolation_count));
 	HeeksObj::GetProperties(list);
+#endif
 }
 
 void CNCCode::GetTools(std::list<Tool*>* t_list, const wxPoint* p)

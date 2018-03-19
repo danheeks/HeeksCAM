@@ -247,6 +247,7 @@ double HEllipse::GetRotation()const
 }
 
 void HEllipse::GetProperties(std::list<Property *> *list){
+#if 0 // to do
 	double c[3], a[3];
 	extract(C, c);
 	extract(m_zdir, a);
@@ -259,6 +260,7 @@ void HEllipse::GetProperties(std::list<Property *> *list){
 	list->push_back(new PropertyDouble(_("start angle"), m_start, this, on_set_start_angle));
 	list->push_back(new PropertyDouble(_("end angle"), m_end, this, on_set_end_angle));
 	HeeksObj::GetProperties(list);
+#endif
 }
 
 bool HEllipse::FindNearPoint(const double* ray_start, const double* ray_direction, double *point){

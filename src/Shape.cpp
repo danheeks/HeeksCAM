@@ -1228,6 +1228,7 @@ void CShape::CalculateVolumeAndCentre()
 
 void CShape::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyDouble(_("opacity"), m_opacity, this, on_set_opacity));
 
 	if(m_volume_found)
@@ -1243,6 +1244,6 @@ void CShape::GetProperties(std::list<Property *> *list)
 	{
 		list->push_back(new PropertyCheck(_("calculate volume"), false, this, on_calculate_volume));
 	}
-
+#endif
 	IdNamedObjList::GetProperties(list);
 }

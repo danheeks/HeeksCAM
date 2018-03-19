@@ -233,7 +233,8 @@ static void on_set_pz(const double *vt, HeeksObj* object){
 
 void CGroup::GetProperties(std::list<Property *> *list)
 {
-	list->push_back ( new PropertyCheck( _("custom grippers"), m_custom_grippers, this, on_set_custom_grippers) );
+#if 0 // to do
+	list->push_back(new PropertyCheck(_("custom grippers"), m_custom_grippers, this, on_set_custom_grippers));
 
 	if(m_custom_grippers)
 	{
@@ -248,7 +249,7 @@ void CGroup::GetProperties(std::list<Property *> *list)
 		extract(m_pz, p);
 		list->push_back(new PropertyVertex(_("z"), p, this, on_set_pz));
 	}
-
+#endif
 	ObjList::GetProperties(list);
 }
 

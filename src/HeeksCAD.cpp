@@ -3322,6 +3322,7 @@ void on_set_use_DOS(bool value, HeeksObj* object)
 
 void HeeksCADapp::GetOptions(std::list<Property *> *list)
 {
+#if 0 // to do
 	PropertyList* view_options = new PropertyList(_("view options"));
 
 	{
@@ -3544,6 +3545,7 @@ void HeeksCADapp::GetOptions(std::list<Property *> *list)
 	machining_options->m_list.push_back(new PropertyCheck(_("Use DOS Line Endings"), m_use_DOS_not_Unix, NULL, on_set_use_DOS));
 
 	list->push_back(machining_options);
+#endif
 }
 
 void HeeksCADapp::DeleteMarkedItems()

@@ -160,6 +160,7 @@ void CDepthOp::ReadBaseXML(TiXmlElement* element)
 
 void CDepthOp::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyLength(_("clearance height"), m_clearance_height, this, on_set_clearance_height));
 
 	if (CTool::IsMillingToolType(CTool::FindToolType(this->m_tool_number)))
@@ -173,6 +174,7 @@ void CDepthOp::GetProperties(std::list<Property *> *list)
 		list->push_back(new PropertyString(_("user depths"), m_user_depths.c_str(), this, on_set_user_depths));
 	}
 	CSpeedOp::GetProperties(list);
+#endif
 }
 
 void CDepthOp::WriteDefaultValues()

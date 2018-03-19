@@ -328,7 +328,8 @@ static void on_set_units(int value, HeeksObj* object, bool from_undo_redo)
 
 void HRuler::GetProperties(std::list<Property *> *list)
 {
-	list->push_back( new PropertyCheck(_("use view units"), m_use_view_units, this, on_set_use_view_units));
+#if 0 // to do
+	list->push_back(new PropertyCheck(_("use view units"), m_use_view_units, this, on_set_use_view_units));
 	if(!m_use_view_units){
 		std::list< wxString > choices;
 		choices.push_back ( wxString ( _("mm") ) );
@@ -340,7 +341,7 @@ void HRuler::GetProperties(std::list<Property *> *list)
 	list->push_back( new PropertyLength(_("width"), m_width, this, on_set_width));
 	list->push_back( new PropertyLength(_("length"), m_length, this, on_set_length));
 	list->push_back( new PropertyLength(_("empty_length"), m_empty_length, this, on_set_empty_length));
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 

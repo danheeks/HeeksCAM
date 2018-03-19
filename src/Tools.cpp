@@ -242,6 +242,7 @@ static void on_set_title_format(int value, HeeksObj* object, bool from_undo_redo
 
 void CTools::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	{
 		std::list< wxString > choices;
 		choices.push_back( _("Guage number replaces size") );
@@ -249,6 +250,7 @@ void CTools::GetProperties(std::list<Property *> *list)
 
 		list->push_back ( new PropertyChoice ( _("Title Format"),  choices, m_title_format, this, on_set_title_format ) );
 	}
+#endif
 	HeeksObj::GetProperties(list);
 }
 

@@ -58,8 +58,10 @@ void CDoubleInput::OnMouse( wxMouseEvent& event )
 
 void CDoubleInput::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	value_for_set_value = &m_value;
 	list->push_back(new PropertyDouble(m_value_title.c_str(), m_value, NULL, set_value));
+#endif
 }
 
 
@@ -76,7 +78,9 @@ CLengthInput::CLengthInput(const wxChar* prompt, const wxChar* value_name, doubl
 
 void CLengthInput::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	value_for_set_value = &m_value;
 	list->push_back(new PropertyLength(m_value_title.c_str(), m_value, NULL, set_value));
+#endif
 }
 

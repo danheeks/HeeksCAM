@@ -336,6 +336,7 @@ void CDrilling::glCommands(bool select, bool marked, bool no_color)
 
 void CDrilling::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyDouble(_("dwell"), m_dwell, this, on_set_dwell));
 	{ // Begin choice scope
 		std::list< wxString > choices;
@@ -359,6 +360,7 @@ void CDrilling::GetProperties(std::list<Property *> *list)
 	list->push_back(new PropertyCheck(_("internal coolant on"), m_internal_coolant_on, this, on_set_internal_coolant));
 	list->push_back(new PropertyCheck(_("rapid to clearance between positions"), m_rapid_to_clearance, this, on_set_rapid_to_clearance));
 	CDepthOp::GetProperties(list);
+#endif
 }
 
 HeeksObj *CDrilling::MakeACopy(void)const

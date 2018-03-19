@@ -302,6 +302,7 @@ static void on_set_font(int zero_based_choice, HeeksObj *obj, bool from_undo_red
 
 void HText::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyTrsf(_("orientation"), m_trsf, this, on_set_trsf));
 
 #ifndef WIN32
@@ -344,7 +345,7 @@ void HText::GetProperties(std::list<Property *> *list)
 		choices.push_back ( wxString ( _("top") ) );
 		list->push_back(new PropertyChoice(_("vertical justification"),  choices, m_v_justification, this, on_set_vj ) );
 	}
-
+#endif
 	ObjList::GetProperties(list);
 }
 

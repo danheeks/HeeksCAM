@@ -7,12 +7,8 @@
 #include "HLine.h"
 #include "HILine.h"
 #include "HCircle.h"
-#include "PropertyDouble.h"
-#include "PropertyInt.h"
-#include "PropertyLength.h"
-#include "PropertyChoice.h"
+#include "Property.h"
 #include "tinyxml.h"
-#include "PropertyVertex.h"
 #include "Tool.h"
 #include "Gripper.h"
 #include "Sketch.h"
@@ -271,8 +267,19 @@ void HArea::GetGripperPositions(std::list<GripData> *list, bool just_for_endof){
 	//list->push_back(GripData(GripperTypeStretch,C->m_p.X(),C->m_p.Y(),C->m_p.Z(),C));
 }
 
+class PropertyNumCurves :PropertyInt
+{
+public:
+	PropertyNumCurves(){}
+	PropertyNumCurves(HArea* area) :PropertyInt(area){}
+	const wxChar* GetShortString(void)const{ return _("number of curves"); }
+	int Get()const{ return ((HArea*)m_object)->m_area.m_curves.size(); }
+	Property *MakeACopy(void)const{ return new PropertyNumCurves(*this); }
+};
+
+
 void HArea::GetProperties(std::list<Property *> *list){
-	list->push_back(new PropertyInt(_("number of curves"), this->m_area.m_curves.size(), this, NULL));
+	list->push_back((Property*)(new PropertyNumCurves(this)));
 	IdNamedObj::GetProperties(list);
 }
 

@@ -84,6 +84,7 @@ const wxBitmap &HeeksObj::GetIcon()
 
 void HeeksObj::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	bool editable = CanEditString();
 	list->push_back(new PropertyString(_("object type"), GetTypeString(), NULL));
 	if(GetShortString())list->push_back(new PropertyString(_("object title"), GetShortString(), this, editable ? on_edit_string : NULL));
@@ -94,6 +95,7 @@ void HeeksObj::GetProperties(std::list<Property *> *list)
 		list->push_back ( new PropertyColor ( _("color"),  *c, this, on_set_color ) );
 	}
 	list->push_back(new PropertyCheck(_("visible"), m_visible, this, on_set_visible));
+#endif
 }
 
 bool HeeksObj::GetScaleAboutMatrix(double *m)

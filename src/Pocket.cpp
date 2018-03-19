@@ -447,6 +447,7 @@ void CPocket::glCommands(bool select, bool marked, bool no_color)
 
 void CPocket::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	int tool_type = CTool::FindToolType(this->m_tool_number);
 
 	list->push_back(new PropertyLength(_("step over"), m_step_over, this, on_set_step_over));
@@ -479,6 +480,7 @@ void CPocket::GetProperties(std::list<Property *> *list)
 		list->push_back(new PropertyDouble(_("zig angle"), m_zig_angle, this, on_set_zig_angle));
 		list->push_back(new PropertyCheck(_("unidirectional"), m_zig_unidirectional, this, on_set_zig_uni));
 	}
+#endif
 	CSketchOp::GetProperties(list);
 }
 
@@ -601,7 +603,9 @@ static void on_set_spline_deviation(double value, HeeksObj* object){
 // static
 void CPocket::GetOptions(std::list<Property *> *list)
 {
-	list->push_back ( new PropertyDouble ( _("Pocket spline deviation"), max_deviation_for_spline_to_arc, NULL, on_set_spline_deviation ) );
+#if 0 // to do
+	list->push_back(new PropertyDouble(_("Pocket spline deviation"), max_deviation_for_spline_to_arc, NULL, on_set_spline_deviation));
+#endif
 }
 
 // static

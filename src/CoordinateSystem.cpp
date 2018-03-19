@@ -1312,6 +1312,7 @@ void CoordinateSystem::GetProperties(std::list<Property *> *list)
 	extract(m_o, o);
 	extract(m_x, x);
 	extract(m_y, y);
+#if 0 //to do
 	list->push_back(new PropertyVertex(_("position"), o, this, on_set_pos));
 	list->push_back(new PropertyVector(_("x axis"), x, NULL));
 	list->push_back(new PropertyVector(_("y axis"), y, NULL));
@@ -1319,7 +1320,7 @@ void CoordinateSystem::GetProperties(std::list<Property *> *list)
 	list->push_back(new PropertyDouble(_("Vertical Angle"), vertical_angle_for_property * 180/M_PI, this, on_set_vertical_angle));
 	list->push_back(new PropertyDouble(_("Horizontal Angle"), horizontal_angle_for_property * 180/M_PI, this, on_set_horizontal_angle));
 	list->push_back(new PropertyDouble(_("Twist Angle"), twist_angle_for_property * 180/M_PI, this, on_set_twist_angle));
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 
@@ -1504,6 +1505,7 @@ static void on_set_ax2_twist_angle(double value, HeeksObj* object)
 
 void CoordinateSystem::GetAx2Properties(std::list<Property *> *list, gp_Ax2& a, HeeksObj* object)
 {
+#if 0 // to do
 	ax2_for_GetProperties = &a;
 	double o[3];
 	extract(a.Location(), o);
@@ -1512,6 +1514,7 @@ void CoordinateSystem::GetAx2Properties(std::list<Property *> *list, gp_Ax2& a, 
 	list->push_back(new PropertyDouble(_("Vertical Angle"), vertical_angle_for_property * 180/M_PI, object, on_set_ax2_vertical_angle));
 	list->push_back(new PropertyDouble(_("Horizontal Angle"), horizontal_angle_for_property * 180/M_PI, object, on_set_ax2_horizontal_angle));
 	if(fabs(vertical_angle_for_property) > 0.000001)list->push_back(new PropertyDouble(_("Twist Angle"), twist_angle_for_property * 180/M_PI, object, on_set_ax2_twist_angle));
+#endif
 }
 
 static void on_set_origin(const double* pos)

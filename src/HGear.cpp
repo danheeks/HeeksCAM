@@ -546,6 +546,7 @@ static void on_set_angle(double value, HeeksObj* object){
 	((HGear*)object)->m_angle = value;
 }
 void HGear::GetProperties(std::list<Property *> *list){
+#if 0 // to do
 	list->push_back(new PropertyInt(_("num teeth"), m_num_teeth, this, on_set_num_teeth));
 	list->push_back(new PropertyDouble(_("module"), m_module, this, on_set_module));
 	list->push_back(new PropertyDouble(_("pressure angle"), m_pressure_angle * 180/M_PI, this, on_set_pressure_angle));
@@ -553,7 +554,7 @@ void HGear::GetProperties(std::list<Property *> *list){
 	list->push_back(new PropertyDouble(_("depth"), m_depth, this, on_set_depth));
 	list->push_back(new PropertyDouble(_("cone half angle"), m_cone_half_angle * 180/M_PI, this, on_set_cone_half_angle));
 	list->push_back(new PropertyDouble(_("drawn angle"), m_angle, this, on_set_angle));
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 

@@ -145,20 +145,38 @@ bool CCone::IsDifferent(HeeksObj* o)
 	return HeeksObj::IsDifferent(o);
 }
 
-static void on_set_r1(double value, HeeksObj* object){
-	((CCone*)object)->m_r1 = value;
-	object->OnApplyProperties();
-}
 
-static void on_set_r2(double value, HeeksObj* object){
-	((CCone*)object)->m_r2 = value;
-	object->OnApplyProperties();
-}
+class PropertyR1 :PropertyLength
+{
+public:
+	PropertyR1(CCone* cone) :PropertyLength(cone){}
+	const wxChar* GetShortString(void)const{ return _("r1"); }
+	double Get()const{ return ((CCone*)m_object)->m_r1; }
+	void Set(double value){ ((CCone*)m_object)->m_r1 = value; ((CCone*)m_object)->OnApplyProperties(); }
+	Property *MakeACopy(void)const{ return new PropertyR1(*this); }
+};
 
-static void on_set_height(double value, HeeksObj* object){
-	((CCone*)object)->m_height = value;
-	object->OnApplyProperties();
-}
+class PropertyR2 :PropertyLength
+{
+	CCone* m_cone;
+public:
+	PropertyR2(CCone* cone) :PropertyLength(cone){}
+	const wxChar* GetShortString(void)const{ return _("r2"); }
+	double Get()const{ return ((CCone*)m_object)->m_r2; }
+	void Set(double value){ ((CCone*)m_object)->m_r2 = value; ((CCone*)m_object)->OnApplyProperties(); }
+	Property *MakeACopy(void)const{ return new PropertyR2(*this); }
+};
+
+class PropertyHeight :PropertyLength
+{
+	CCone* m_cone;
+public:
+	PropertyHeight(CCone* cone) :PropertyLength(cone){}
+	const wxChar* GetShortString(void)const{ return _("height"); }
+	double Get()const{ return ((CCone*)m_object)->m_height; }
+	void Set(double value){ ((CCone*)m_object)->m_height = value; ((CCone*)m_object)->OnApplyProperties(); }
+	Property *MakeACopy(void)const{ return new PropertyHeight(*this); }
+};
 
 void CCone::MakeTransformedShape(const gp_Trsf &mat)
 {
@@ -175,9 +193,9 @@ wxString CCone::StretchedName(){ return _("Stretched Cone");}
 void CCone::GetProperties(std::list<Property *> *list)
 {
 	CoordinateSystem::GetAx2Properties(list, m_pos, this);
-	list->push_back(new PropertyLength(_("r1"), m_r1, this, on_set_r1));
-	list->push_back(new PropertyLength(_("r2"), m_r2, this, on_set_r2));
-	list->push_back(new PropertyLength(_("height"), m_height, this, on_set_height));
+	list->push_back((Property*)(new PropertyR1(this)));
+	list->push_back((Property*)(new PropertyR2(this)));
+	list->push_back((Property*)(new PropertyHeight(this)));
 
 	CSolid::GetProperties(list);
 }

@@ -69,10 +69,12 @@ static void on_set_height(double value, HeeksObj* object){((CTag*)object)->m_hei
 
 void CTag::GetProperties(std::list<Property *> *list)
 {
+#if 0
 	list->push_back(new PropertyVertex2d(_("position"), m_pos, this, on_set_pos));
 	list->push_back(new PropertyLength(_("width"), m_width, this, on_set_width));
 	list->push_back(new PropertyDouble(_("angle"), m_angle, this, on_set_angle));
 	list->push_back(new PropertyLength(_("height"), m_height, this, on_set_height));
+#endif
 }
 
 static CTag* object_for_tools = NULL;

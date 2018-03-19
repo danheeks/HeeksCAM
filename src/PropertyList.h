@@ -7,21 +7,4 @@
 
 #include "Property.h"
 
-class PropertyList:public Property{
-private:
-	wxString title;
-
-public:
-	std::list< Property* > m_list;
-
-	PropertyList(const wxChar* t, void(*selectcallback)(HeeksObj*) = NULL);
-	~PropertyList();
-
-	// Property's virtual functions
-	int get_property_type(){return ListOfPropertyType;}
-	bool property_editable()const{return false;}
-	Property *MakeACopy(void)const;
-	const wxChar* GetShortString(void)const;
-};
-
 #endif

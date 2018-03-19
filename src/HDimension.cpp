@@ -314,6 +314,7 @@ static void on_set_scale(double value, HeeksObj* object)
 
 void HDimension::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyTrsf(_("orientation"), m_trsf, this, on_set_trsf));
 
 	std::list< wxString > choices;
@@ -334,7 +335,7 @@ void HDimension::GetProperties(std::list<Property *> *list)
 
 	wxString text = MakeText();
 	list->push_back(new PropertyString(_("dimension value"), text, this, NULL));
-
+#endif
 	EndedObject::GetProperties(list);
 }
 

@@ -109,6 +109,7 @@ static void on_set_tool_number(int zero_based_choice, HeeksObj* object, bool fro
 
 void COp::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyString(_("comment"), m_comment.c_str(), this, on_set_comment));
 	list->push_back(new PropertyCheck(_("active"), m_active, this, on_set_active));
 
@@ -132,7 +133,7 @@ void COp::GetProperties(std::list<Property *> *list)
 
 	list->push_back(new PropertyInt(_("pattern"), m_pattern, this, on_set_pattern));
 	list->push_back(new PropertyInt(_("surface"), m_surface, this, on_set_surface));
-
+#endif
 	IdNamedObjList::GetProperties(list);
 }
 

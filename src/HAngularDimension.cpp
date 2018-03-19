@@ -299,6 +299,7 @@ static void on_set_scale(double value, HeeksObj* object)
 
 void HAngularDimension::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	std::list< wxString > choices;
 
 	choices.clear();
@@ -309,7 +310,7 @@ void HAngularDimension::GetProperties(std::list<Property *> *list)
 	list->push_back ( new PropertyChoice ( _("text mode"),  choices, m_text_mode, this, on_set_text_mode ) );
 
 	list->push_back ( new PropertyDouble ( _("scale"),  m_scale, this, on_set_scale ) );
-
+#endif
 	HeeksObj::GetProperties(list);
 }
 

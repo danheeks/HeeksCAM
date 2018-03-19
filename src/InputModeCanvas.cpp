@@ -74,9 +74,11 @@ void CInputModeCanvas::RefreshByRemovingAndAddingAll2(){
 	std::list<Property *> list;
 
 	// add the input_mode mode's properties
+#if 0 // to do
 	PropertyString* title = new PropertyString(_("Input Mode"), wxGetApp().input_mode_object->GetTitle(), NULL);
 	if(wxGetApp().input_mode_object->TitleHighlighted())title->m_highlighted = true;
 	list.push_back(title);
+#endif
 	wxGetApp().input_mode_object->GetProperties(&list);
 
 	// add the properties to the grid

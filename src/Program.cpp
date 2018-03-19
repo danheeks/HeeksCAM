@@ -292,6 +292,7 @@ static void on_set_naive_cam_tolerance(double value, HeeksObj *object)
 
 void CProgram::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	{
 		std::vector<CMachine> machines;
 		GetMachines(machines);
@@ -347,7 +348,7 @@ void CProgram::GetProperties(std::list<Property *> *list)
 			list->push_back( new PropertyLength( _("Naive CAM Tolerance"), m_naive_cam_tolerance, this, on_set_naive_cam_tolerance ) );
 		} // End if - then
 	}
-
+#endif
 	IdNamedObjList::GetProperties(list);
 }
 

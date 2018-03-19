@@ -162,6 +162,7 @@ static bool SketchOrderAvailable(SketchOrderType old_order, SketchOrderType new_
 
 void CSketch::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyInt(_("Number of elements"), IdNamedObjList::GetNumChildren(), this));
 
 	int initial_index = 0;
@@ -182,7 +183,7 @@ void CSketch::GetProperties(std::list<Property *> *list)
 	}
 
 	list->push_back ( new PropertyChoice ( _("order"), choices, initial_index, this, on_set_order_type ) );
-
+#endif
 	IdNamedObjList::GetProperties(list);
 }
 

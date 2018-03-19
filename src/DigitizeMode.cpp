@@ -423,6 +423,7 @@ static void set_offset(const wxChar *value, HeeksObj* object)
 }
 
 void DigitizeMode::GetProperties(std::list<Property *> *list){
+#if 0 // to do
 	list->push_back(new PropertyLength(_("X"), digitized_point.m_point.X(), NULL, set_x));
 	list->push_back(new PropertyLength(_("Y"), digitized_point.m_point.Y(), NULL, set_y));
 	list->push_back(new PropertyLength(_("Z"), digitized_point.m_point.Z(), NULL, set_z));
@@ -437,6 +438,7 @@ void DigitizeMode::GetProperties(std::list<Property *> *list){
 
 		list->push_back(new PropertyString(_("Offset (from last point)"), _T("0,0,0"), NULL, set_offset));
 	}
+#endif
 }
 
 class EndPosPicking:public Tool{

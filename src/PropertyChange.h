@@ -2,6 +2,7 @@
 
 class PropertyChangeString: public Undoable
 {
+	PropertyString* m_property;
 public:
 	wxString m_value;
 	wxString m_old;
@@ -19,6 +20,7 @@ class PropertyDouble;
 
 class PropertyChangeDouble: public Undoable
 {
+	PropertyDouble* m_property;
 public:
 	double m_value;
 	double m_old;
@@ -36,6 +38,7 @@ class PropertyLength;
 
 class PropertyChangeLength: public Undoable
 {
+	PropertyLength* m_property;
 public:
 	double m_value;
 	double m_old;
@@ -53,11 +56,10 @@ class PropertyInt;
 
 class PropertyChangeInt: public Undoable
 {
+	PropertyInt* m_property;
 public:
 	int m_value;
 	int m_old;
-	HeeksObj* m_object;
-	void(*m_callbackfunc)(int, HeeksObj*);
 
 	PropertyChangeInt(const int& value, PropertyInt* property);
 
@@ -70,11 +72,10 @@ class PropertyColor;
 
 class PropertyChangeColor: public Undoable
 {
+	PropertyColor* m_property;
 public:
 	HeeksColor m_value;
 	HeeksColor m_old;
-	HeeksObj* m_object;
-	void(*m_callbackfunc)(HeeksColor, HeeksObj*);
 
 	PropertyChangeColor(const HeeksColor& value, PropertyColor* property);
 
@@ -83,32 +84,32 @@ public:
 	const wxChar* GetTitle(){return _("Property Change Color");}
 };
 
+#if 0
 class PropertyVertex;
 
 class PropertyChangeVertex: public Undoable
 {
+	PropertyVertex* m_property;
 public:
 	double m_value[3];
 	double m_old[3];
-	HeeksObj* m_object;
-	void(*m_callbackfunc)(const double*, HeeksObj*);
 
-	PropertyChangeVertex(const double* value, PropertyVertex* property);
+	PropertyChangeVertex(double x, double y, double z, PropertyVertex* property);
 
 	void Run(bool redo);
 	void RollBack();
 	const wxChar* GetTitle(){return _("Property Change Vertex");}
 };
+#endif
 
 class PropertyTrsf;
 
 class PropertyChangeTrsf: public Undoable
 {
+	PropertyTrsf* m_property;
 public:
 	gp_Trsf m_value;
 	gp_Trsf m_old;
-	HeeksObj* m_object;
-	void(*m_callbackfunc)(const gp_Trsf&, HeeksObj*);
 
 	PropertyChangeTrsf(const gp_Trsf &value, PropertyTrsf* property);
 
@@ -121,11 +122,10 @@ class PropertyChoice;
 
 class PropertyChangeChoice: public Undoable
 {
+	PropertyChoice* m_property;
 public:
 	int m_value;
 	int m_old;
-	HeeksObj* m_object;
-	void(*m_callbackfunc)(int, HeeksObj*, bool);
 
 	PropertyChangeChoice(const int& value, PropertyChoice* property);
 
@@ -138,11 +138,10 @@ class PropertyCheck;
 
 class PropertyChangeCheck: public Undoable
 {
+	PropertyCheck* m_property;
 public:
 	bool m_value;
 	bool m_old;
-	HeeksObj* m_object;
-	void(*m_callbackfunc)(bool, HeeksObj*);
 
 	PropertyChangeCheck(const bool& value, PropertyCheck* property);
 

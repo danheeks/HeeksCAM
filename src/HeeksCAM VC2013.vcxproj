@@ -346,6 +346,7 @@
     <ClCompile Include="ProgramCanvas.cpp" />
     <ClCompile Include="ProgramDlg.cpp" />
     <ClCompile Include="PropertiesCanvas.cpp" />
+    <ClCompile Include="Property.cpp" />
     <ClCompile Include="PropertyChange.cpp" />
     <ClCompile Include="PropertyCheck.cpp" />
     <ClCompile Include="PropertyChoice.cpp" />

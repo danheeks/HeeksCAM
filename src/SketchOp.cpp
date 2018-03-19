@@ -95,7 +95,9 @@ void on_set_sketch(int value, HeeksObj* object)
 
 void CSketchOp::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyInt(_("sketch id"), m_sketch, this, on_set_sketch));
+#endif
 	CDepthOp::GetProperties(list);
 }
 

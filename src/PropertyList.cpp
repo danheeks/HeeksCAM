@@ -5,27 +5,3 @@
 #include "stdafx.h"
 
 #include "PropertyList.h"
-
-PropertyList::PropertyList(const wxChar* t, void(*selectcallback)(HeeksObj*)):Property(NULL, selectcallback){
-	title = wxString(t);
-}
-
-PropertyList::~PropertyList(){
-#if 0
-	std::list< Property* >::iterator It;
-	for(It = m_list.begin(); It != m_list.end(); It++)
-	{
-		Property* property = *It;
-		delete property;
-	}
-#endif
-}
-
-const wxChar* PropertyList::GetShortString(void)const{
-	return title.c_str();
-}
-
-Property *PropertyList::MakeACopy(void)const{
-	PropertyList* new_object = new PropertyList(*this);
-	return new_object;
-}

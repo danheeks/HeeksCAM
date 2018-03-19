@@ -79,11 +79,12 @@ wxString CSphere::StretchedName(){ return _("Ellipsoid");}
 
 void CSphere::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	double pos[3];
 	extract(m_pos, pos);
 	list->push_back(new PropertyVertex(_("centre"), pos, this, on_set_centre));
 	list->push_back(new PropertyLength(_("radius"), m_radius, this, on_set_radius));
-
+#endif
 	CSolid::GetProperties(list);
 }
 

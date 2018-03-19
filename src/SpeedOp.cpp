@@ -119,12 +119,14 @@ void CSpeedOp::ReadDefaultValues()
 
 void CSpeedOp::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	if (CTool::IsMillingToolType(CTool::FindToolType(this->m_tool_number)))
 	{
 		list->push_back(new PropertyLength(_("horizontal feed rate"), m_horizontal_feed_rate, this, on_set_horizontal_feed_rate));
 		list->push_back(new PropertyLength(_("vertical feed rate"), m_vertical_feed_rate, this, on_set_vertical_feed_rate));
 		list->push_back(new PropertyDouble(_("spindle speed"), m_spindle_speed, this, on_set_spindle_speed));
 	}
+#endif
 	COp::GetProperties(list);
 }
 

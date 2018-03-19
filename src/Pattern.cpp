@@ -91,13 +91,14 @@ static void on_set_y_shift2(double value, HeeksObj* object)
 
 void CPattern::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	list->push_back(new PropertyInt(_("number of copies 1"), m_copies1, this, on_set_copies1));
 	list->push_back(new PropertyDouble(_("x shift 1"), m_x_shift1, this, on_set_x_shift1));
 	list->push_back(new PropertyDouble(_("y shift 1"), m_y_shift1, this, on_set_y_shift1));
 	list->push_back(new PropertyInt(_("number of copies 2"), m_copies2, this, on_set_copies2));
 	list->push_back(new PropertyDouble(_("x shift 2"), m_x_shift2, this, on_set_x_shift2));
 	list->push_back(new PropertyDouble(_("y shift 2"), m_y_shift2, this, on_set_y_shift2));
-
+#endif
 	IdNamedObj::GetProperties(list);
 }
 

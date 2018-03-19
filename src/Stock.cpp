@@ -76,8 +76,9 @@ void CStock::ReadDefaultValues()
 
 void CStock::GetProperties(std::list<Property *> *list)
 {
+#if 0 // to do
 	AddSolidsProperties(list, m_solids);
-
+#endif
 	IdNamedObj::GetProperties(list);
 }
 

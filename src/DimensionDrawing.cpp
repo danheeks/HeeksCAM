@@ -77,6 +77,7 @@ static void on_set_mode(int value, HeeksObj* object, bool from_undo_redo)
 }
 
 void DimensionDrawing::GetProperties(std::list<Property *> *list){
+#if 0 // to do
 	// add drawing mode
 	std::list< wxString > choices;
 	choices.push_back ( wxString ( _("between two points") ) );
@@ -89,6 +90,7 @@ void DimensionDrawing::GetProperties(std::list<Property *> *list){
 	list->push_back ( new PropertyChoice ( _("mode"),  choices, m_mode, NULL, on_set_mode ) );
 
 	Drawing::GetProperties(list);
+#endif
 }
 
 void DimensionDrawing::GetTools(std::list<Tool*> *f_list, const wxPoint *p){

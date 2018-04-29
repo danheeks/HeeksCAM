@@ -6,8 +6,6 @@ class PropertyChangeString: public Undoable
 public:
 	wxString m_value;
 	wxString m_old;
-	HeeksObj* m_object;
-	void(*m_callbackfunc)(const wxChar*, HeeksObj*);
 
 	PropertyChangeString(const wxString& value, PropertyString* property);
 
@@ -24,8 +22,6 @@ class PropertyChangeDouble: public Undoable
 public:
 	double m_value;
 	double m_old;
-	HeeksObj* m_object;
-	void(*m_callbackfunc)(double, HeeksObj*);
 
 	PropertyChangeDouble(const double& value, PropertyDouble* property);
 
@@ -42,8 +38,6 @@ class PropertyChangeLength: public Undoable
 public:
 	double m_value;
 	double m_old;
-	HeeksObj* m_object;
-	void(*m_callbackfunc)(double, HeeksObj*);
 
 	PropertyChangeLength(const double& value, PropertyLength* property);
 
@@ -82,40 +76,6 @@ public:
 	void Run(bool redo);
 	void RollBack();
 	const wxChar* GetTitle(){return _("Property Change Color");}
-};
-
-#if 0
-class PropertyVertex;
-
-class PropertyChangeVertex: public Undoable
-{
-	PropertyVertex* m_property;
-public:
-	double m_value[3];
-	double m_old[3];
-
-	PropertyChangeVertex(double x, double y, double z, PropertyVertex* property);
-
-	void Run(bool redo);
-	void RollBack();
-	const wxChar* GetTitle(){return _("Property Change Vertex");}
-};
-#endif
-
-class PropertyTrsf;
-
-class PropertyChangeTrsf: public Undoable
-{
-	PropertyTrsf* m_property;
-public:
-	gp_Trsf m_value;
-	gp_Trsf m_old;
-
-	PropertyChangeTrsf(const gp_Trsf &value, PropertyTrsf* property);
-
-	void Run(bool redo);
-	void RollBack();
-	const wxChar* GetTitle(){return _("Property Change Trsf");}
 };
 
 class PropertyChoice;

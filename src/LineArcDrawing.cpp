@@ -657,59 +657,74 @@ void LineArcDrawing::set_cursor(void){
 
 static LineArcDrawing* line_drawing_for_GetProperties = NULL;
 
-static void on_set_drawing_mode(int drawing_mode, HeeksObj* object, bool from_undo_redo)
+class PropertyDrawingMode:public Property
 {
-	line_drawing_for_GetProperties->drawing_mode = (EnumDrawingMode)drawing_mode;
-	line_drawing_for_GetProperties->m_save_drawing_mode.clear();
-	wxGetApp().m_frame->RefreshProperties();
-	wxGetApp().Repaint();
-}
-
-static void on_set_circle_mode(int circle_mode, HeeksObj* object, bool from_undo_redo)
-{
-	line_drawing_for_GetProperties->circle_mode = (EnumCircleDrawingMode)circle_mode;
-	wxGetApp().m_frame->RefreshProperties();
-	wxGetApp().Repaint();
-}
-
-static void on_set_circle_radius(double value, HeeksObj* object)
-{
-	line_drawing_for_GetProperties->radius_for_circle = value;
-	HeeksConfig config;
-	config.Write(_T("RadiusForCircle"), value);
-}
-
-void LineArcDrawing::GetProperties(std::list<Property *> *list){
-#if 0 // to do
-	line_drawing_for_GetProperties = this;
-
-	// add drawing mode
+public:
+	PropertyDrawingMode() :Property(NULL, _("drawing mode")){}
+	Property* MakeACopy(){ return new PropertyDrawingMode(*this); }
+	int get_property_type(){ return ChoicePropertyType; }
+	void Set(int value)
 	{
-		std::list< wxString > choices;
-		choices.push_back ( wxString ( _("draw lines") ) );
+		line_drawing_for_GetProperties->drawing_mode = (EnumDrawingMode)value;
+		line_drawing_for_GetProperties->m_save_drawing_mode.clear();
+		wxGetApp().m_frame->RefreshProperties();
+	}
+	int GetInt()
+	{
+		return (int)line_drawing_for_GetProperties->drawing_mode;
+	}
+	void GetChoices(std::list< wxString > &choices)
+	{
 		choices.push_back ( wxString ( _("draw tangential arcs") ) );
 		choices.push_back ( wxString ( _("infinite line") ) );
 		choices.push_back ( wxString ( _("draw circles") ) );
-		list->push_back ( new PropertyChoice ( _("drawing mode"),  choices, drawing_mode, NULL, on_set_drawing_mode ) );
+
 	}
+};
+
+class PropertyCircleMode :public Property
+{
+public:
+	PropertyCircleMode() :Property(NULL, _("circle mode")){}
+	Property* MakeACopy(){ return new PropertyCircleMode(*this); }
+	int get_property_type(){ return ChoicePropertyType; }
+	void Set(int value)
+	{
+		line_drawing_for_GetProperties->circle_mode = (EnumCircleDrawingMode)value;
+		wxGetApp().m_frame->RefreshProperties();
+	}
+	int GetInt()
+	{
+		return (int)line_drawing_for_GetProperties->circle_mode;
+	}
+	void GetChoices(std::list< wxString > &choices)
+	{
+		choices.push_back(wxString(_("centre and point")));
+		choices.push_back(wxString(_("three points")));
+		choices.push_back(wxString(_("two points")));
+		choices.push_back(wxString(_("centre and radius")));
+
+	}
+};
+
+void LineArcDrawing::GetProperties(std::list<Property *> *list){
+	line_drawing_for_GetProperties = this;
+
+	// add drawing mode
+	list->push_back(new PropertyDrawingMode());
 
 	switch(drawing_mode)
 	{
 	case LineDrawingMode:
 		{
-			list->push_back(new PropertyString(_("(press 'a' for arcs)"), _T(""), NULL));
+			list->push_back(new PropertyStringReadOnly(_("(press 'a' for arcs)"), _T("")));
 		}
 		break;
 
 	case CircleDrawingMode:
 		{
-			std::list< wxString > choices;
-			choices.push_back ( wxString ( _("centre and point") ) );
-			choices.push_back ( wxString ( _("three points") ) );
-			choices.push_back ( wxString ( _("two points") ) );
-			choices.push_back ( wxString ( _("centre and radius") ) );
-			list->push_back ( new PropertyChoice ( _("circle mode"),  choices, circle_mode, NULL, on_set_circle_mode ) );
-			list->push_back(new PropertyLength(_("radius"), radius_for_circle, NULL, on_set_circle_radius));
+			list->push_back(new PropertyCircleMode());
+			list->push_back(new PropertyLengthWithConfig(NULL, _("radius"), &radius_for_circle, _T("RadiusForCircle")));
 		}
 		break;
 
@@ -718,7 +733,6 @@ void LineArcDrawing::GetProperties(std::list<Property *> *list){
 	}
 
 	Drawing::GetProperties(list);
-#endif
 }
 
 void LineArcDrawing::GetTools(std::list<Tool*> *f_list, const wxPoint *p){

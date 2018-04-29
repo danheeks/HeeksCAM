@@ -68,16 +68,7 @@ bool DimensionDrawing::calculate_item(DigitizedPoint &end)
 	return true;
 }
 
-static DimensionDrawing* DimensionDrawing_for_GetProperties = NULL;
-
-static void on_set_mode(int value, HeeksObj* object, bool from_undo_redo)
-{
-	DimensionDrawing_for_GetProperties->m_mode = (DimensionMode)value;
-	wxGetApp().Repaint();
-}
-
 void DimensionDrawing::GetProperties(std::list<Property *> *list){
-#if 0 // to do
 	// add drawing mode
 	std::list< wxString > choices;
 	choices.push_back ( wxString ( _("between two points") ) );
@@ -86,11 +77,9 @@ void DimensionDrawing::GetProperties(std::list<Property *> *list){
 	choices.push_back ( wxString ( _("between two points, Y only") ) );
 	choices.push_back ( wxString ( _("between two points, Z only") ) );
 	choices.push_back ( wxString ( _("orthogonal") ) );
-	DimensionDrawing_for_GetProperties = this;
-	list->push_back ( new PropertyChoice ( _("mode"),  choices, m_mode, NULL, on_set_mode ) );
+	list->push_back ( new PropertyChoice (NULL,  _("mode"),  choices, (int*)(&m_mode) ) );
 
 	Drawing::GetProperties(list);
-#endif
 }
 
 void DimensionDrawing::GetTools(std::list<Tool*> *f_list, const wxPoint *p){

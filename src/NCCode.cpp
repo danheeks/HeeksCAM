@@ -16,8 +16,6 @@
 #include "PropertyInt.h"
 #include "Tool.h"
 #include "HeeksConfig.h"
-#include "CTool.h"
-#include "Program.h"
 #include "Picking.h"
 
 #include <TopoDS_Shape.hxx>
@@ -1008,30 +1006,6 @@ std::list<gp_Pnt> PathArc::Interpolate(
 
 } // End Interpolate() method
 
-
-std::list< std::pair<PathObject *, CTool *> > CNCCode::GetPaths() const
-{
-	std::list< std::pair<PathObject *, CTool *> > paths;
-
-	for(std::list<CNCCodeBlock*>::const_iterator l_itCodeBlock = m_blocks.begin(); l_itCodeBlock != m_blocks.end(); l_itCodeBlock++)
-	{
-		for (std::list<ColouredPath>::const_iterator l_itColouredPath = (*l_itCodeBlock)->m_line_strips.begin();
-			l_itColouredPath != (*l_itCodeBlock)->m_line_strips.end(); l_itColouredPath++)
-		{
-			for (std::list< PathObject* >::const_iterator l_itPoint = l_itColouredPath->m_points.begin();
-				l_itPoint != l_itColouredPath->m_points.end(); l_itPoint++)
-			{
-				CTool *pTool = CTool::Find( (*l_itPoint)->m_tool_number );
-				if (pTool != NULL)
-				{
-					paths.push_back( std::make_pair( *l_itPoint, pTool ) );
-				} // End if - then
-			} // End for
-		} // End for
-	} // End for
-
-	return(paths);
-} // End GetPaths() method
 
 void CNCCode::SetHighlightedBlock(CNCCodeBlock* block)
 {

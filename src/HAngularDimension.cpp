@@ -282,24 +282,8 @@ void HAngularDimension::GetGripperPositions(std::list<GripData> *list, bool just
 	list->push_back(GripData(GripperTypeStretch,m_p4->m_p.X(),m_p4->m_p.Y(),m_p4->m_p.Z(),&m_p4));
 }
 
-static void on_set_text_mode(int value, HeeksObj* object, bool from_undo_redo)
-{
-	HAngularDimension* dimension = (HAngularDimension*)object;
-	dimension->m_text_mode = (AngularDimensionTextMode)value;
-	wxGetApp().Repaint();
-}
-
-static void on_set_scale(double value, HeeksObj* object)
-{
-	HAngularDimension* dimension = (HAngularDimension*)object;
-	dimension->m_scale = value;
-	wxGetApp().Repaint();
-}
-
-
 void HAngularDimension::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
 	std::list< wxString > choices;
 
 	choices.clear();
@@ -307,10 +291,8 @@ void HAngularDimension::GetProperties(std::list<Property *> *list)
 	choices.push_back ( wxString ( _("pythagorean") ) );
 	choices.push_back ( wxString ( _("horizontal") ) );
 	choices.push_back ( wxString ( _("vertical") ) );
-	list->push_back ( new PropertyChoice ( _("text mode"),  choices, m_text_mode, this, on_set_text_mode ) );
-
-	list->push_back ( new PropertyDouble ( _("scale"),  m_scale, this, on_set_scale ) );
-#endif
+	list->push_back ( new PropertyChoice ( this, _("text mode"),  choices, (int*)&m_text_mode ) );
+	list->push_back ( new PropertyDouble ( this, _("scale"),  &m_scale ) );
 	HeeksObj::GetProperties(list);
 }
 

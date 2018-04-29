@@ -84,18 +84,6 @@ public:
 	void RollBack(){m_object->m_order = m_old_order;}
 };
 
-static std::map<int, int> order_map_for_properties; // maps drop-down index to SketchOrderType
-
-static void on_set_order_type(int value, HeeksObj* object, bool from_undo_redo)
-{
-	std::map<int, int>::iterator FindIt = order_map_for_properties.find(value);
-	if(FindIt != order_map_for_properties.end())
-	{
-		int order = FindIt->second;
-		if(!from_undo_redo)((CSketch*)object)->ReOrderSketch((SketchOrderType)order);
-	}
-}
-
 static bool SketchOrderAvailable(SketchOrderType old_order, SketchOrderType new_order)
 {
 	// can we change from the older order type to the new order type?
@@ -160,30 +148,64 @@ static bool SketchOrderAvailable(SketchOrderType old_order, SketchOrderType new_
 	return false;
 }
 
-void CSketch::GetProperties(std::list<Property *> *list)
+static int num_children_for_properties = 0;
+
+class PropertySketchOrder : public Property
 {
-#if 0 // to do
-	list->push_back(new PropertyInt(_("Number of elements"), IdNamedObjList::GetNumChildren(), this));
-
-	int initial_index = 0;
-	std::list< wxString > choices;
-	SketchOrderType sketch_order = GetSketchOrder();
-	order_map_for_properties.clear();
-	int j = 0;
-	for(int i = 0; i< MaxSketchOrderTypes; i++)
-	{
-		if((SketchOrderType)i == sketch_order)initial_index = j;
-
-		if(SketchOrderAvailable(sketch_order, (SketchOrderType)i))
+	std::map<int, int> m_order_map_for_properties;
+	std::list< wxString > m_choices;
+	int m_initial_index = 0;
+	SketchOrderType m_sketch_order;
+	bool m_done;
+public:
+	PropertySketchOrder(HeeksObj* object) :Property(object, _("order")){
+		m_initial_index = 0;
+		m_done = false;
+		m_sketch_order = ((CSketch*)object)->GetSketchOrder();
+		int j = 0;
+		for (int i = 0; i< MaxSketchOrderTypes; i++)
 		{
-			order_map_for_properties.insert(std::pair<int, int>(j, i));
-			choices.push_back(Ctt(m_sketch_order_str[i].c_str()));
-			j++;
+			if ((SketchOrderType)i == m_sketch_order)m_initial_index = j;
+
+			if (SketchOrderAvailable(m_sketch_order, (SketchOrderType)i))
+			{
+				m_order_map_for_properties.insert(std::pair<int, int>(j, i));
+				m_choices.push_back(Ctt(CSketch::m_sketch_order_str[i].c_str()));
+				j++;
+			}
 		}
 	}
+	Property *MakeACopy(void)const{ return new PropertySketchOrder(*this); }
+	virtual void GetChoices(std::list< wxString > &choices){
+		choices = m_choices;
+	}
+	virtual int get_property_type(){ return ChoicePropertyType; }
+	void Set(int value)
+	{
+		if (!m_done)
+		{
+			std::map<int, int>::iterator FindIt = m_order_map_for_properties.find(value);
+			if (FindIt != m_order_map_for_properties.end())
+			{
+				int order = FindIt->second;
+				((CSketch*)m_object)->ReOrderSketch((SketchOrderType)order);
+			}
+			m_done = true;
+		}
+	}
+	int GetInt()
+	{
+		return m_initial_index;
+	}
 
-	list->push_back ( new PropertyChoice ( _("order"), choices, initial_index, this, on_set_order_type ) );
-#endif
+};
+
+void CSketch::GetProperties(std::list<Property *> *list)
+{
+	num_children_for_properties = IdNamedObjList::GetNumChildren();
+	list->push_back(new PropertyInt(this, _("Number of elements"), (const int*)&num_children_for_properties));
+	list->push_back(new PropertySketchOrder(this));
+
 	IdNamedObjList::GetProperties(list);
 }
 

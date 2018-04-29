@@ -211,30 +211,64 @@ void HSpline::GetGripperPositions(std::list<GripData> *list, bool just_for_endof
 	} 
 }
 
-void OnSetKnot(double v, HeeksObj* obj, int i)
-{
-	((HSpline*)obj)->m_spline->SetKnot(i,v);
-}
+class PropertyKnot: public Property{
+	int m_i;
+public:
+	PropertyKnot(HeeksObj* object, int i) :Property(object, wxString::Format(_T("%s %d"), _("Knot"), i)), m_i(i){}
+	Property* MakeACopy(void){ return new PropertyKnot(*this); }
+	int get_property_type(){ return DoublePropertyType; }
+	void Set(double value){ ((HSpline*)m_object)->m_spline->SetKnot(m_i, value); m_object->OnApplyProperties(); }
+	double GetDouble(){ ((HSpline*)m_object)->m_spline->Knot(m_i); }
+};
 
-void OnSetWeight(double v, HeeksObj* obj, int i)
+class PropertyPoleX : public Property
 {
-	((HSpline*)obj)->m_spline->SetWeight(i,v);
-}
+	int m_i;
+public:
+	PropertyPoleX(HeeksObj* object, int i) :Property(object, _("x")), m_i(i){}
+	Property* MakeACopy(void){ return new PropertyPoleX(*this); }
+	int get_property_type(){ return LengthPropertyType; }
+	void Set(double value){ gp_Pnt pole;  ((HSpline*)m_object)->m_spline->Pole(m_i); pole.SetX(value); ((HSpline*)m_object)->m_spline->SetPole(m_i, pole); m_object->OnApplyProperties(); }
+	double GetDouble(){ ((HSpline*)m_object)->m_spline->Pole(m_i).X(); }
+};
 
-void OnSetPole(const double *v, HeeksObj* obj, int i)
+class PropertyPoleY : public Property
 {
-	gp_Pnt p = make_point(v);
-	((HSpline*)obj)->m_spline->SetPole(i,p);
-}
+	int m_i;
+public:
+	PropertyPoleY(HeeksObj* object, int i) :Property(object, _("y")), m_i(i){}
+	Property* MakeACopy(void){ return new PropertyPoleY(*this); }
+	int get_property_type(){ return LengthPropertyType; }
+	void Set(double value){ gp_Pnt pole;  ((HSpline*)m_object)->m_spline->Pole(m_i); pole.SetY(value); ((HSpline*)m_object)->m_spline->SetPole(m_i, pole); m_object->OnApplyProperties(); }
+	double GetDouble(){ ((HSpline*)m_object)->m_spline->Pole(m_i).Y(); }
+};
 
+class PropertyPoleZ : public Property
+{
+	int m_i;
+public:
+	PropertyPoleZ(HeeksObj* object, int i) :Property(object, _("z")), m_i(i){}
+	Property* MakeACopy(void){ return new PropertyPoleZ(*this); }
+	int get_property_type(){ return LengthPropertyType; }
+	void Set(double value){ gp_Pnt pole;  ((HSpline*)m_object)->m_spline->Pole(m_i); pole.SetZ(value); ((HSpline*)m_object)->m_spline->SetPole(m_i, pole); m_object->OnApplyProperties(); }
+	double GetDouble(){ ((HSpline*)m_object)->m_spline->Pole(m_i).Z(); }
+};
+
+class PropertyWeight : public Property
+{
+	int m_i;
+public:
+	PropertyWeight(HeeksObj* object, int i) :Property(object, wxString::Format(_T("%s %d"), _("Weight"), i)), m_i(i){}
+	Property* MakeACopy(void){ return new PropertyWeight(*this); }
+	int get_property_type(){ return DoublePropertyType; }
+	void Set(double value){ ((HSpline*)m_object)->m_spline->SetWeight(m_i, value); m_object->OnApplyProperties(); }
+	double GetDouble(){ ((HSpline*)m_object)->m_spline->Weight(m_i); }
+};
 
 void HSpline::GetProperties(std::list<Property *> *list){
-#if 0 // to do
-	wxChar str[512];
 	for(int i=1; i <= m_spline->NbKnots(); i++)
 	{
-		wxSprintf(str,_T("%s %d"), _("Knot"), i);
-		list->push_back(new PropertyDouble(str,m_spline->Knot(i),this,OnSetKnot,i));
+		list->push_back(new PropertyKnot(this, i));
 		//TODO: Should add the multiplicity property. Complicated to change though.
 		//Will blow up bspline unless a bunch of other parameters change as well
 		//sprintf(str,"%s %d", _("Multiplicity"), i);
@@ -242,14 +276,14 @@ void HSpline::GetProperties(std::list<Property *> *list){
 	}
 	for(int i=1; i <= m_spline->NbPoles(); i++)
 	{
-		double p[3];
-		extract(m_spline->Pole(i),p);
-		wxSprintf(str,_T("%s %d"), _("Pole"), i);
-		list->push_back(new PropertyVertex(str,p,this,OnSetPole,i));
-		wxSprintf(str,_T("%s %d"), _("Weight"), i);
-		list->push_back(new PropertyDouble(str,m_spline->Weight(i),this,OnSetWeight,i));
+		PropertyList* p = new PropertyList(wxString::Format(_T("%s %d"), _("Pole"), i));
+		p->m_list.push_back(new PropertyPoleX(this, i));
+		p->m_list.push_back(new PropertyPoleY(this, i));
+		p->m_list.push_back(new PropertyPoleZ(this, i));
+		list->push_back(p);
+		list->push_back(new PropertyWeight(this, i));
 	}
-#endif
+
 	EndedObject::GetProperties(list); 
 }
 

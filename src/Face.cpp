@@ -199,9 +199,7 @@ void CFace::WriteXML(TiXmlNode *root)
 
 void CFace::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
-	list->push_back(new PropertyString(_("surface type"), GetSurfaceTypeStr(), NULL));
-#endif
+	list->push_back(new PropertyStringReadOnly(_("surface type"), GetSurfaceTypeStr()));
 	HeeksObj::GetProperties(list);
 }
 
@@ -904,28 +902,31 @@ void CFace::KillMarkingGLList()
 	}
 }
 
-void CFace::UpdateMarkingGLList(bool marked)
+void CFace::UpdateMarkingGLList(bool marked, bool no_color)
 {
 	if(m_marking_gl_list)
 	{
 		glNewList(m_marking_gl_list, GL_COMPILE);
 
-		if(marked)
+		if (!no_color)
 		{
-			Material(wxGetApp().face_selection_color).glMaterial(1.0);
-			glDisable(GL_BLEND);
-			glDepthMask(1);
-		}
-		else
-		{
-			// use the parent body's colour
-			CShape* parent_body = GetParentBody();
-			if(parent_body)Material(parent_body->m_color).glMaterial(parent_body->GetOpacity());
-			else
+			if (marked)
 			{
-				Material().glMaterial(1.0);
+				Material(wxGetApp().face_selection_color).glMaterial(1.0);
 				glDisable(GL_BLEND);
 				glDepthMask(1);
+			}
+			else
+			{
+				// use the parent body's colour
+				CShape* parent_body = GetParentBody();
+				if (parent_body)Material(parent_body->m_color).glMaterial(parent_body->GetOpacity());
+				else
+				{
+					Material().glMaterial(1.0);
+					glDisable(GL_BLEND);
+					glDepthMask(1);
+				}
 			}
 		}
 

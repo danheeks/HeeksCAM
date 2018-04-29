@@ -104,18 +104,10 @@ void HPoint::GetGripperPositions(std::list<GripData> *list, bool just_for_endof)
 	}
 }
 
-static void on_set_point(const double *vt, HeeksObj* object){
-	((HPoint*)object)->m_p = make_point(vt);
-	wxGetApp().Repaint();
-}
-
 void HPoint::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
-	double p[3];
-	extract(m_p, p);
-	list->push_back(new PropertyVertex(_("position"), p, this, on_set_point));
-#endif
+	list->push_back( PropertyPnt(this, _("position"), &m_p));
+
 	HeeksObj::GetProperties(list);
 }
 

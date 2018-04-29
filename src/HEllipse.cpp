@@ -190,44 +190,18 @@ void HEllipse::GetGripperPositions(std::list<GripData> *list, bool just_for_endo
 	}
 }
 
-static void on_set_centre(const double *vt, HeeksObj* object){
-	((HEllipse*)object)->C = make_point(vt);
-	wxGetApp().Repaint();
-}
-
-static void on_set_axis(const double *vt, HeeksObj* object){
-	HEllipse *e = (HEllipse*)object;
-	gp_Ax2 a(e->C,e->m_zdir,e->m_xdir);
-	a.SetDirection(make_vector(vt));
-	e->m_zdir = a.Direction();
-	e->m_xdir = a.XDirection();
-	wxGetApp().Repaint();
-}
-
-static void on_set_major_radius(double value, HeeksObj* object){
-	((HEllipse*)object)->m_majr = value;
-	wxGetApp().Repaint();
-}
-
-static void on_set_minor_radius(double value, HeeksObj* object){
-	((HEllipse*)object)->m_minr = value;
-	wxGetApp().Repaint();
-}
-
-static void on_set_rotation(double value, HeeksObj* object){
-    ((HEllipse*)object)->SetRotation(value);
-	wxGetApp().Repaint();
-}
-
-static void on_set_start_angle(double value, HeeksObj* object){
-    ((HEllipse*)object)->m_start = value;
-	wxGetApp().Repaint();
-}
-
-static void on_set_end_angle(double value, HeeksObj* object){
-    ((HEllipse*)object)->m_end = value;
-	wxGetApp().Repaint();
-}
+class PropertyEllipseRotation : public Property
+{
+public:
+	PropertyEllipseRotation(HeeksObj* object) :Property(object, _("rotation")){}
+	int get_property_type(){ return DoublePropertyType; }
+	Property *MakeACopy(void)const{ return new PropertyEllipseRotation(*this); }
+	void Set(double value){
+		((HEllipse*)m_object)->SetRotation(value);
+		m_object->OnApplyProperties();
+	}
+	double GetDouble()const{ return ((HEllipse*)m_object)->GetRotation(); }
+};
 
 void HEllipse::SetRotation(double value)
 {
@@ -247,20 +221,15 @@ double HEllipse::GetRotation()const
 }
 
 void HEllipse::GetProperties(std::list<Property *> *list){
-#if 0 // to do
-	double c[3], a[3];
-	extract(C, c);
-	extract(m_zdir, a);
-	double rot = GetRotation();
-	list->push_back(new PropertyVertex(_("centre"), c, this, on_set_centre));
-	list->push_back(new PropertyVector(_("axis"), a, this, on_set_axis));
-	list->push_back(new PropertyLength(_("major radius"), m_majr, this, on_set_major_radius));
-	list->push_back(new PropertyLength(_("minor radius"), m_minr, this, on_set_minor_radius));
-	list->push_back(new PropertyDouble(_("rotation"), rot, this, on_set_rotation));
-	list->push_back(new PropertyDouble(_("start angle"), m_start, this, on_set_start_angle));
-	list->push_back(new PropertyDouble(_("end angle"), m_end, this, on_set_end_angle));
+	list->push_back(PropertyPnt(this, _("centre"), &C));
+	list->push_back(PropertyDir(this, _("x axis"), &m_xdir));
+	list->push_back(PropertyDir(this, _("z axis"), &m_zdir));
+	list->push_back(new PropertyLength(this, _("major radius"), &m_majr));
+	list->push_back(new PropertyLength(this, _("minor radius"), &m_minr));
+	list->push_back(new PropertyEllipseRotation(this));
+	list->push_back(new PropertyDouble(this, _("start angle"), &m_start));
+	list->push_back(new PropertyDouble(this, _("end angle"), &m_end));
 	HeeksObj::GetProperties(list);
-#endif
 }
 
 bool HEllipse::FindNearPoint(const double* ray_start, const double* ray_direction, double *point){

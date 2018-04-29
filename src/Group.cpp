@@ -199,57 +199,18 @@ void CGroup::GetGripperPositions(std::list<GripData> *list, bool just_for_endof)
 	}
 }
 
-static void on_set_custom_grippers(bool value, HeeksObj* object)
-{
-	((CGroup*)object)->m_custom_grippers = value;
-	wxGetApp().Repaint();
-}
-
-static void on_set_custom_grippers_one_axis(bool value, HeeksObj* object)
-{
-	((CGroup*)object)->m_custom_grippers_just_one_axis = value;
-	wxGetApp().Repaint();
-}
-
-static void on_set_o(const double *vt, HeeksObj* object){
-	((CGroup*)object)->m_o = make_point(vt);
-	wxGetApp().Repaint();
-}
-
-static void on_set_px(const double *vt, HeeksObj* object){
-	((CGroup*)object)->m_px = make_point(vt);
-	wxGetApp().Repaint();
-}
-
-static void on_set_py(const double *vt, HeeksObj* object){
-	((CGroup*)object)->m_py = make_point(vt);
-	wxGetApp().Repaint();
-}
-
-static void on_set_pz(const double *vt, HeeksObj* object){
-	((CGroup*)object)->m_pz = make_point(vt);
-	wxGetApp().Repaint();
-}
-
 void CGroup::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
-	list->push_back(new PropertyCheck(_("custom grippers"), m_custom_grippers, this, on_set_custom_grippers));
+	list->push_back(new PropertyCheck(this, _("custom grippers"), &m_custom_grippers));
 
 	if(m_custom_grippers)
 	{
-		list->push_back ( new PropertyCheck( _("custom grippers just one axis"), m_custom_grippers_just_one_axis, this, on_set_custom_grippers_one_axis) );
-		double p[3];
-		extract(m_o, p);
-		list->push_back(new PropertyVertex(_("datum"), p, this, on_set_o));
-		extract(m_px, p);
-		list->push_back(new PropertyVertex(_("x"), p, this, on_set_px));
-		extract(m_py, p);
-		list->push_back(new PropertyVertex(_("y"), p, this, on_set_py));
-		extract(m_pz, p);
-		list->push_back(new PropertyVertex(_("z"), p, this, on_set_pz));
+		list->push_back ( new PropertyCheck(this,  _("custom grippers just one axis"), &m_custom_grippers_just_one_axis) );
+		list->push_back(PropertyPnt(this, _("datum"), &m_o));
+		list->push_back(PropertyPnt(this, _("x"), &m_px));
+		list->push_back(PropertyPnt(this, _("y"), &m_py));
+		list->push_back(PropertyPnt(this, _("z"), &m_pz));
 	}
-#endif
 	ObjList::GetProperties(list);
 }
 

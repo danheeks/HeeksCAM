@@ -95,28 +95,9 @@
 #include "RemoveOrAddTool.h"
 #include "Observer.h"
 #include "ToolImage.h"
-#include "Program.h"
-#include "ProgramCanvas.h"
 #include "OutputCanvas.h"
 #include "NCCode.h"
-#include "Profile.h"
-#include "Pocket.h"
-#include "Drilling.h"
-#include "CTool.h"
-#include "Operations.h"
-#include "Tools.h"
 #include "strconv.h"
-#include "CNCPoint.h"
-#include "Tags.h"
-#include "Tag.h"
-#include "ScriptOp.h"
-#include "Simulate.h"
-#include "Pattern.h"
-#include "Patterns.h"
-#include "Surface.h"
-#include "Surfaces.h"
-#include "Stock.h"
-#include "Stocks.h"
 #include "Picking.h"
 
 #include <sstream>
@@ -274,14 +255,8 @@ HeeksCADapp::HeeksCADapp(): ObjList()
 	m_settings_restored = false;
 
 	// cnc constructor code
-	m_draw_cutter_radius = true;
-	m_program = NULL;
-	m_run_program_on_new_line = false;
-#ifdef HAVE_TOOLBARS
-	m_machiningBar = NULL;
-#endif
+	m_nc_code = new CNCCode;
 	m_icon_texture_number = 0;
-	m_machining_hidden = false;
 	m_settings_restored = false;
 
 }
@@ -2679,90 +2654,6 @@ gp_Trsf HeeksCADapp::GetDrawMatrix(bool get_the_appropriate_orthogonal)
 	return mat;
 }
 
-void on_set_background_color0(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().background_color[0] = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_background_color1(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().background_color[1] = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_background_color2(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().background_color[2] = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_background_color3(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().background_color[3] = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_background_color4(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().background_color[4] = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_background_color5(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().background_color[5] = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_background_color6(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().background_color[6] = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_background_color7(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().background_color[7] = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_background_color8(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().background_color[8] = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_background_color9(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().background_color[9] = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_background_mode(int value, HeeksObj* object, bool from_undo_redo)
-{
-	wxGetApp().m_background_mode = (BackgroundMode)value;
-	wxGetApp().Repaint();
-	wxGetApp().m_frame->RefreshOptions();
-}
-
-void on_set_face_color(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().face_selection_color = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_current_color(HeeksColor value, HeeksObj* object)
-{
-	wxGetApp().current_color = value;
-}
-
-void on_set_grid_mode(int value, HeeksObj* object, bool from_undo_redo)
-{
-	wxGetApp().grid_mode = value;
-	wxGetApp().Repaint();
-}
-
 void on_set_perspective(bool value, HeeksObj* object)
 {
 	wxGetApp().m_current_viewport->m_view_point.SetPerspective(value);
@@ -2771,40 +2662,7 @@ void on_set_perspective(bool value, HeeksObj* object)
 
 void on_set_tool_icon_size(int value, HeeksObj* object, bool from_undo_redo)
 {
-	int size = 16;
-	switch(value)
-	{
-	case 0:
-		size = 16;
-		break;
-	case 1:
-		size = 20;
-		break;
-	case 2:
-		size = 24;
-		break;
-	case 3:
-		size = 28;
-		break;
-	case 4:
-		size = 32;
-		break;
-	case 5:
-		size = 48;
-		break;
-	case 6:
-		size = 64;
-		break;
-	case 7:
-		size = 96;
-		break;
 
-	}
-
-	ToolImage::SetBitmapSize(size);
-
-	wxGetApp().m_frame->OnChangeBitmapSize();
-	wxGetApp().m_frame->m_aui_manager->Update();
 }
 
 void on_grid(bool onoff, HeeksObj* object)
@@ -2818,96 +2676,9 @@ void on_grid(bool onoff, HeeksObj* object)
 	wxGetApp().Repaint();
 }
 
-void on_useOldFuse(bool onoff, HeeksObj* object)
-{
-	wxGetApp().useOldFuse = onoff;
-}
-
-static void on_extrude_to_solid(bool onoff, HeeksObj* object)
-{
-	wxGetApp().m_extrude_to_solid = onoff;
-}
-
-static void on_revolve_angle(double value, HeeksObj* object)
-{
-	wxGetApp().m_revolve_angle = value;
-}
-
-static void on_outline_fit_arcs(bool value, HeeksObj* object)
-{
-	wxGetApp().m_fit_arcs_on_solid_outline = value;
-}
-
-void on_set_min_correlation_factor(double value, HeeksObj* object)
-{
-	wxGetApp().m_min_correlation_factor = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_max_scale_threshold(double value, HeeksObj* object)
-{
-	wxGetApp().m_max_scale_threshold = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_number_of_sample_points(int value, HeeksObj* object)
-{
-	wxGetApp().m_number_of_sample_points = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_correlate_by_color(bool value, HeeksObj* object)
-{
-	wxGetApp().m_correlate_by_color = value;
-	wxGetApp().Repaint();
-}
-
-
 void on_grid_edit(double grid_value, HeeksObj* object)
 {
 	wxGetApp().digitizing_grid = grid_value;
-	wxGetApp().Repaint();
-}
-
-
-
-
-void on_set_geom_tol(double value, HeeksObj* object)
-{
-	wxGetApp().m_geom_tol = value;
-	wxGetApp().Repaint();
-
-	TiXmlBase::SetRequiredDecimalPlaces( DecimalPlaces(value) );
-}
-
-void on_set_sketch_reorder_tol(double value, HeeksObj* object)
-{
-	wxGetApp().m_sketch_reorder_tol = value;
-	HeeksConfig config;
-	config.Write(_T("SketchReorderTolerance"), wxGetApp().m_sketch_reorder_tol);
-	wxGetApp().Repaint();
-}
-
-void on_set_face_to_sketch_deviation(double value, HeeksObj* object)
-{
-	FaceToSketchTool::deviation = value;
-}
-
-void on_set_show_datum(bool onoff, HeeksObj* object)
-{
-	wxGetApp().m_show_datum_coords_system = onoff;
-	wxGetApp().Repaint();
-}
-
-void on_set_solid_datum(bool onoff, HeeksObj* object)
-{
-	wxGetApp().m_datum_coords_system_solid_arrows = onoff;
-	wxGetApp().Repaint();
-}
-
-void on_set_show_ruler(bool onoff, HeeksObj* object)
-{
-	wxGetApp().m_show_ruler = onoff;
 	wxGetApp().Repaint();
 }
 
@@ -2921,12 +2692,6 @@ void on_set_rotate_mode(int value, HeeksObj* object, bool from_undo_redo)
 		wxGetApp().m_current_viewport->StoreViewPoint();
 		wxGetApp().Repaint();
 	}
-}
-
-void on_set_screen_text(int value, HeeksObj* object, bool from_undo_redo)
-{
-	wxGetApp().m_graphics_text_mode = (GraphicsTextMode)value;
-	wxGetApp().Repaint();
 }
 
 void on_set_antialiasing(bool value, HeeksObj* object)
@@ -2944,23 +2709,6 @@ void on_set_light_push_matrix(bool value, HeeksObj* object)
 void on_set_reverse_mouse_wheel(bool value, HeeksObj* object)
 {
 	wxGetApp().mouse_wheel_forward_away = !value;
-}
-
-void on_set_stl_save_binary(bool value, HeeksObj* object)
-{
-	wxGetApp().m_stl_save_as_binary = value;
-}
-
-void on_set_reverse_zooming(bool value, HeeksObj* object)
-{
-	ViewZooming::m_reversed = value;
-	wxGetApp().OnInputModeHelpTextChanged();
-}
-
-void on_set_ctrl_does_rotate(bool value, HeeksObj* object)
-{
-	wxGetApp().ctrl_does_rotate = value;
-	wxGetApp().OnInputModeHelpTextChanged();
 }
 
 void on_intersection(bool onoff, HeeksObj* object){
@@ -3026,217 +2774,7 @@ static void AddPropertyCallBack(Property* p)
 	list_for_GetOptions->push_back(p);
 }
 
-void on_set_datum_size(double value, HeeksObj* object){
-	CoordinateSystem::size = value;
-	wxGetApp().Repaint();
-}
-
-void on_set_size_is_pixels(bool value, HeeksObj* object){
-	CoordinateSystem::size_is_pixels = value;
-	wxGetApp().Repaint();
-}
-
-void on_sel_filter_line(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_LINE;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_LINE;
-}
-
-void on_sel_filter_arc(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_ARC;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_ARC;
-}
-
-void on_sel_filter_iline(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_ILINE;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_ILINE;
-}
-
-void on_sel_filter_circle(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_CIRCLE;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_CIRCLE;
-}
-
-void on_sel_filter_point(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_POINT;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_POINT;
-}
-
-void on_sel_filter_solid(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_SOLID;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_SOLID;
-}
-
-void on_sel_filter_stl_solid(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_STL_SOLID;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_STL_SOLID;
-}
-
-void on_sel_filter_wire(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_WIRE;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_WIRE;
-}
-
-void on_sel_filter_face(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_FACE;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_FACE;
-}
-
-void on_sel_filter_vertex(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_VERTEX;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_VERTEX;
-}
-
-void on_sel_filter_edge(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_EDGE;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_EDGE;
-}
-
-void on_sel_filter_sketch(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_SKETCH;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_SKETCH;
-}
-
-void on_sel_filter_image(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_IMAGE;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_IMAGE;
-}
-
-void on_sel_filter_coordinate_sys(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_COORDINATE_SYSTEM;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_COORDINATE_SYSTEM;
-}
-
-void on_sel_filter_text(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_TEXT;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_TEXT;
-}
-
-void on_sel_filter_dimension(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_DIMENSION;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_DIMENSION;
-}
-
-void on_sel_filter_ruler(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_RULER;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_RULER;
-}
-void on_sel_filter_pad(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_PAD;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_PAD;
-}
-
-void on_sel_filter_part(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_PART;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_PART;
-}
-
-void on_sel_filter_pocket(bool value, HeeksObj* object){
-	if(value)wxGetApp().m_marked_list->m_filter |= MARKING_FILTER_POCKETSOLID;
-	else wxGetApp().m_marked_list->m_filter &= ~MARKING_FILTER_POCKETSOLID;
-}
-
-void on_dxf_make_sketch(bool value, HeeksObj* object){
-	HeeksDxfRead::m_make_as_sketch = value;
-	HeeksConfig config;
-	config.Write(_T("ImportDxfAsSketches"), HeeksDxfRead::m_make_as_sketch);
-}
-
-void on_sel_dxf_read_errors(bool value, HeeksObj* object){
-	HeeksDxfRead::m_ignore_errors = value;
-
-	HeeksConfig config;
-	config.Write(_T("IgnoreDxfReadErrors"), HeeksDxfRead::m_ignore_errors);
-}
-
-void on_dxf_read_points(bool value, HeeksObj* object){
-	HeeksDxfRead::m_read_points = value;
-
-	HeeksConfig config;
-	config.Write(_T("DxfReadPoints"), HeeksDxfRead::m_read_points);
-}
-
-void on_edit_layer_name_suffixes_to_discard(const wxChar* value, HeeksObj* object)
-{
-	HeeksDxfRead::m_layer_name_suffixes_to_discard = value;
-
-	HeeksConfig config;
-	config.Write(_T("LayerNameSuffixesToDiscard"), HeeksDxfRead::m_layer_name_suffixes_to_discard);
-}
-
-void on_add_uninstanced_blocks(bool value, HeeksObj* object)
-{
-	HeeksDxfRead::m_add_uninstanced_blocks = value;
-
-	HeeksConfig config;
-	config.Write(_T("DxfAddUninstancedBlocks"), HeeksDxfRead::m_add_uninstanced_blocks);
-}
-
-void on_stl_facet_tolerance(double value, HeeksObj* object){
-	wxGetApp().m_stl_facet_tolerance = value;
-}
-
 void on_set_auto_save_interval(int value, HeeksObj* object){
-	wxGetApp().m_auto_save_interval = value;
-
-	if (wxGetApp().m_auto_save_interval > 0)
-	{
-		if (wxGetApp().m_pAutoSave.get() == NULL)
-		{
-			wxGetApp().m_pAutoSave = std::auto_ptr<CAutoSave>(new CAutoSave( wxGetApp().m_auto_save_interval, true ));
-		}
-		else
-		{
-			wxGetApp().m_pAutoSave->Start( wxGetApp().m_auto_save_interval * 60 * 1000, false );
-		}
-	}
-	else
-	{
-		if (wxGetApp().m_pAutoSave.get() != NULL)
-		{
-			delete wxGetApp().m_pAutoSave.release();
-			wxGetApp().m_pAutoSave = std::auto_ptr<CAutoSave>(NULL);
-		}
-	}
-	HeeksConfig config;
-	config.Write(_T("AutoSaveInterval"), wxGetApp().m_auto_save_interval);
-}
-
-static void on_set_units(int value, HeeksObj* object, bool from_undo_redo)
-{
-	wxGetApp().m_view_units = (value == 0) ? 1.0:25.4;
-	wxGetApp().OnChangeViewUnits(wxGetApp().m_view_units);
-
-	// Notify any registered handler routines.
-	for (HeeksCADapp::UnitsChangedHandlers_t::iterator itHandler = wxGetApp().m_units_changed_handlers.begin();
-            itHandler != wxGetApp().m_units_changed_handlers.end(); itHandler++)
-    {
-            (*(*itHandler))(wxGetApp().m_view_units);
-    }
-
-	HeeksConfig config;
-	config.Write(_T("ViewUnits"), wxGetApp().m_view_units);
-	wxGetApp().m_frame->RefreshProperties();
-	wxGetApp().m_frame->RefreshInputCanvas();
-	wxGetApp().m_ruler->KillGLLists();
-	wxGetApp().Repaint();
-}
-
-static void on_dimension_draw_flat(bool value, HeeksObj* object)
-{
-	HDimension::DrawFlat = value;
-	wxGetApp().Repaint();
-}
-
-static void on_input_uses_modal_dialog(bool value, HeeksObj* object)
-{
-	wxGetApp().m_input_uses_modal_dialog = value;
-	wxGetApp().Repaint();
-}
-
-static void on_dragging_moves_objects(bool value, HeeksObj* object)
-{
-	wxGetApp().m_dragging_moves_objects = value;
-	wxGetApp().Repaint();
 }
 
 #ifndef WIN32
@@ -3289,64 +2827,321 @@ void on_set_highlight_color(HeeksColor value, HeeksObj* object)
 	wxGetApp().Repaint();
 }
 
-void on_stl_solid_random_colors(bool value, HeeksObj* object)
+class PropertyRotateMode :public PropertyChoice{
+public:
+	PropertyRotateMode() :PropertyChoice(NULL, _("rotate mode"), std::list< wxString >{_("stay upright"), _("free")}, &wxGetApp().m_rotate_mode){}
+	void Set(int value){
+		PropertyChoice::Set(value);
+		if (!wxGetApp().m_rotate_mode)
+		{
+			gp_Vec vy(0, 1, 0), vz(0, 0, 1);
+			wxGetApp().m_current_viewport->m_view_point.SetView(vy, vz, 6);
+			wxGetApp().m_current_viewport->StoreViewPoint();
+			wxGetApp().Repaint();
+		}
+	}
+};
+
+
+class PropertyChoiceWithRefreshOptions :public PropertyChoice{
+public:
+	PropertyChoiceWithRefreshOptions(HeeksObj* object, const wxChar* title, const std::list< wxString > &choices, int* pvar) :PropertyChoice(object, title, choices, pvar){}
+	void Set(int value){
+		PropertyChoice::Set(value);
+		wxGetApp().m_frame->RefreshOptions();
+	}
+};
+
+
+class PropertyCheckWithHelpTextChanged : public PropertyCheck{
+public:
+	PropertyCheckWithHelpTextChanged(HeeksObj* object, const wxChar* title, bool* pvar) :PropertyCheck(object, title, pvar){ }
+	void Set(bool value){
+		PropertyCheck::Set(value);
+		wxGetApp().OnInputModeHelpTextChanged();
+	}
+};
+
+class PropertyCheckWithKillGlLists : public PropertyCheck{
+public:
+	PropertyCheckWithKillGlLists(HeeksObj* object, const wxChar* title, bool* pvar) :PropertyCheck(object, title, pvar){ }
+	void Set(bool value){
+		PropertyCheck::Set(value);
+		m_object->KillGLLists();
+	}
+};
+
+class PropertyPerspective : public Property
 {
-	wxGetApp().m_stl_solid_random_colors = value;
-	wxGetApp().KillGLLists();
-	wxGetApp().Repaint();
-}
+public:
+	PropertyPerspective() :Property(NULL, _("perspective")){}
+	int get_property_type(){ return CheckPropertyType; }
+	bool GetBool(){ wxGetApp().m_current_viewport->m_view_point.GetPerspective(); }
+	void Set(bool value){ wxGetApp().m_current_viewport->m_view_point.SetPerspective(value); }
+};
 
-
-void on_iges_sewing_tolerance(const double value, HeeksObj* object)
+class PropertyToolIconSize : public Property
 {
-	wxGetApp().m_iges_sewing_tolerance = value;
-	HeeksConfig config;
-	config.Write(_T("IgesSewingTolerance"), wxGetApp().m_iges_sewing_tolerance);
-}
+public:
+	std::list< wxString > m_choices;
+public:
+	PropertyToolIconSize() :Property(NULL, _("tool icon size"))
+	{
+		std::list< wxString > choices;
+		choices.push_back(wxString(_T("16")));
+		choices.push_back(wxString(_T("20")));
+		choices.push_back(wxString(_T("24")));
+		choices.push_back(wxString(_T("28")));
+		choices.push_back(wxString(_T("32")));
+		choices.push_back(wxString(_T("48")));
+		choices.push_back(wxString(_T("64")));
+		choices.push_back(wxString(_T("96")));
+		m_choices = choices;
+	}
+	// Property's virtual functions
+	int get_property_type(){ return ChoicePropertyType; }
+	Property *MakeACopy(void)const{ return new PropertyToolIconSize(*this); }
+	void Set(int value){
+		int size = 16;
+		switch (value)
+		{
+		case 0:
+			size = 16;
+			break;
+		case 1:
+			size = 20;
+			break;
+		case 2:
+			size = 24;
+			break;
+		case 3:
+			size = 28;
+			break;
+		case 4:
+			size = 32;
+			break;
+		case 5:
+			size = 48;
+			break;
+		case 6:
+			size = 64;
+			break;
+		case 7:
+			size = 96;
+			break;
 
-void on_set_solid_view_mode(int value, HeeksObj* object, bool from_undo_redo)
+		}
+
+		ToolImage::SetBitmapSize(size);
+
+		wxGetApp().m_frame->OnChangeBitmapSize();
+		wxGetApp().m_frame->m_aui_manager->Update();
+	}
+	int GetInt()const{
+		int s = ToolImage::GetBitmapSize();
+		int choice = 0;
+		if (s > 70)choice = 5;
+		else if (s > 60)choice = 4;
+		else if (s > 40)choice = 3;
+		else if (s > 30)choice = 2;
+		else if (s > 20)choice = 1;
+		return choice;
+	}
+	void GetChoices(std::list< wxString > &choices){ choices = m_choices; }
+};
+
+class PropertyUnits:public Property
 {
-	wxGetApp().m_solid_view_mode = (SolidViewMode)value;
-}
+public:
+	PropertyUnits() :Property(NULL, _("units")){}
+	// Property's virtual functions
+	int get_property_type(){ return ChoicePropertyType; }
+	Property *MakeACopy(void)const{ return new PropertyUnits(*this); }
+	void Set(int value){
+		wxGetApp().m_view_units = (value == 0) ? 1.0 : 25.4;
+		wxGetApp().OnChangeViewUnits(wxGetApp().m_view_units);
 
-void on_set_use_clipper(bool value, HeeksObj* object)
+		// Notify any registered handler routines.
+		for (HeeksCADapp::UnitsChangedHandlers_t::iterator itHandler = wxGetApp().m_units_changed_handlers.begin();
+			itHandler != wxGetApp().m_units_changed_handlers.end(); itHandler++)
+		{
+			(*(*itHandler))(wxGetApp().m_view_units);
+		}
+
+		HeeksConfig config;
+		config.Write(_T("ViewUnits"), wxGetApp().m_view_units);
+		wxGetApp().m_frame->RefreshProperties();
+		wxGetApp().m_frame->RefreshInputCanvas();
+		wxGetApp().m_ruler->KillGLLists();
+	}
+	int GetInt()const{
+		if (wxGetApp().m_view_units > 25.0)return 1;
+		else return 0;
+	}
+	void GetChoices(std::list< wxString > &choices){
+		choices.push_back(wxString(_("mm")));
+		choices.push_back(wxString(_("inch")));
+	}
+};
+
+static const wxChar* digitizing_titles[10] = {
+	_T(""),
+	_("end"),
+	_("intersection"),
+	_("centre"),
+	_("midpoint"),
+	_("nearest"),
+	_("tangent"),
+	_("coordinates"),
+	_("screen"),
+	_("snap to grid")
+};
+
+class PropertySnap : public Property
 {
-	wxGetApp().m_use_Clipper_not_Boolean = value;
-}
+	int m_type;
+public:
+	PropertySnap(int type) :Property(NULL, digitizing_titles[type]), m_type(type){}
+	int get_property_type(){ return CheckPropertyType; }
+	Property *MakeACopy(void)const{ return new PropertySnap(*this); }
+	bool* SnapVar()const
+	{
+		switch (m_type)
+		{
+		case 1:
+			return &wxGetApp().digitize_end;
+		case 2:
+			return &wxGetApp().digitize_inters;
+		case 3:
+			return &wxGetApp().digitize_centre;
+		case 4:
+			return &wxGetApp().digitize_midpoint;
+		case 5:
+			return &wxGetApp().digitize_nearest;
+		case 6:
+			return &wxGetApp().digitize_tangent;
+		case 7:
+			return &wxGetApp().digitize_coords;
+		case 8:
+			return &wxGetApp().digitize_screen;
+		case 9:
+			return &wxGetApp().draw_to_grid;
+		default:
+			return NULL;
+		}
+	}
+	void Set(bool value){
+		*(SnapVar()) = value;
 
-void on_set_use_DOS(bool value, HeeksObj* object)
+#ifndef USING_RIBBON
+#ifdef HAVE_TOOLBARS
+		switch (m_type)
+		{
+		case 1:
+			wxGetApp().m_frame->m_endof_button->m_bitmap = wxBitmap(ToolImage(wxGetApp().digitize_end ? _T("endof") : _T("endofgray")));
+			break;
+		case 2:
+			wxGetApp().m_frame->m_inters_button->m_bitmap = wxBitmap(ToolImage(wxGetApp().digitize_inters ? _T("inters") : _T("intersgray")));
+			break;
+		case 3:
+			wxGetApp().m_frame->m_centre_button->m_bitmap = wxBitmap(ToolImage(wxGetApp().digitize_centre ? _T("centre") : _T("centregray")));
+			break;
+		case 4:
+			wxGetApp().m_frame->m_midpoint_button->m_bitmap = wxBitmap(ToolImage(wxGetApp().digitize_midpoint ? _T("midpoint") : _T("midpointgray")));
+			break;
+		default:
+			return NULL;
+		}
+#endif
+#endif
+	}
+	bool GetBool(void)const{ return *SnapVar(); }
+};
+
+class PropertyGeomTol : public PropertyLength
 {
-	wxGetApp().m_use_DOS_not_Unix = value;
+public:
+	PropertyGeomTol() :PropertyLength(NULL, _("geometry tolerance"), &wxGetApp().m_geom_tol){}
+	void Set(double value)
+	{
+		PropertyLength::Set(value);
+		TiXmlBase::SetRequiredDecimalPlaces(DecimalPlaces(value));
+	}
+};
 
-}
+class PropertyFilter : public Property
+{
+	unsigned int m_mask;
+public:
+	PropertyFilter(const wxChar* title, unsigned int mask) :Property(NULL, title), m_mask(mask){}
+	int get_property_type(){ return CheckPropertyType; }
+	Property *MakeACopy(void)const{ return new PropertyFilter(*this); }
+	void Set(bool value){
+		if (value)wxGetApp().m_marked_list->m_filter |= m_mask;
+		else wxGetApp().m_marked_list->m_filter &= ~m_mask;
+	}
+	bool GetBool(void)const{
+		return (wxGetApp().m_marked_list->m_filter & m_mask) != 0;
+	}
+};
+
+class PropertyAutoSaveInterval : public Property
+{
+public:
+	PropertyAutoSaveInterval() : Property(NULL, _("auto save interval (in minutes)")){}
+	int get_property_type(){ return IntPropertyType; }
+	Property *MakeACopy(void)const{ return new PropertyAutoSaveInterval(*this); }
+	void Set(int value){
+		wxGetApp().m_auto_save_interval = value;
+
+		if (wxGetApp().m_auto_save_interval > 0)
+		{
+			if (wxGetApp().m_pAutoSave.get() == NULL)
+			{
+				wxGetApp().m_pAutoSave = std::auto_ptr<CAutoSave>(new CAutoSave(wxGetApp().m_auto_save_interval, true));
+			}
+			else
+			{
+				wxGetApp().m_pAutoSave->Start(wxGetApp().m_auto_save_interval * 60 * 1000, false);
+			}
+		}
+		else
+		{
+			if (wxGetApp().m_pAutoSave.get() != NULL)
+			{
+				delete wxGetApp().m_pAutoSave.release();
+				wxGetApp().m_pAutoSave = std::auto_ptr<CAutoSave>(NULL);
+			}
+		}
+		HeeksConfig config;
+		config.Write(_T("AutoSaveInterval"), wxGetApp().m_auto_save_interval);
+	}
+	int GetInt(void)const{
+		return wxGetApp().m_auto_save_interval;
+	}
+};
 
 void HeeksCADapp::GetOptions(std::list<Property *> *list)
 {
-#if 0 // to do
 	PropertyList* view_options = new PropertyList(_("view options"));
 
-	{
-		std::list< wxString > choices;
-		choices.push_back ( wxString ( _("stay upright") ) );
-		choices.push_back ( wxString ( _("free") ) );
-		view_options->m_list.push_back ( new PropertyChoice ( _("rotate mode"),  choices, m_rotate_mode, NULL, on_set_rotate_mode ) );
-	}
+	view_options->m_list.push_back(new PropertyRotateMode());
 	{
 		std::list< wxString > choices;
 		choices.push_back ( wxString ( _("none") ) );
 		choices.push_back ( wxString ( _("input mode title") ) );
 		choices.push_back ( wxString ( _("full help") ) );
-		view_options->m_list.push_back ( new PropertyChoice ( _("screen text"),  choices, m_graphics_text_mode, NULL, on_set_screen_text ) );
+		view_options->m_list.push_back ( new PropertyChoice ( NULL, _("screen text"),  choices, (int*)&m_graphics_text_mode ) );
 	}
-	view_options->m_list.push_back( new PropertyCheck(_("antialiasing"), m_antialiasing, NULL, on_set_antialiasing));
-	view_options->m_list.push_back( new PropertyCheck(_("reverse mouse wheel"), !(mouse_wheel_forward_away), NULL, on_set_reverse_mouse_wheel));
-	view_options->m_list.push_back( new PropertyCheck(_("reverse zooming mode"), ViewZooming::m_reversed, NULL, on_set_reverse_zooming));
-	view_options->m_list.push_back( new PropertyCheck(_("Ctrl key does rotate"), ctrl_does_rotate, NULL, on_set_ctrl_does_rotate));
-	view_options->m_list.push_back(new PropertyCheck(_("show datum"), m_show_datum_coords_system, NULL, on_set_show_datum));
-	view_options->m_list.push_back(new PropertyCheck(_("datum is solid"), m_datum_coords_system_solid_arrows, NULL, on_set_solid_datum));
-	view_options->m_list.push_back(new PropertyDouble(_("datum size"), CoordinateSystem::size, NULL, on_set_datum_size));
-	view_options->m_list.push_back(new PropertyCheck(_("datum size is pixels not mm"), CoordinateSystem::size_is_pixels, NULL, on_set_size_is_pixels));
-	view_options->m_list.push_back(new PropertyCheck(_("show ruler"), m_show_ruler, NULL, on_set_show_ruler));
+	view_options->m_list.push_back( new PropertyCheck(NULL, _("antialiasing"), &m_antialiasing ));
+	view_options->m_list.push_back( new PropertyCheck(NULL, _("mouse wheel forward zooms away"), &mouse_wheel_forward_away ));
+	view_options->m_list.push_back(new PropertyCheckWithHelpTextChanged(NULL, _("reverse zooming mode"), &ViewZooming::m_reversed));
+	view_options->m_list.push_back(new PropertyCheckWithHelpTextChanged(NULL, _("Ctrl key does rotate"), &ctrl_does_rotate));
+	view_options->m_list.push_back(new PropertyCheck(NULL, _("show datum"), &m_show_datum_coords_system ));
+	view_options->m_list.push_back(new PropertyCheck(NULL, _("datum is solid"), &m_datum_coords_system_solid_arrows ));
+	view_options->m_list.push_back(new PropertyDouble(NULL, _("datum size"), &CoordinateSystem::size ));
+	view_options->m_list.push_back(new PropertyCheck(NULL, _("datum size is pixels not mm"), &CoordinateSystem::size_is_pixels ));
+	view_options->m_list.push_back(new PropertyCheck(NULL, _("show ruler"), &m_show_ruler ));
 	{
 		std::list< wxString > choices;
 		choices.push_back ( wxString ( _("single color") ) );
@@ -3354,38 +3149,38 @@ void HeeksCADapp::GetOptions(std::list<Property *> *list)
 		choices.push_back ( wxString ( _("left color and right color") ) );
 		choices.push_back ( wxString ( _("four corner colors") ) );
 		choices.push_back ( wxString ( _("sky and ground") ) );
-		view_options->m_list.push_back ( new PropertyChoice ( _("background mode"),  choices, (int)m_background_mode, NULL, on_set_background_mode ) );
+		view_options->m_list.push_back ( new PropertyChoiceWithRefreshOptions ( NULL, _("background mode"),  choices, (int*)&m_background_mode ) );
 	}
 	switch(m_background_mode)
 	{
 	case BackgroundModeOneColor:
-		view_options->m_list.push_back ( new PropertyColor ( _("background color"),  background_color[0], NULL, on_set_background_color0 ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("background color"),  &background_color[0] ) );
 		break;
 
 	case BackgroundModeTwoColors:
-		view_options->m_list.push_back ( new PropertyColor ( _("top background color"),  background_color[0], NULL, on_set_background_color0 ) );
-		view_options->m_list.push_back ( new PropertyColor ( _("bottom background color"),  background_color[1], NULL, on_set_background_color1 ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("top background color"),  &background_color[0] ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("bottom background color"),  &background_color[1] ) );
 		break;
 
 	case BackgroundModeTwoColorsLeftToRight:
-		view_options->m_list.push_back ( new PropertyColor ( _("left background color"),  background_color[0], NULL, on_set_background_color0 ) );
-		view_options->m_list.push_back ( new PropertyColor ( _("right background color"),  background_color[2], NULL, on_set_background_color2 ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("left background color"),  &background_color[0] ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("right background color"),  &background_color[2] ) );
 		break;
 
 	case BackgroundModeFourColors:
-		view_options->m_list.push_back ( new PropertyColor ( _("top left background color"),  background_color[0], NULL, on_set_background_color0 ) );
-		view_options->m_list.push_back ( new PropertyColor ( _("bottom left background color"),  background_color[1], NULL, on_set_background_color1 ) );
-		view_options->m_list.push_back ( new PropertyColor ( _("top right background color"),  background_color[2], NULL, on_set_background_color2 ) );
-		view_options->m_list.push_back ( new PropertyColor ( _("bottom right background color"),  background_color[3], NULL, on_set_background_color3 ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("top left background color"), &background_color[0] ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("bottom left background color"), &background_color[1] ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("top right background color"), &background_color[2] ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("bottom right background color"), &background_color[3] ) );
 		break;
 
 	case BackgroundModeSkyDome:
-		view_options->m_list.push_back ( new PropertyColor ( _("sky top color"),  background_color[4], NULL, on_set_background_color4 ) );
-		view_options->m_list.push_back ( new PropertyColor ( _("sky middle color"),  background_color[5], NULL, on_set_background_color5 ) );
-		view_options->m_list.push_back ( new PropertyColor ( _("sky bottom color"),  background_color[6], NULL, on_set_background_color6 ) );
-		view_options->m_list.push_back ( new PropertyColor ( _("ground top color"),  background_color[7], NULL, on_set_background_color7 ) );
-		view_options->m_list.push_back ( new PropertyColor ( _("ground middle color"),  background_color[8], NULL, on_set_background_color8 ) );
-		view_options->m_list.push_back ( new PropertyColor ( _("ground bottom color"),  background_color[9], NULL, on_set_background_color9 ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("sky top color"),  &background_color[4] ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("sky middle color"),  &background_color[5] ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("sky bottom color"),  &background_color[6] ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("ground top color"),  &background_color[7] ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("ground middle color"),  &background_color[8] ) );
+		view_options->m_list.push_back ( new PropertyColor ( NULL, _("ground bottom color"),  &background_color[9] ) );
 		break;
 
 	}
@@ -3395,84 +3190,58 @@ void HeeksCADapp::GetOptions(std::list<Property *> *list)
 		choices.push_back ( wxString ( _("faint color") ) );
 		choices.push_back ( wxString ( _("alpha blending") ) );
 		choices.push_back ( wxString ( _("colored alpha blending") ) );
-		view_options->m_list.push_back ( new PropertyChoice ( _("grid mode"),  choices, grid_mode, NULL, on_set_grid_mode ) );
+		view_options->m_list.push_back ( new PropertyChoice ( NULL, _("grid mode"),  choices, &grid_mode  ) );
 	}
-	view_options->m_list.push_back ( new PropertyColor ( _("face selection color"), face_selection_color, NULL, on_set_face_color ) );
-	view_options->m_list.push_back( new PropertyCheck(_("perspective"), m_current_viewport->m_view_point.GetPerspective(), NULL, on_set_perspective));
-
-	{
-		std::list< wxString > choices;
-		choices.push_back ( wxString ( _T("16") ) );
-		choices.push_back ( wxString ( _T("20") ) );
-		choices.push_back ( wxString ( _T("24") ) );
-		choices.push_back ( wxString ( _T("28") ) );
-		choices.push_back ( wxString ( _T("32") ) );
-		choices.push_back ( wxString ( _T("48") ) );
-		choices.push_back ( wxString ( _T("64") ) );
-		choices.push_back ( wxString ( _T("96") ) );
-		int s = ToolImage::GetBitmapSize();
-		int choice = 0;
-		if(s > 70)choice = 5;
-		else if(s > 60)choice = 4;
-		else if(s > 40)choice = 3;
-		else if(s > 30)choice = 2;
-		else if(s > 20)choice = 1;
-		view_options->m_list.push_back ( new PropertyChoice ( _("tool icon size"),  choices, choice, NULL, on_set_tool_icon_size ) );
-	}
-
-	{
-		std::list< wxString > choices;
-		choices.push_back ( wxString ( _("mm") ) );
-		choices.push_back ( wxString ( _("inch") ) );
-		int choice = 0;
-		if(m_view_units > 25.0)choice = 1;
-		view_options->m_list.push_back ( new PropertyChoice ( _("units"),  choices, choice, this, on_set_units ) );
-	}
-	view_options->m_list.push_back(new PropertyCheck(_("flat on screen dimension text"), HDimension::DrawFlat, NULL, on_dimension_draw_flat));
+	view_options->m_list.push_back ( new PropertyColor ( NULL, _("face selection color"), &face_selection_color  ) );
+	view_options->m_list.push_back(new PropertyPerspective());
+	view_options->m_list.push_back(new PropertyToolIconSize());
+	view_options->m_list.push_back(new PropertyUnits());
+	view_options->m_list.push_back(new PropertyCheck(NULL, _("flat on screen dimension text"), &HDimension::DrawFlat));
 	{
 		std::list< wxString > choices;
 		choices.push_back ( wxString ( _("faces and edges") ) );
 		choices.push_back ( wxString ( _("edges only") ) );
 		choices.push_back ( wxString ( _("faces only") ) );
-		view_options->m_list.push_back ( new PropertyChoice ( _("solid view mode"),  choices, m_solid_view_mode, this, on_set_solid_view_mode ) );
+		view_options->m_list.push_back ( new PropertyChoice ( NULL, _("solid view mode"),  choices, (int*)&m_solid_view_mode ) );
 	}
-	view_options->m_list.push_back(new PropertyCheck(_("input uses modal dialog"), m_input_uses_modal_dialog, NULL, on_input_uses_modal_dialog));
-	view_options->m_list.push_back(new PropertyCheck(_("dragging moves objects"), m_dragging_moves_objects, NULL, on_dragging_moves_objects));
-	view_options->m_list.push_back(new PropertyCheck(_("highlight items under mouse"), m_mouse_move_highlighting, NULL, on_set_mouse_move_highlighting));
-	view_options->m_list.push_back(new PropertyColor(_("highlight color"), m_highlight_color, NULL, on_set_highlight_color));
-	view_options->m_list.push_back(new PropertyCheck(_("stl solid random colors"), m_stl_solid_random_colors, NULL, on_stl_solid_random_colors));
+	view_options->m_list.push_back(new PropertyCheck(NULL, _("input uses modal dialog"), &m_input_uses_modal_dialog ));
+	view_options->m_list.push_back(new PropertyCheck(NULL, _("dragging moves objects"), &m_dragging_moves_objects ));
+	view_options->m_list.push_back(new PropertyCheck(NULL, _("highlight items under mouse"), &m_mouse_move_highlighting));
+	view_options->m_list.push_back(new PropertyColor(NULL, _("highlight color"), &m_highlight_color));
+	view_options->m_list.push_back(new PropertyCheckWithKillGlLists(this, _("stl solid random colors"), &m_stl_solid_random_colors));
 
 	list->push_back(view_options);
 
 	PropertyList* digitizing = new PropertyList(_("digitizing"));
-	digitizing->m_list.push_back(new PropertyCheck(_("end"), digitize_end, NULL, on_end_of));
-	digitizing->m_list.push_back(new PropertyCheck(_("intersection"), digitize_inters, NULL, on_intersection));
-	digitizing->m_list.push_back(new PropertyCheck(_("centre"), digitize_centre, NULL, on_centre));
-	digitizing->m_list.push_back(new PropertyCheck(_("midpoint"), digitize_midpoint, NULL, on_mid_point));
-	digitizing->m_list.push_back(new PropertyCheck(_("nearest"), digitize_nearest, NULL, on_nearest));
-	digitizing->m_list.push_back(new PropertyCheck(_("tangent"), digitize_tangent, NULL, on_tangent));
-	digitizing->m_list.push_back(new PropertyCheck(_("coordinates"), digitize_coords, NULL, on_coords));
-	digitizing->m_list.push_back(new PropertyCheck(_("screen"), digitize_screen, NULL, on_relative));
-	digitizing->m_list.push_back(new PropertyLength(_("grid size"), digitizing_grid, NULL, on_grid_edit));
-	digitizing->m_list.push_back(new PropertyCheck(_("snap to grid"), draw_to_grid, NULL, on_grid));
+
+	digitizing->m_list.push_back(new PropertySnap(1));
+	digitizing->m_list.push_back(new PropertySnap(2));
+	digitizing->m_list.push_back(new PropertySnap(3));
+	digitizing->m_list.push_back(new PropertySnap(4));
+	digitizing->m_list.push_back(new PropertySnap(5));
+	digitizing->m_list.push_back(new PropertySnap(6));
+	digitizing->m_list.push_back(new PropertySnap(7));
+	digitizing->m_list.push_back(new PropertySnap(8));
+	digitizing->m_list.push_back(new PropertyLength(NULL, _("grid size"), &digitizing_grid));
+	digitizing->m_list.push_back(new PropertySnap(9));
 	list->push_back(digitizing);
 
 	PropertyList* correlation_properties = new PropertyList(_("correlation"));
-	correlation_properties->m_list.push_back(new PropertyDouble(_("Minimum correlation factor (0.0 (nothing like it) -> 1.0 (perfect match))"), m_min_correlation_factor, NULL, on_set_min_correlation_factor));
-	correlation_properties->m_list.push_back(new PropertyDouble(_("Maximum scale threshold (1.0 - must be same size, 1.5 (can be half as big again or 2/3 size)"), m_max_scale_threshold, NULL, on_set_max_scale_threshold));
-	correlation_properties->m_list.push_back(new PropertyInt(_("Number of sample points"), m_number_of_sample_points, NULL, on_set_number_of_sample_points));
-	correlation_properties->m_list.push_back(new PropertyCheck( _("Correlate by color"), m_correlate_by_color, NULL, on_set_correlate_by_color));
+	correlation_properties->m_list.push_back(new PropertyDouble(NULL, _("Minimum correlation factor (0.0 (nothing like it) -> 1.0 (perfect match))"), &m_min_correlation_factor ));
+	correlation_properties->m_list.push_back(new PropertyDouble(NULL, _("Maximum scale threshold (1.0 - must be same size, 1.5 (can be half as big again or 2/3 size)"), &m_max_scale_threshold));
+	correlation_properties->m_list.push_back(new PropertyInt(NULL, _("Number of sample points"), &m_number_of_sample_points ));
+	correlation_properties->m_list.push_back(new PropertyCheck(NULL, _("Correlate by color"), &m_correlate_by_color));
 	list->push_back(correlation_properties);
 
 	PropertyList* drawing = new PropertyList(_("drawing"));
-	drawing->m_list.push_back ( new PropertyColor ( _("current color"),  current_color, NULL, on_set_current_color ) );
-	drawing->m_list.push_back(new PropertyLength(_("geometry tolerance"), m_geom_tol, NULL, on_set_geom_tol));
-	drawing->m_list.push_back(new PropertyLength(_("sketch reorder tolerance"), m_sketch_reorder_tol, NULL, on_set_sketch_reorder_tol));
-	drawing->m_list.push_back(new PropertyLength(_("face to sketch deviaton"), FaceToSketchTool::deviation, NULL, on_set_face_to_sketch_deviation));
-	drawing->m_list.push_back(new PropertyCheck(_("Use old solid fuse ( to prevent coplanar faces )"), useOldFuse, NULL, on_useOldFuse));
-	drawing->m_list.push_back(new PropertyCheck(_("Extrude makes a solid"), m_extrude_to_solid, NULL, on_extrude_to_solid));
-	drawing->m_list.push_back(new PropertyDouble(_("Solid revolution angle"), m_revolve_angle, NULL, on_revolve_angle));
-	drawing->m_list.push_back(new PropertyCheck(_("Fit arcs on solid outline"), m_fit_arcs_on_solid_outline, NULL, on_outline_fit_arcs));
+	drawing->m_list.push_back ( new PropertyColor ( NULL, _("current color"),  &current_color ) );
+	drawing->m_list.push_back(new PropertyGeomTol());
+	drawing->m_list.push_back(new PropertyLengthWithConfig(NULL, _("sketch reorder tolerance"), &m_sketch_reorder_tol, _T("SketchReorderTolerance")));
+	drawing->m_list.push_back(new PropertyLength(NULL, _("face to sketch deviaton"), &FaceToSketchTool::deviation));
+	drawing->m_list.push_back(new PropertyCheck(NULL, _("Use old solid fuse ( to prevent coplanar faces )"), &useOldFuse));
+	drawing->m_list.push_back(new PropertyCheck(NULL, _("Extrude makes a solid"), &m_extrude_to_solid));
+	drawing->m_list.push_back(new PropertyDouble(NULL, _("Solid revolution angle"), &m_revolve_angle));
+	drawing->m_list.push_back(new PropertyCheck(NULL, _("Fit arcs on solid outline"), &m_fit_arcs_on_solid_outline));
 	list->push_back(drawing);
 
 	for(std::list<Plugin>::iterator It = m_loaded_libraries.begin(); It != m_loaded_libraries.end(); It++){
@@ -3484,47 +3253,50 @@ void HeeksCADapp::GetOptions(std::list<Property *> *list)
 	}
 
 	PropertyList* selection_filter = new PropertyList(_("selection filter"));
-	selection_filter->m_list.push_back(new PropertyCheck(_("point"), (m_marked_list->m_filter & MARKING_FILTER_POINT) != 0, NULL, on_sel_filter_point));
-	selection_filter->m_list.push_back(new PropertyCheck(_("line"), (m_marked_list->m_filter & MARKING_FILTER_LINE) != 0, NULL, on_sel_filter_line));
-	selection_filter->m_list.push_back(new PropertyCheck(_("arc"), (m_marked_list->m_filter & MARKING_FILTER_ARC) != 0, NULL, on_sel_filter_arc));
-	selection_filter->m_list.push_back(new PropertyCheck(_("infinite line"), (m_marked_list->m_filter & MARKING_FILTER_ILINE) != 0, NULL, on_sel_filter_iline));
-	selection_filter->m_list.push_back(new PropertyCheck(_("circle"), (m_marked_list->m_filter & MARKING_FILTER_CIRCLE) != 0, NULL, on_sel_filter_circle));
-	selection_filter->m_list.push_back(new PropertyCheck(_("edge"), (m_marked_list->m_filter & MARKING_FILTER_EDGE) != 0, NULL, on_sel_filter_edge));
-	selection_filter->m_list.push_back(new PropertyCheck(_("face"), (m_marked_list->m_filter & MARKING_FILTER_FACE) != 0, NULL, on_sel_filter_face));
-	selection_filter->m_list.push_back(new PropertyCheck(_("vertex"), (m_marked_list->m_filter & MARKING_FILTER_VERTEX) != 0, NULL, on_sel_filter_vertex));
-	selection_filter->m_list.push_back(new PropertyCheck(_("solid"), (m_marked_list->m_filter & MARKING_FILTER_SOLID) != 0, NULL, on_sel_filter_solid));
-	selection_filter->m_list.push_back(new PropertyCheck(_("stl_solid"), (m_marked_list->m_filter & MARKING_FILTER_STL_SOLID) != 0, NULL, on_sel_filter_stl_solid));
-	selection_filter->m_list.push_back(new PropertyCheck(_("wire"), (m_marked_list->m_filter & MARKING_FILTER_WIRE) != 0, NULL, on_sel_filter_wire));
-	selection_filter->m_list.push_back(new PropertyCheck(_("sketch"), (m_marked_list->m_filter & MARKING_FILTER_SKETCH) != 0, NULL, on_sel_filter_sketch));
-	selection_filter->m_list.push_back(new PropertyCheck(_("image"), (m_marked_list->m_filter & MARKING_FILTER_IMAGE) != 0, NULL, on_sel_filter_image));
-	selection_filter->m_list.push_back(new PropertyCheck(_("coordinate system"), (m_marked_list->m_filter & MARKING_FILTER_COORDINATE_SYSTEM) != 0, NULL, on_sel_filter_coordinate_sys));
-	selection_filter->m_list.push_back(new PropertyCheck(_("text"), (m_marked_list->m_filter & MARKING_FILTER_TEXT) != 0, NULL, on_sel_filter_text));
-	selection_filter->m_list.push_back(new PropertyCheck(_("dimension"), (m_marked_list->m_filter & MARKING_FILTER_DIMENSION) != 0, NULL, on_sel_filter_dimension));
-	selection_filter->m_list.push_back(new PropertyCheck(_("ruler"), (m_marked_list->m_filter & MARKING_FILTER_RULER) != 0, NULL, on_sel_filter_ruler));
-	selection_filter->m_list.push_back(new PropertyCheck(_("pad"), (m_marked_list->m_filter & MARKING_FILTER_PAD) != 0, NULL, on_sel_filter_pad));
-	selection_filter->m_list.push_back(new PropertyCheck(_("part"), (m_marked_list->m_filter & MARKING_FILTER_PART) != 0, NULL, on_sel_filter_part));
-	selection_filter->m_list.push_back(new PropertyCheck(_("pocket"), (m_marked_list->m_filter & MARKING_FILTER_POCKETSOLID) != 0, NULL, on_sel_filter_pocket));
+
+	selection_filter->m_list.push_back(new PropertyFilter(_("point"), MARKING_FILTER_POINT));
+	selection_filter->m_list.push_back(new PropertyFilter(_("line"), MARKING_FILTER_LINE));
+	selection_filter->m_list.push_back(new PropertyFilter(_("arc"), MARKING_FILTER_ARC));
+	selection_filter->m_list.push_back(new PropertyFilter(_("infinite"), MARKING_FILTER_ILINE));
+	selection_filter->m_list.push_back(new PropertyFilter(_("circle"), MARKING_FILTER_CIRCLE));
+	selection_filter->m_list.push_back(new PropertyFilter(_("edge"), MARKING_FILTER_EDGE));
+	selection_filter->m_list.push_back(new PropertyFilter(_("face"), MARKING_FILTER_FACE));
+	selection_filter->m_list.push_back(new PropertyFilter(_("vertex"), MARKING_FILTER_VERTEX));
+	selection_filter->m_list.push_back(new PropertyFilter(_("solid"), MARKING_FILTER_SOLID));
+	selection_filter->m_list.push_back(new PropertyFilter(_("stl_solid"), MARKING_FILTER_STL_SOLID));
+	selection_filter->m_list.push_back(new PropertyFilter(_("wire"), MARKING_FILTER_WIRE));
+	selection_filter->m_list.push_back(new PropertyFilter(_("sketch"), MARKING_FILTER_SKETCH));
+	selection_filter->m_list.push_back(new PropertyFilter(_("image"), MARKING_FILTER_IMAGE));
+	selection_filter->m_list.push_back(new PropertyFilter(_("coordinate system"), MARKING_FILTER_COORDINATE_SYSTEM));
+	selection_filter->m_list.push_back(new PropertyFilter(_("text"), MARKING_FILTER_TEXT));
+	selection_filter->m_list.push_back(new PropertyFilter(_("dimension"), MARKING_FILTER_DIMENSION));
+	selection_filter->m_list.push_back(new PropertyFilter(_("ruler"), MARKING_FILTER_RULER));
+	selection_filter->m_list.push_back(new PropertyFilter(_("pad"), MARKING_FILTER_PAD));
+	selection_filter->m_list.push_back(new PropertyFilter(_("part"), MARKING_FILTER_PART));
+	selection_filter->m_list.push_back(new PropertyFilter(_("pocket"), MARKING_FILTER_POCKETSOLID));
+
 	list->push_back(selection_filter);
+
 
 	PropertyList* file_options = new PropertyList(_("file options"));
 	PropertyList* dxf_options = new PropertyList(_("DXF"));
-	dxf_options->m_list.push_back(new PropertyCheck(_("make sketch"), HeeksDxfRead::m_make_as_sketch, NULL, on_dxf_make_sketch));
-	dxf_options->m_list.push_back(new PropertyCheck(_("ignore errors where possible"), HeeksDxfRead::m_ignore_errors, NULL, on_sel_dxf_read_errors));
-	dxf_options->m_list.push_back(new PropertyCheck(_("read points"), HeeksDxfRead::m_read_points, NULL, on_dxf_read_points));
-	dxf_options->m_list.push_back( new PropertyString(_("Layer Name Suffixes To Discard"), HeeksDxfRead::m_layer_name_suffixes_to_discard, this, on_edit_layer_name_suffixes_to_discard));
-	dxf_options->m_list.push_back(new PropertyCheck(_("add uninstanced blocks"), HeeksDxfRead::m_add_uninstanced_blocks, NULL, on_add_uninstanced_blocks));
+	dxf_options->m_list.push_back(new PropertyCheckWithConfig(NULL, _("make sketch"), &HeeksDxfRead::m_make_as_sketch, _T("ImportDxfAsSketches") ));
+	dxf_options->m_list.push_back(new PropertyCheckWithConfig(NULL, _("ignore errors where possible"), &HeeksDxfRead::m_ignore_errors, _T("IgnoreDxfReadErrors")));
+	dxf_options->m_list.push_back(new PropertyCheckWithConfig(NULL, _("read points"), &HeeksDxfRead::m_read_points, _T("DxfReadPoints")));
+	dxf_options->m_list.push_back(new PropertyStringWithConfig(NULL, _("Layer Name Suffixes To Discard"), &HeeksDxfRead::m_layer_name_suffixes_to_discard, _T("LayerNameSuffixesToDiscard")));
+	dxf_options->m_list.push_back(new PropertyCheckWithConfig(NULL, _("add uninstanced blocks"), &HeeksDxfRead::m_add_uninstanced_blocks, _T("DxfAddUninstancedBlocks")));
 	file_options->m_list.push_back(dxf_options);
 
 	PropertyList* stl_options = new PropertyList(_("STL"));
-	stl_options->m_list.push_back(new PropertyDouble(_("stl save facet tolerance"), m_stl_facet_tolerance, NULL, on_stl_facet_tolerance));
-	stl_options->m_list.push_back( new PropertyCheck(_("STL save binary"), m_stl_save_as_binary, NULL, on_set_stl_save_binary));
+	stl_options->m_list.push_back(new PropertyDouble(NULL, _("stl save facet tolerance"), &m_stl_facet_tolerance ));
+	stl_options->m_list.push_back( new PropertyCheck(NULL, _("STL save binary"), &m_stl_save_as_binary ));
 	file_options->m_list.push_back(stl_options);
 
 	PropertyList* iges_options = new PropertyList(_("IGES"));
-	iges_options->m_list.push_back(new PropertyDouble(_("face sewing tolerance"), m_iges_sewing_tolerance, NULL, on_iges_sewing_tolerance));
+	iges_options->m_list.push_back(new PropertyLengthWithConfig(NULL, _("face sewing tolerance"), &m_iges_sewing_tolerance, _T("IgesSewingTolerance")));
 	file_options->m_list.push_back(iges_options);
 
-	file_options->m_list.push_back(new PropertyInt(_("auto save interval (in minutes)"), m_auto_save_interval, NULL, on_set_auto_save_interval));
+	file_options->m_list.push_back(new PropertyAutoSaveInterval());
 	list->push_back(file_options);
 
 #ifndef WIN32
@@ -3538,14 +3310,8 @@ void HeeksCADapp::GetOptions(std::list<Property *> *list)
 
 	PropertyList* machining_options = new PropertyList(_("machining options"));
 	CNCCode::GetOptions(&(machining_options->m_list));
-	CSpeedOp::GetOptions(&(machining_options->m_list));
-	CProfile::GetOptions(&(machining_options->m_list));
-	CPocket::GetOptions(&(machining_options->m_list));
-	machining_options->m_list.push_back(new PropertyCheck(_("Use Clipper not Boolean"), m_use_Clipper_not_Boolean, NULL, on_set_use_clipper));
-	machining_options->m_list.push_back(new PropertyCheck(_("Use DOS Line Endings"), m_use_DOS_not_Unix, NULL, on_set_use_DOS));
 
 	list->push_back(machining_options);
-#endif
 }
 
 void HeeksCADapp::DeleteMarkedItems()
@@ -4141,8 +3907,9 @@ void HeeksCADapp::WriteRecentFilesProfileString(wxConfigBase &config)
 void HeeksCADapp::InsertRecentFileItem(const wxChar* filepath)
 {
 	// add to recent files list
+	wxString new_string(filepath);
 	m_recent_files.remove(filepath);
-	m_recent_files.push_front( wxString( filepath ) );
+	m_recent_files.push_front(new_string);
 	if(m_recent_files.size() > MAX_RECENT_FILES)m_recent_files.pop_back();
 }
 
@@ -4495,16 +4262,14 @@ void HeeksCADapp::render_text(const wxChar* str, bool select)
 {
 	//Needs to be called before text output
 	create_font();
-	//glColor4ub(0, 0, 0, 255);
 	EnableBlend();
 	glEnable(GL_TEXTURE_2D);
-
 	glDepthMask(0);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	m_gl_font.Begin(select);
 
 	//Draws text with a glFont
-	m_gl_font.DrawString(str, 0.08f, 0.0f, 0.0f);
+	m_gl_font.DrawString(str, get_text_scale(), 0.0f, 0.0f);
 
 	glDepthMask(1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
@@ -4518,10 +4283,15 @@ bool HeeksCADapp::get_text_size(const wxChar* str, float* width, float* height)
 
 	std::pair<int, int> size;
 	m_gl_font.GetStringSize(str, &size);
-	*width = (float)(size.first) * 0.08f;
-	*height = (float)(size.second) * 0.08f;
+	*width = (float)(size.first) * get_text_scale();
+	*height = (float)(size.second) * get_text_scale();
 
 	return true;
+}
+
+float HeeksCADapp::get_text_scale()
+{
+	return 21.0f / m_gl_font.GetTexHeight();
 }
 
 void HeeksCADapp::render_screen_text2(const wxChar* str, bool select)
@@ -4583,6 +4353,7 @@ void HeeksCADapp::EnableBlend()
 	{
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE);
 	}
 }
 

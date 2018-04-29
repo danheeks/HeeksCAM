@@ -206,7 +206,7 @@ void CShape::glCommands(bool select, bool marked, bool no_color)
 			glNewList(m_face_gl_list, GL_COMPILE);
 
 			// render all the faces
-			m_faces->glCommands(true, marked, no_color);
+			m_faces->glCommands(true, false, true);
 
 			glEndList();
 		}
@@ -218,7 +218,7 @@ void CShape::glCommands(bool select, bool marked, bool no_color)
 			for(HeeksObj* object = m_faces->GetFirstChild(); object; object = m_faces->GetNextChild())
 			{
 				CFace* f = (CFace*)object;
-				f->UpdateMarkingGLList(wxGetApp().m_marked_list->ObjectMarked(f));
+				f->UpdateMarkingGLList(wxGetApp().m_marked_list->ObjectMarked(f), no_color);
 			}
 		}
 	}
@@ -1198,7 +1198,7 @@ void CShape::SetClickMarkPoint(MarkedObject* marked_object, const double* ray_st
 
 float CShape::GetOpacity()
 {
-	return m_opacity;
+	return (float)m_opacity;
 }
 
 void CShape::SetOpacity(float opacity)
@@ -1206,15 +1206,6 @@ void CShape::SetOpacity(float opacity)
 	m_opacity = opacity;
 	if(m_opacity < 0.0)m_opacity = 0.0f;
 	if(m_opacity > 1.0)m_opacity = 1.0f;
-}
-
-static void on_set_opacity(double value, HeeksObj* object){
-	((CShape*)object)->SetOpacity((float)value);
-}
-
-static void on_calculate_volume(bool value, HeeksObj* object){
-	((CShape*)object)->CalculateVolumeAndCentre();
-	wxGetApp().m_frame->RefreshProperties();
 }
 
 void CShape::CalculateVolumeAndCentre()
@@ -1226,24 +1217,42 @@ void CShape::CalculateVolumeAndCentre()
 	m_volume_found = true;
 }
 
+static double volume_for_properties = 0.0;
+static double centre_of_mass[3] = { 0.0, 0.0, 0.0 };
+
+
+class CalculateVolumeProperty :public Property{
+public:
+	CalculateVolumeProperty(HeeksObj* object) :Property(object, _("calculate volume")){}
+
+	// Property's virtual functions
+	int get_property_type(){ return CheckPropertyType; }
+	Property *MakeACopy(void)const{	return new CalculateVolumeProperty(*this);}
+	void Set(bool value){
+		((CShape*)m_object)->CalculateVolumeAndCentre();
+		wxGetApp().m_frame->RefreshProperties();
+	}
+	bool GetBool(void)const{ return false; }
+};
+
 void CShape::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
-	list->push_back(new PropertyDouble(_("opacity"), m_opacity, this, on_set_opacity));
+	list->push_back(new PropertyDoubleLimited(this, _("opacity"), &m_opacity, true, 0.0, true, 1.0));
 
 	if(m_volume_found)
 	{
-		double volume = this->m_volume;
-		volume /= (pow(wxGetApp().m_view_units, 3)); // convert volume to cubic units
-		list->push_back(new PropertyDouble(_("volume"), volume, this));
-		double p[3];
-		extract(m_centre_of_mass, p);
-		list->push_back(new PropertyVertex(_("centre of gravity"), p, this));
+		volume_for_properties = this->m_volume;
+		volume_for_properties /= (pow(wxGetApp().m_view_units, 3)); // convert volume to cubic units
+		list->push_back(new PropertyDouble(this, _("volume"), (const double*)(&volume_for_properties)));
+
+		extract(m_centre_of_mass, centre_of_mass);
+
+		list->push_back(PropertyVertex(this, _("centre of gravity"), (const double*)centre_of_mass));
 	}
 	else
 	{
-		list->push_back(new PropertyCheck(_("calculate volume"), false, this, on_calculate_volume));
+		list->push_back(new CalculateVolumeProperty(this));
 	}
-#endif
+
 	IdNamedObjList::GetProperties(list);
 }

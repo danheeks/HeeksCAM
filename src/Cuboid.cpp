@@ -70,21 +70,6 @@ bool CCuboid::IsDifferent(HeeksObj* other)
 	return CShape::IsDifferent(other);
 }
 
-static void on_set_x(double value, HeeksObj* object){
-	((CCuboid*)object)->m_x = value;
-	object->OnApplyProperties();
-}
-
-static void on_set_y(double value, HeeksObj* object){
-	((CCuboid*)object)->m_y = value;
-	object->OnApplyProperties();
-}
-
-static void on_set_z(double value, HeeksObj* object){
-	((CCuboid*)object)->m_z = value;
-	object->OnApplyProperties();
-}
-
 void CCuboid::MakeTransformedShape(const gp_Trsf &mat)
 {
 	m_pos.Transform(mat);
@@ -99,12 +84,10 @@ wxString CCuboid::StretchedName(){ return _("Stretched Cuboid");}
 
 void CCuboid::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
 	CoordinateSystem::GetAx2Properties(list, m_pos, this);
-	list->push_back(new PropertyLength(_("width ( x )"), m_x, this, on_set_x));
-	list->push_back(new PropertyLength(_("height( y )"), m_y, this, on_set_y));
-	list->push_back(new PropertyLength(_("depth ( z )"), m_z, this, on_set_z));
-#endif
+	list->push_back(new PropertyLength(this, _("width ( x )"), &m_x));
+	list->push_back(new PropertyLength(this, _("height( y )"), &m_y));
+	list->push_back(new PropertyLength(this, _("depth ( z )"), &m_z));
 	CSolid::GetProperties(list);
 }
 

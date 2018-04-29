@@ -444,35 +444,6 @@ void RegularShapesDrawing::CalculateObround(const gp_Pnt& p0, const gp_Pnt& p1, 
 
 static RegularShapesDrawing* RegularShapesDrawing_for_GetProperties = NULL;
 
-static void on_set_drawing_mode(int value, HeeksObj* object, bool from_undo_redo)
-{
-	RegularShapesDrawing_for_GetProperties->m_mode = (RegularShapeMode)value;
-	RegularShapesDrawing_for_GetProperties->ClearSketch();
-	wxGetApp().m_frame->RefreshInputCanvas();
-}
-
-static void on_set_polygon_mode(int value, HeeksObj* object, bool from_undo_redo)
-{
-	RegularShapesDrawing_for_GetProperties->p_mode = (PolygonMode)value;
-	//RegularShapesDrawing_for_GetProperties->ClearSketch();
-	//wxGetApp().m_frame->RefreshInputCanvas();
-}
-
-static void on_set_rect_radius(double value, HeeksObj* object)
-{
-	RegularShapesDrawing_for_GetProperties->m_rect_radius = value;
-}
-
-static void on_set_obround_radius(double value, HeeksObj* object)
-{
-	RegularShapesDrawing_for_GetProperties->m_obround_radius = value;
-}
-
-static void on_set_num_sides(int value, HeeksObj* object)
-{
-	RegularShapesDrawing_for_GetProperties->m_number_of_side_for_polygon = value;
-}
-
 const wxChar* RegularShapesDrawing::GetTitle()
 {
 	switch(m_mode)
@@ -491,29 +462,51 @@ const wxChar* RegularShapesDrawing::GetTitle()
 	}
 }
 
+
+static RegularShapesDrawing* line_drawing_for_GetProperties = NULL;
+
+class PropertyDrawingMode:public Property
+{
+public:
+	PropertyDrawingMode() :Property(NULL, _("drawing mode")){}
+	Property* MakeACopy(){ return new PropertyDrawingMode(*this); }
+	int get_property_type(){ return ChoicePropertyType; }
+	void Set(int value)
+	{
+		RegularShapesDrawing_for_GetProperties->m_mode = (RegularShapeMode)value;
+		RegularShapesDrawing_for_GetProperties->ClearSketch();
+		wxGetApp().m_frame->RefreshInputCanvas();
+	}
+	int GetInt()
+	{
+		return (int)RegularShapesDrawing_for_GetProperties->m_mode;
+	}
+	void GetChoices(std::list< wxString > &choices)
+	{
+		choices.push_back(wxString(_("draw rectangles")));
+		choices.push_back(wxString(_("draw polygons")));
+		choices.push_back(wxString(_("draw slots")));
+
+	}
+};
+
 void RegularShapesDrawing::GetProperties(std::list<Property *> *list){
-#if 0 // to do
-	// add drawing mode
-	std::list< wxString > choices;
-	choices.push_back ( wxString ( _("draw rectangles") ) );
-	choices.push_back ( wxString ( _("draw polygons") ) );
-	choices.push_back ( wxString ( _("draw slots") ) );
 	RegularShapesDrawing_for_GetProperties = this;
-	list->push_back ( new PropertyChoice ( _("drawing mode"),  choices, m_mode, NULL, on_set_drawing_mode ) );
+	list->push_back(new PropertyDrawingMode());
 
 
-	if(m_mode == RectanglesRegularShapeMode)list->push_back( new PropertyLength( _("radius"), m_rect_radius, NULL, on_set_rect_radius));
-	if(m_mode == ObroundRegularShapeMode)list->push_back( new PropertyLength( _("radius"), m_obround_radius, NULL, on_set_obround_radius));
+	if(m_mode == RectanglesRegularShapeMode)list->push_back( new PropertyLength( NULL, _("radius"),& m_rect_radius ));
+	if(m_mode == ObroundRegularShapeMode)list->push_back( new PropertyLength( NULL, _("radius"), &m_obround_radius ));
 	if(m_mode == PolygonsRegularShapeMode)
 	{
-        list->push_back( new PropertyInt(_("number of sides for polygon"), m_number_of_side_for_polygon, NULL, on_set_num_sides));
+        list->push_back( new PropertyInt(NULL, _("number of sides for polygon"), &m_number_of_side_for_polygon ));
 
         std::list< wxString > polygonChoices;
             polygonChoices.push_back ( wxString ( _("excribed circle") ) );
             polygonChoices.push_back ( wxString ( _("inscribed circle") ) );
-        list->push_back ( new PropertyChoice ( _("polygon mode"),  polygonChoices, p_mode, NULL, on_set_polygon_mode ) );
+        list->push_back ( new PropertyChoice ( NULL, _("polygon mode"),  polygonChoices, (int*)&p_mode ) );
 	}
-#endif
+
 	Drawing::GetProperties(list);
 }
 

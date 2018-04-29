@@ -252,9 +252,15 @@ void GLFont::Begin (bool sharp)
 {
 	//Bind to font texture
 	if (sharp)
+	{
 		glBindTexture(GL_TEXTURE_2D, m_tex_sharp);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	}
 	else
+	{
 		glBindTexture(GL_TEXTURE_2D, header.tex_normal);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	}
 }
 //*******************************************************************
 

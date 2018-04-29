@@ -90,10 +90,6 @@ void CObjPropsCanvas::RefreshByRemovingAndAddingAll2(){
 		for(std::list<Property*>::iterator It = list.begin(); It != list.end(); It++)
 		{
 			Property* property = *It;
-
-			// a test
-			int a = ((Property*)property)->GetInt();
-
 			if(m_make_initial_properties_in_refresh)m_initial_properties.push_back(property->MakeACopy());
 			AddProperty(property);
 		}

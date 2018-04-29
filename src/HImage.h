@@ -15,6 +15,7 @@ private:
 	int m_frame_when_loaded;// for movies only. only valid if m_texture_number != 0
     int width, height, textureWidth, textureHeight;
 	bool m_rectangle_intialized;
+	double m_opacity;
 
 	void destroy_texture();
 	const wxChar* GetTextureFileName(const wxString &file_path, int is_a_movie);

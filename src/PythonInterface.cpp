@@ -11,19 +11,8 @@
 #include "HeeksConfig.h"
 #include "Observer.h"
 #include "HCircle.h"
-#include "Drilling.h"
-#include "Pocket.h"
-#include "Profile.h"
-#include "Operations.h"
-#include "Program.h"
 #include "HPoint.h"
-#include "CTool.h"
-#include "Tools.h"
-#include "Surfaces.h"
-#include "Stocks.h"
-#include "Patterns.h"
 #include "NCCode.h"
-#include "ProgramCanvas.h"
 #include "OutputCanvas.h"
 #include "HArc.h"
 #include "StlSolid.h"
@@ -88,6 +77,9 @@ wxMenu *currentMenu = NULL;
 
 
 std::vector<PyObject *> python_menu_callbacks;
+
+PyObject *main_module = NULL;
+PyObject *globals = NULL;
 
 void CadMessageBox(std::wstring str)
 {
@@ -275,13 +267,15 @@ void MessageBoxPythonError()
 	wxMessageBox(error_string.c_str());
 }
 
-
 std::map<int, PyObject*> menu_item_map;
 
 static void BeforePythonCall(PyObject **main_module, PyObject **globals)
 {
-	*main_module = PyImport_ImportModule("__main__");
-	*globals = PyModule_GetDict(*main_module);
+	if (*main_module == NULL)
+	{
+		*main_module = PyImport_ImportModule("__main__");
+		*globals = PyModule_GetDict(*main_module);
+	}
 
 	wxString stdOutErr(_T("import sys\nclass CatchOutErr:\n  def __init__(self):\n    self.value = ''\n  def write(self, txt):\n    self.value += txt\ncatchOutErr = CatchOutErr()\nsys.stdout = catchOutErr")); //this is python code to redirect stdouts/stderr
 	PyRun_String(stdOutErr.utf8_str(), Py_file_input, *globals, *globals); //invoke code to redirect
@@ -308,7 +302,7 @@ void OnMenuItem(wxCommandEvent &event)
 	std::map<int, PyObject*>::iterator FindIt = menu_item_map.find(event.GetId());
 	if (FindIt != menu_item_map.end())
 	{
-		PyObject *main_module, *globals;
+		//PyObject *main_module, *globals;
 		BeforePythonCall(&main_module, &globals);
 
 		// Execute the python function
@@ -344,7 +338,7 @@ void CallOnSelectionChanged()
 {
 	if (OnSelectionChanged)
 	{
-		PyObject *main_module, *globals;
+		//PyObject *main_module, *globals;
 		BeforePythonCall(&main_module, &globals);
 
 		PyObject_CallFunction(OnSelectionChanged, 0);
@@ -435,6 +429,9 @@ void AddObjectToPythonList(HeeksObj* object, boost::python::list& list)
 	case CircleType:
 		list.append(boost::python::pointer_wrapper<HCircle*>((HCircle*)object));
 		break;
+	default:
+		list.append(boost::python::pointer_wrapper<HeeksObj*>((HeeksObj*)object));
+		break;
 	}
 }
 
@@ -444,6 +441,7 @@ boost::python::list GetSelectedObjects() {
 	{
 		HeeksObj* object = *It;
 		//slist.append(object);
+		//slist.append(boost::python::pointer_wrapper<HeeksObj*>((HeeksObj*)object));
 		AddObjectToPythonList(object, slist);
 	}
 	return slist;
@@ -459,7 +457,7 @@ boost::python::list GetObjects() {
 	return olist;
 }
 
-int GetTypeFromHeeksObj(HeeksObj* object)
+int GetTypeFromHeeksObj(const HeeksObj* object)
 {
 	switch (object->GetType())
 	{
@@ -471,11 +469,11 @@ int GetTypeFromHeeksObj(HeeksObj* object)
 	case StlSolidType:
 		return (int)OBJECT_TYPE_SOLID;
 	default:
-		return 0;
+		return object->GetType();
 	}
 }
 
-std::wstring GetTitleFromHeeksObj(HeeksObj* object)
+std::wstring GetTitleFromHeeksObj(const HeeksObj* object)
 {
 	return std::wstring(object->GetShortString());
 }
@@ -561,35 +559,6 @@ HeeksObj* NewPoint(double x, double y, double z)
 	return new_object;
 }
 
-HeeksObj* NewDrilling()
-{
-	HeeksObj* new_object = new CDrilling();
-	return new_object;
-}
-
-HeeksObj* NewProfile()
-{
-	HeeksObj* new_object = new CProfile();
-	return new_object;
-}
-
-HeeksObj* NewPocket()
-{
-	HeeksObj* new_object = new CPocket();
-	return new_object;
-}
-
-HeeksObj* NewTool()
-{
-	HeeksObj* new_object = new CTool();
-	return new_object;
-}
-
-CProgram* GetProgram()
-{
-	return wxGetApp().m_program;
-}
-
 bp::tuple CircleGetCentre(HCircle &circle)
 {
 	double c[3] = { 0.0, 0.0, 0.0 };
@@ -608,11 +577,6 @@ int GetId(HeeksObj* object)
 	return object->GetID();
 }
 
-void ToolResetTitle(CTool& tool)
-{
-	tool.ResetTitle();
-}
-
 class HBitmap : public wxBitmap
 {
 public:
@@ -623,7 +587,7 @@ public:
 
 std::wstring str_for_base_object;
 HBitmap hbitmap_for_base_object;
-
+HeeksColor color_for_base_object;
 
 std::list<Property *> *property_list = NULL;
 
@@ -659,7 +623,7 @@ struct PyLockGIL
 
 bp::detail::method_result Call_Override(bp::override &f)
 {
-	PyObject *main_module, *globals;
+	//PyObject *main_module, *globals;
 	BeforePythonCall(&main_module, &globals);
 
 	// Execute the python function
@@ -667,6 +631,43 @@ bp::detail::method_result Call_Override(bp::override &f)
 	try
 	{
 		return f();
+	}
+	catch (const bp::error_already_set&)
+	{
+		AfterPythonCall(main_module);
+	}
+}
+
+
+bp::detail::method_result Call_Override(bp::override &f, int value)
+{
+	//PyObject *main_module, *globals;
+	BeforePythonCall(&main_module, &globals);
+
+	// Execute the python function
+	PyLockGIL lock;
+	try
+	{
+		return f(value);
+	}
+	catch (const bp::error_already_set&)
+	{
+		AfterPythonCall(main_module);
+	}
+
+}
+
+
+bp::detail::method_result Call_Override(bp::override &f, double value)
+{
+	//PyObject *main_module, *globals;
+	BeforePythonCall(&main_module, &globals);
+
+	// Execute the python function
+	PyLockGIL lock;
+	try
+	{
+		return f(value);
 	}
 	catch (const bp::error_already_set&)
 	{
@@ -681,7 +682,10 @@ bp::detail::method_result Call_Override(bp::override &f)
 class BaseObject : public HeeksObj, public bp::wrapper<HeeksObj>
 {
 public:
-	BaseObject() :HeeksObj(){}
+	bool m_uses_display_list;
+	int m_display_list;
+
+	BaseObject() :HeeksObj(), m_uses_display_list(false), m_display_list(0){}
 	int GetType()const override
 	{
 		if (bp::override f = this->get_override("GetType"))
@@ -724,39 +728,77 @@ public:
 		return HeeksObj::GetTypeString();
 	}
 
+	const HeeksColor* GetColor()const override
+	{
+		if (bp::override f = this->get_override("GetColor"))
+		{
+			color_for_base_object = f();
+			return &color_for_base_object;
+		}
+		return HeeksObj::GetColor();
+	}
+
 	static bool in_glCommands;
 	static bool triangles_begun;
 	static bool lines_begun;
-	static HeeksColor color_set;
-	static bool this_no_color;
-
 
 	void glCommands(bool select, bool marked, bool no_color) override
 	{
 		if (in_glCommands)
 			return; // shouldn't be needed
 
-		if (bp::override f = this->get_override("OnRender"))
+		if (!select)
 		{
-			in_glCommands = true;
-			this_no_color = no_color;
-			
-			Call_Override(f);
-
-			if (triangles_begun)
-			{
-				glEnd();
-				glDisable(GL_LIGHTING);
-				triangles_begun = false;
-			}
-
-			if(lines_begun)
-			{
-				glEnd();
-				lines_begun = false;
-			}
-			in_glCommands = false;
+			glEnable(GL_LIGHTING);
+			if (!no_color)Material(*this->GetColor()).glMaterial(1.0);
 		}
+
+		bool display_list_started = false;
+		bool do_render_commands = true;
+		if (m_uses_display_list)
+		{
+			if (m_display_list)
+			{
+				glCallList(m_display_list);
+				do_render_commands = false;
+			}
+			else{
+				m_display_list = glGenLists(1);
+				glNewList(m_display_list, GL_COMPILE_AND_EXECUTE);
+				display_list_started = true;
+			}
+		}
+
+		if (do_render_commands)
+		{
+			if (bp::override f = this->get_override("OnRenderTriangles"))
+			{
+				in_glCommands = true;
+
+				Call_Override(f);
+
+				if (triangles_begun)
+				{
+					glEnd();
+					triangles_begun = false;
+				}
+
+				if (lines_begun)
+				{
+					glEnd();
+					lines_begun = false;
+				}
+				in_glCommands = false;
+			}
+		}
+
+		if (display_list_started)
+		{
+			glEndList();
+		}
+
+		if(!select)glDisable(GL_LIGHTING);
+
 	}
 
 	void GetProperties(std::list<Property *> *list) override
@@ -767,20 +809,50 @@ public:
 			Property* p = Call_Override(f);
 		}
 	}
+
+	void GetBox(CBox &box) override
+	{
+		if (bp::override f = this->get_override("GetBox"))
+		{
+			bp::tuple tuple = Call_Override(f);
+
+			if (bp::len(tuple) == 6)
+			{
+				double xmin = bp::extract<double>(tuple[0]);
+				double ymin = bp::extract<double>(tuple[1]);
+				double zmin = bp::extract<double>(tuple[2]);
+				double xmax = bp::extract<double>(tuple[3]);
+				double ymax = bp::extract<double>(tuple[4]);
+				double zmax = bp::extract<double>(tuple[5]);
+				box.Insert(CBox(xmin, ymin, zmin, xmax, ymax, zmax));
+			}
+			else
+			{
+				PyErr_SetString(PyExc_RuntimeError, "GetBox takes exactly 6 parameters!");
+			}
+		}
+	}
+
+	void KillGLLists() override
+	{
+		if (m_uses_display_list && m_display_list)
+		{
+			glDeleteLists(m_display_list, 1);
+			m_display_list = 0;
+		}
+	}
 };
 
 // static definitions
 bool BaseObject::in_glCommands = false;
 bool BaseObject::triangles_begun = false;
 bool BaseObject::lines_begun = false;
-HeeksColor BaseObject::color_set(0, 0, 0);
-bool BaseObject::this_no_color = false;
 
 
-
-int BaseObjectGetType(const BaseObject& object)
+int BaseObjectGetType(const HeeksObj& object)
 {
-	return object.GetType();
+	return GetTypeFromHeeksObj(&object);
+	//return object.GetType();
 }
 
 HBitmap BaseObjectGetIcon(BaseObject& object)
@@ -788,14 +860,25 @@ HBitmap BaseObjectGetIcon(BaseObject& object)
 	return object.GetIcon();
 }
 
-std::wstring BaseObjectGetTitle(const BaseObject& object)
+std::wstring BaseObjectGetTitle(const HeeksObj& object)
 {
-	return object.GetShortString();
+	return GetTitleFromHeeksObj(&object);
+	//return object.GetShortString();
 }
 
 unsigned int BaseObjectGetID(BaseObject& object)
 {
 	return object.GetID();
+}
+
+void BaseObjectSetUsesGLList(BaseObject& object, bool on)
+{
+	object.m_uses_display_list = on;
+}
+
+HeeksColor BaseObjectGetColor(const BaseObject& object)
+{
+	return *(object.GetColor());
 }
 
 int PropertyGetInt(Property& property)
@@ -811,12 +894,6 @@ void DrawTriangle(double x0, double x1, double x2, double x3, double x4, double 
 		{
 			glEnd();
 			BaseObject::lines_begun = false;
-		}
-		if (!BaseObject::this_no_color)
-		{
-			Material m(BaseObject::color_set);
-			m.glMaterial(1.0);
-			glEnable(GL_LIGHTING);
 		}
 		glBegin(GL_TRIANGLES);
 		BaseObject::triangles_begun = true;
@@ -853,28 +930,8 @@ void DrawLine(double x0, double x1, double x2, double x3, double x4, double x5)
 		glBegin(GL_LINES);
 		BaseObject::lines_begun = true;
 	}
-	if (!BaseObject::this_no_color)
-	{
-		BaseObject::color_set.glColor();
-	}
 	glVertex3d(x0, x1, x2);
 	glVertex3d(x3, x4, x5);
-}
-
-void DrawColor(unsigned char r, unsigned char g, unsigned char b)
-{
-	BaseObject::color_set = HeeksColor(r, g, b);
-}
-
-void Proptest(HeeksObj* object)
-{
-	std::list<Property *> list;
-	object->GetProperties(&list);
-	if (list.size() > 0)
-	{
-		int a = list.front()->GetInt();
-		int b = a;
-	}
 }
 
 void AddProperty(Property* property)
@@ -885,12 +942,28 @@ void AddProperty(Property* property)
 
 class PropertyWrap : public Property, public bp::wrapper<Property>
 {
+	int m_type;
 public:
-	PropertyWrap() :Property(){}
+	PropertyWrap() :Property(), m_type(InvalidPropertyType){}
+	PropertyWrap(int type, const std::wstring& title, HeeksObj* object) :Property(object, title.c_str()), m_type(type){ m_editable = true; }
+	int get_property_type(){ return m_type; }
 	int GetInt()const override
 	{
 		if (bp::override f = this->get_override("GetInt"))return Call_Override(f);
 		return Property::GetInt();
+	}
+	double GetDouble()const override
+	{
+		if (bp::override f = this->get_override("GetFloat"))return Call_Override(f);
+		return Property::GetDouble();
+	}
+	void Set(int value)override
+	{
+		if (bp::override f = this->get_override("SetInt"))Call_Override(f, value);
+	}
+	void Set(double value)override
+	{
+		if (bp::override f = this->get_override("SetFloat"))Call_Override(f, value);
 	}
 	Property *MakeACopy(void)const{ return new PropertyWrap(*this); }
 };
@@ -902,30 +975,29 @@ int PropertyWrapGetInt(PropertyWrap& property)
 }
 
 BOOST_PYTHON_MODULE(cad) {
-	/// class Object
-	/// interface to a solid
-	bp::class_<HeeksObj>("Object")
-		.def(bp::init<HeeksObj>())
-		.def("GetType", &GetTypeFromHeeksObj) ///function GetType///return Object///returns the object's type
-		.def("GetTitle", &GetTitleFromHeeksObj)
-		.def("GetId", &GetId)
-		.def("AddObject", &ObjectAddObject)
-		;
-
-	bp::class_<Property>("Property")
-		.def(bp::init<Property>())
-		.def("GetInt", &PropertyGetInt)
-		;
-
-	bp::class_<PropertyWrap, boost::noncopyable >("Property")
-		.def("GetInt", &PropertyWrapGetInt)
-		;
-
 	bp::class_<BaseObject, boost::noncopyable >("Object")
 		.def("GetType", &BaseObjectGetType)
 		.def("GetIcon", &BaseObjectGetIcon)
 		.def("GetTitle", &BaseObjectGetTitle)
 		.def("GetID", &BaseObjectGetID)
+		.def("KillGLLists", &BaseObject::KillGLLists)
+		.def("SetUsesGLList", &BaseObjectSetUsesGLList)
+		.def("GetColor", &BaseObjectGetColor)
+		;
+
+	bp::class_<HeeksColor>("Color")
+		.def(bp::init<HeeksColor>())
+		.def(bp::init<unsigned char, unsigned char, unsigned char>())
+		.def_readwrite("red", &HeeksColor::red)
+		.def_readwrite("green", &HeeksColor::green)
+		.def_readwrite("blue", &HeeksColor::blue)
+		;
+
+	bp::class_<PropertyWrap, boost::noncopyable >("Property")
+		.def(bp::init<int, std::wstring, HeeksObj*>())
+		.def("GetInt", &PropertyWrapGetInt)
+		.def_readwrite("editable", &PropertyWrap::m_editable)
+		.def_readwrite("object", &PropertyWrap::m_object)
 		;
 
 	bp::class_<HCircle, bp::bases<HeeksObj> >("Circle")
@@ -970,149 +1042,17 @@ BOOST_PYTHON_MODULE(cad) {
 		.def("WriteSTL", &StlSolidWriteSTL) ///function WriteSTL///params float tolerance, string filepath///writes an STL file for the body to the given tolerance
 		;
 
-	bp::class_<COp, bp::bases<IdNamedObjList>>("Op")
-		.def(bp::init<COp>())
-		.def_readwrite("comment", &COp::m_comment)
-		.def_readwrite("active", &COp::m_active)
-		.def_readwrite("tool_number", &COp::m_tool_number)
-		.def_readwrite("pattern", &COp::m_pattern)
-		.def_readwrite("surface", &COp::m_surface)
-		;
-
-	bp::class_<CProgram, bp::bases<IdNamedObjList>>("Program")
-		.def(bp::init<CProgram>())
-		.def("GetNCCode", &CProgram::NCCode, bp::return_value_policy<bp::reference_existing_object>())
-		.def("GetOperations", &CProgram::Operations, bp::return_value_policy<bp::reference_existing_object>())
-		.def("GetTools", &CProgram::Tools, bp::return_value_policy<bp::reference_existing_object>())
-		.def("GetPatterns", &CProgram::Patterns, bp::return_value_policy<bp::reference_existing_object>())
-		.def("GetSurfaces", &CProgram::Surfaces, bp::return_value_policy<bp::reference_existing_object>())
-		.def("GetStocks", &CProgram::Stocks, bp::return_value_policy<bp::reference_existing_object>())
-		;
-
 	bp::class_<CNCCode, bp::bases<HeeksObj>>("NCCode")
 		.def(bp::init<CNCCode>())
-		;
-
-	bp::class_<COperations, bp::bases<ObjList>>("Operations")
-		.def(bp::init<COperations>())
-		;
-
-	bp::class_<CTools, bp::bases<ObjList>>("Tools")
-		.def(bp::init<CTools>())
 		;
 
 	bp::class_<ObjList, bp::bases<HeeksObj>>("Patterns")
 		.def(bp::init<ObjList>())
 		;
 
-	bp::class_<CSurfaces, bp::bases<ObjList>>("Surfaces")
-		.def(bp::init<CSurfaces>())
-		;
-
-	bp::class_<CStocks, bp::bases<ObjList>>("Stocks")
-		.def(bp::init<CStocks>())
-		;
-
-	bp::class_<CTool, bp::bases<HeeksObj>>("Tool")
-		.def(bp::init<CTool>())
-		.def("ResetTitle", &ToolResetTitle)
-		.def_readwrite("material", &CTool::m_material)
-		.def_readwrite("diameter", &CTool::m_diameter)
-		.def_readwrite("tool_length_offset", &CTool::m_tool_length_offset)
-		.def_readwrite("corner_radius", &CTool::m_corner_radius)
-		.def_readwrite("flat_radius", &CTool::m_flat_radius)
-		.def_readwrite("cutting_edge_angle", &CTool::m_cutting_edge_angle)
-		.def_readwrite("cutting_edge_height", &CTool::m_cutting_edge_height)
-		.def_readwrite("type", &CTool::m_type)
-		.def_readwrite("automatically_generate_title", &CTool::m_automatically_generate_title)
-		.def_readwrite("title", &CTool::m_title)
-		.def_readwrite("tool_number", &CTool::m_tool_number)
-		;
-
-	bp::class_<CSpeedOp, bp::bases<COp>>("SpeedOp")
-		.def(bp::init<CSpeedOp>())
-		.def_readwrite("horizontal_feed_rate", &CSpeedOp::m_horizontal_feed_rate)
-		.def_readwrite("vertical_feed_rate", &CSpeedOp::m_vertical_feed_rate)
-		.def_readwrite("spindle_speed", &CSpeedOp::m_spindle_speed)
-		;
-
-	bp::class_<CDepthOp, bp::bases<CSpeedOp>>("DepthOp")
-		.def(bp::init<CDepthOp>())
-		.def_readwrite("clearance_height", &CDepthOp::m_clearance_height)
-		.def_readwrite("rapid_safety_space", &CDepthOp::m_rapid_safety_space)
-		.def_readwrite("start_depth", &CDepthOp::m_start_depth)
-		.def_readwrite("step_down", &CDepthOp::m_step_down)
-		.def_readwrite("z_finish_depth", &CDepthOp::m_z_finish_depth)
-		.def_readwrite("z_thru_depth", &CDepthOp::m_z_thru_depth)
-		.def_readwrite("final_depth", &CDepthOp::m_final_depth)
-		.def_readwrite("user_depths", &CDepthOp::m_user_depths)
-		;
-
-	bp::class_<CDrilling, bp::bases<CDepthOp>>("Drilling")
-		.def(bp::init<CDrilling>())
-		.def("AddPoint", &CDrilling::AddPoint)
-		.def_readwrite("dwell", &CDrilling::m_dwell)
-		.def_readwrite("retract_mode", &CDrilling::m_retract_mode)
-		.def_readwrite("spindle_mode", &CDrilling::m_spindle_mode)
-		.def_readwrite("internal_coolant_on", &CDrilling::m_internal_coolant_on)
-		.def_readwrite("rapid_to_clearance", &CDrilling::m_rapid_to_clearance)
-		;
-
-	bp::class_<CSketchOp, bp::bases<CDepthOp>>("SketchOp")
-		.def(bp::init<CSketchOp>())
-		.def_readwrite("sketch", &CSketchOp::m_sketch)
-		;
-
-	bp::class_<CPocket, bp::bases<CSketchOp>>("Pocket")
-		.def(bp::init<CPocket>())
-		.def_readwrite("starting_place", &CPocket::m_starting_place)
-		.def_readwrite("material_allowance", &CPocket::m_material_allowance)
-		.def_readwrite("step_over", &CPocket::m_step_over)
-		.def_readwrite("keep_tool_down_if_poss", &CPocket::m_keep_tool_down_if_poss)
-		.def_readwrite("use_zig_zag", &CPocket::m_use_zig_zag)
-		.def_readwrite("zig_angle", &CPocket::m_zig_angle)
-		.def_readwrite("zig_unidirectional", &CPocket::m_zig_unidirectional)
-		.def_readwrite("cut_mode", &CPocket::m_cut_mode)
-		;
-
 	bp::class_<HBitmap>("Bitmap")
 		.def(bp::init<HBitmap>())
 		.def(bp::init<std::wstring>())
-		;
-
-	bp::class_<CProfile, bp::bases<CSketchOp>>("Profile")
-		.def(bp::init<CProfile>())
-		.def_readwrite("tool_on_side", &CProfile::m_tool_on_side)
-		.def_readwrite("cut_mode", &CProfile::m_cut_mode)
-		.def_readwrite("auto_roll_on", &CProfile::m_auto_roll_on)
-		.def_readwrite("auto_roll_off", &CProfile::m_auto_roll_off)
-		.def_readwrite("auto_roll_radius", &CProfile::m_auto_roll_radius)
-		.def_readwrite("lead_in_line_len", &CProfile::m_lead_in_line_len)
-		.def_readwrite("lead_out_line_len", &CProfile::m_lead_out_line_len)
-		.def_readwrite("roll_on_point_x", &CProfile::m_roll_on_point_x)
-		.def_readwrite("roll_on_point_y", &CProfile::m_roll_on_point_y)
-		.def_readwrite("roll_on_point_z", &CProfile::m_roll_on_point_z)
-		.def_readwrite("roll_off_point_x", &CProfile::m_roll_off_point_x)
-		.def_readwrite("roll_off_point_y", &CProfile::m_roll_off_point_y)
-		.def_readwrite("roll_off_point_z", &CProfile::m_roll_off_point_z)
-		.def_readwrite("start_given", &CProfile::m_start_given)
-		.def_readwrite("end_given", &CProfile::m_end_given)
-		.def_readwrite("start_x", &CProfile::m_start_x)
-		.def_readwrite("start_y", &CProfile::m_start_y)
-		.def_readwrite("start_z", &CProfile::m_start_z)
-		.def_readwrite("end_x", &CProfile::m_end_x)
-		.def_readwrite("end_y", &CProfile::m_end_y)
-		.def_readwrite("end_z", &CProfile::m_end_z)
-		.def_readwrite("extend_at_start", &CProfile::m_extend_at_start)
-		.def_readwrite("extend_at_end", &CProfile::m_extend_at_end)
-		.def_readwrite("end_beyond_full_profile", &CProfile::m_end_beyond_full_profile)
-		.def_readwrite("sort_sketches", &CProfile::m_sort_sketches)
-		.def_readwrite("offset_extra", &CProfile::m_offset_extra)
-		.def_readwrite("do_finishing_pass", &CProfile::m_do_finishing_pass)
-		.def_readwrite("only_finishing_pass", &CProfile::m_only_finishing_pass)
-		.def_readwrite("finishing_h_feed_rate", &CProfile::m_finishing_h_feed_rate)
-		.def_readwrite("finishing_cut_mode", &CProfile::m_finishing_cut_mode)
-		.def_readwrite("finishing_step_down", &CProfile::m_finishing_step_down)
 		;
 
 	bp::def("AddMenu", AddMenu);///function AddMenu///params str title///adds a menu to the CAD software
@@ -1124,11 +1064,6 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::def("AddObject", CadAddObject);
 	bp::def("PyIncRef", PyIncRef);
 	bp::def("NewPoint", NewPoint, bp::return_value_policy<bp::reference_existing_object>());
-	bp::def("NewDrilling", NewDrilling, bp::return_value_policy<bp::reference_existing_object>());
-	bp::def("NewProfile", NewProfile, bp::return_value_policy<bp::reference_existing_object>());
-	bp::def("NewPocket", NewPocket, bp::return_value_policy<bp::reference_existing_object>());
-	bp::def("NewTool", NewTool, bp::return_value_policy<bp::reference_existing_object>());
-	bp::def("GetProgram", GetProgram, bp::return_value_policy<bp::reference_existing_object>());
 	bp::def("AddHideableWindow", AddHideableWindow, "adds a window to the CAD software");///function AddHideableWindow///params str title///adds a window to the CAD software
 	bp::def("ShowHideableWindow", ShowHideableWindow);
 	bp::def("AttachWindowToWindow", AttachWindowToWindow);///function AttachWindowToWindow///params int hwnd///attaches given window to the CAD window
@@ -1138,8 +1073,6 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::def("RegisterNewOrOpen", RegisterNewOrOpen);
 	bp::def("DrawTriangle", &DrawTriangle);
 	bp::def("DrawLine", &DrawLine);
-	bp::def("DrawColor", &DrawColor);
-	bp::def("Proptest", &Proptest);
 	bp::def("AddProperty", AddProperty);
 
 
@@ -1157,29 +1090,15 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::scope().attr("OBJECT_TYPE_VERTEX") = (int)OBJECT_TYPE_VERTEX;
 	bp::scope().attr("OBJECT_TYPE_CIRCLE") = (int)OBJECT_TYPE_CIRCLE;
 
-	bp::scope().attr("TOOL_MATERIAL_TYPE_HSS") = (int)CTool::eHighSpeedSteel;
-	bp::scope().attr("TOOL_MATERIAL_TYPE_CARBIDE") = (int)CTool::eCarbide;
-	bp::scope().attr("TOOL_MATERIAL_TYPE_UNDEFINED") = (int)CTool::eUndefinedMaterialType;
-
-	bp::scope().attr("TOOL_TYPE_DRILL") = (int)CTool::eDrill;
-	bp::scope().attr("TOOL_TYPE_CENTRE_DRILL") = (int)CTool::eCentreDrill;
-	bp::scope().attr("TOOL_TYPE_ENDMILL") = (int)CTool::eEndmill;
-	bp::scope().attr("TOOL_TYPE_SLOT_CUTTER") = (int)CTool::eSlotCutter;
-	bp::scope().attr("TOOL_TYPE_BALL_CUTTER") = (int)CTool::eBallEndMill;
-	bp::scope().attr("TOOL_TYPE_CHAMFER") = (int)CTool::eChamfer;
-	bp::scope().attr("TOOL_TYPE_UNDEFINED") = (int)CTool::eUndefinedToolType;
-
 	bp::scope().attr("PROPERTY_TYPE_INVALID") = (int)InvalidPropertyType;
 	bp::scope().attr("PROPERTY_TYPE_STRING") =	(int)StringPropertyType;
 	bp::scope().attr("PROPERTY_TYPE_DOUBLE") =	(int)DoublePropertyType;
 	bp::scope().attr("PROPERTY_TYPE_LENGTH") =	(int)LengthPropertyType;
 	bp::scope().attr("PROPERTY_TYPE_INT") =		(int)IntPropertyType;
-	bp::scope().attr("PROPERTY_TYPE_VERTEX") =	(int)VertexPropertyType;
 	bp::scope().attr("PROPERTY_TYPE_CHOICE") =	(int)ChoicePropertyType;
 	bp::scope().attr("PROPERTY_TYPE_COLOR") =	(int)ColorPropertyType;
 	bp::scope().attr("PROPERTY_TYPE_CHECK") =	(int)CheckPropertyType;
 	bp::scope().attr("PROPERTY_TYPE_LIST") =	(int)ListOfPropertyType;
-	bp::scope().attr("PROPERTY_TYPE_TRS") =		(int)TrsfPropertyType;
 	bp::scope().attr("PROPERTY_TYPE_FILE") =	(int)FilePropertyType;
 }
 
@@ -1206,8 +1125,8 @@ void HeeksCADapp::OnPythonStartUp()
 	Py_Initialize();
 	PyEval_InitThreads();
 
-	PyObject *main_module = PyImport_ImportModule("__main__");
-	PyObject *globals = PyModule_GetDict(main_module);
+	main_module = PyImport_ImportModule("__main__");
+	globals = PyModule_GetDict(main_module);
 	PyRun_String("import OnStart", Py_file_input, globals, globals);
 
 	if (PyErr_Occurred())
@@ -1221,7 +1140,7 @@ void HeeksCADapp::PythonOnNewOrOpen(bool open, int res)
 	{
 		PyObject* python_callback = *It;
 
-		PyObject *main_module, *globals;
+		//PyObject *main_module, *globals;
 		BeforePythonCall(&main_module, &globals);
 
 		// Execute the python function
@@ -1235,19 +1154,9 @@ void HeeksCADapp::PythonOnNewOrOpen(bool open, int res)
 	}
 }
 
-static bool write_python_file(const wxString& python_file_path)
-{
-	wxFile ofs(python_file_path.c_str(), wxFile::write);
-	if (!ofs.IsOpened())return false;
-
-	ofs.Write(wxGetApp().m_program->m_python_program.c_str());
-
-	return true;
-}
-
 static void RunPythonCommand(const char* command)
 {
-	PyObject *main_module, *globals;
+	//PyObject *main_module, *globals;
 	BeforePythonCall(&main_module, &globals);
 
 	PyRun_String(command, Py_file_input, globals, globals);
@@ -1255,80 +1164,37 @@ static void RunPythonCommand(const char* command)
 	AfterPythonCall(main_module);
 }
 
-void HeeksCADapp::RunPythonScript()
+
+static wxString GetBackplotFilePath() 
 {
-	{
-		// clear the output file
-		wxFile f(m_program->GetOutputFileName().c_str(), wxFile::write);
-		if (f.IsOpened())f.Write(_T("\n"));
-	}
-
-	// Check to see if someone has modified the contents of the
-	// program canvas manually.  If so, replace the m_python_program
-	// with the edited program.  We don't want to do this without
-	// this check since the maximum size of m_textCtrl is sometimes
-	// a limitation to the size of the python program.  If the first 'n' characters
-	// of m_python_program matches the full contents of the m_textCtrl then
-	// it's likely that the text control holds as much of the python program
-	// as it can hold but more may still exist in m_python_program.
-	unsigned int text_control_length = m_program_canvas->m_textCtrl->GetLastPosition();
-	if (m_program->m_python_program.substr(0, text_control_length) != m_program_canvas->m_textCtrl->GetValue())
-	{
-		// copy the contents of the program canvas to the string
-		m_program->m_python_program.clear();
-		m_program->m_python_program << wxGetApp().m_program_canvas->m_textCtrl->GetValue();
-	}
-
-#ifdef FREE_VERSION
-	::wxLaunchDefaultBrowser(_T("http://heeks.net/help/buy-heekscnc-1-0"));
-#endif
-	wxString python_file_made;
-
-	m_output_canvas->m_textCtrl->Clear(); // clear the output window
-	m_print_canvas->m_textCtrl->Clear(); // clear the output window
-
-	// write the python file
+	// The xml file is created in the temporary folder
+#if wxCHECK_VERSION(3, 0, 0)
 	wxStandardPaths& standard_paths = wxStandardPaths::Get();
-	wxFileName file_str(standard_paths.GetTempDir().c_str(), _T("post.py"));
-
-	if (!write_python_file(file_str.GetFullPath()))
-	{
-		wxString error;
-		error << _T("couldn't write ") << file_str.GetFullPath();
-		wxMessageBox(error.c_str());
-	}
-	else
-	{
-		python_file_made = file_str.GetFullPath();
-		python_file_made.Replace('\\', '/');
-
-		wxString command = wxString::Format(_T("import importlib\nimport sys\nmods = ['kurve_funcs', 'area', 'area_funcs', 'nc.nc', 'nc.iso', 'nc.iso_modal', 'nc.emc2b']\nfor t in mods:\n  if t in sys.modules.keys(): importlib.reload(sys.modules[t])\nwith open('%s') as f:\n  code = compile(f.read(), 'post.py', 'exec')\n  exec(code, None, None)"), python_file_made.c_str());
-		const char* char_str = command.utf8_str();
-		RunPythonCommand(char_str);
-	}
-
-	BackplotGCode(m_program->GetOutputFileName());
-
+#else
+	wxStandardPaths standard_paths;
+#endif
+	wxFileName file_str(standard_paths.GetTempDir().c_str(), _T("backplot.xml"));
+	return file_str.GetFullPath();
 }
 
 void HeeksCADapp::BackplotGCode(const wxString& output_file)
 {
 	wxBusyCursor busy_cursor();
 
-	if (m_program->m_machine.reader == _T("not found"))
+	if (m_machine.reader == _T("not found"))
 	{
 		wxMessageBox(_T("Machine reader name (defined in Program Properties) not found"));
 	} // End if - then
 	else
 	{
 		wxString output_filepath = output_file;
-		//wxString output_filepath = m_program->GetOutputFileName();
+		//wxString output_filepath = GetOutputFileName();
 		output_filepath.Replace('\\', '/');
-		wxString command = wxString::Format(_T("from nc.hxml_writer import HxmlWriter\nfrom nc.%s import Parser as Parser\nparser = Parser(HxmlWriter())\nparser.Parse('%s')\ndel parser"), m_program->m_machine.reader.c_str(), output_filepath.c_str());
+		wxString command = wxString::Format(_T("from nc.hxml_writer import HxmlWriter\nfrom nc.%s import Parser as Parser\nparser = Parser(HxmlWriter())\nparser.Parse('%s')\ndel parser"), m_machine.reader.c_str(), output_filepath.c_str());
 		RunPythonCommand(command);
 
 		// there should now be an xml file written
-		wxString xml_file_str = wxGetApp().m_program->GetBackplotFilePath();
+		wxString xml_file_str = GetBackplotFilePath();
 		{
 			wxFile ofs(xml_file_str.c_str());
 			if (!ofs.IsOpened())
@@ -1340,8 +1206,8 @@ void HeeksCADapp::BackplotGCode(const wxString& output_file)
 
 		xml_file_str.Replace('\\', '/');
 
-		// read the xml file, just like paste, into the program
-		wxGetApp().OpenXMLFile(xml_file_str, m_program);
+		// read the xml file, just like paste, into the top level
+		wxGetApp().OpenXMLFile(xml_file_str, &wxGetApp());
 		wxGetApp().Repaint();
 
 		// in Windows, at least, executing the bat file was making HeeksCAD change it's Z order

@@ -293,55 +293,51 @@ public:
 
 static ResetRulerTool reset_ruler_tool;
 
-static void on_set_width(double value, HeeksObj* object){
-	((HRuler*)object)->m_width = value;
-	((HRuler*)object)->KillGLLists();
-	wxGetApp().Repaint();
-}
-
-static void on_set_length(double value, HeeksObj* object){
-	((HRuler*)object)->m_length = value;
-	((HRuler*)object)->KillGLLists();
-	wxGetApp().Repaint();
-}
-
-static void on_set_empty_length(double value, HeeksObj* object){
-	((HRuler*)object)->m_empty_length = value;
-	((HRuler*)object)->KillGLLists();
-	wxGetApp().Repaint();
-}
-
-static void on_set_use_view_units(bool value, HeeksObj* object)
+class PropertyUseViewUnits :public PropertyCheck
 {
-	((HRuler*)object)->m_use_view_units = value;
-	wxGetApp().m_frame->RefreshProperties();
-	((HRuler*)object)->KillGLLists();
-	wxGetApp().Repaint();
-}
+public:
+	PropertyUseViewUnits(HeeksObj* object) :PropertyCheck(object, _("use view units"), &((HRuler*)object)->m_use_view_units){}
+	Property *MakeACopy(void)const{ return new PropertyUseViewUnits(*this); }
+	void Set(bool value)
+	{
+		PropertyCheck::Set(value);
+		wxGetApp().m_frame->RefreshProperties();
+		m_object->KillGLLists();
+	}
+};
 
-static void on_set_units(int value, HeeksObj* object, bool from_undo_redo)
+class PropertyRulerUnits : public Property
 {
-	((HRuler*)object)->m_units = (value == 0) ? 1.0:25.4;
-	((HRuler*)object)->KillGLLists();
-	wxGetApp().Repaint();
-}
+public:
+	PropertyRulerUnits(HeeksObj* object) : Property(object, _("units")){}
+	Property *MakeACopy(void)const{ return new PropertyRulerUnits(*this); }
+	virtual void GetChoices(std::list< wxString > &choices){
+		choices.push_back ( wxString ( _("mm") ) );
+		choices.push_back ( wxString ( _("inch") ) );
+	}
+	virtual int get_property_type(){ return ChoicePropertyType; }
+	void Set(int value)
+	{
+		((HRuler*)m_object)->m_units = (value == 0) ? 1.0 : 25.4;
+		m_object->KillGLLists();
+	}
+	int GetInt()const
+	{
+		if (((HRuler*)m_object)->m_units > 25.0)return 1;
+		return 0;
+	}
+};
 
 void HRuler::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
-	list->push_back(new PropertyCheck(_("use view units"), m_use_view_units, this, on_set_use_view_units));
+	list->push_back(new PropertyUseViewUnits(this));
 	if(!m_use_view_units){
-		std::list< wxString > choices;
-		choices.push_back ( wxString ( _("mm") ) );
-		choices.push_back ( wxString ( _("inch") ) );
-		int choice = 0;
-		if(m_units > 25.0)choice = 1;
-		list->push_back ( new PropertyChoice ( _("units"),  choices, choice, this, on_set_units ) );
+		list->push_back(new PropertyRulerUnits(this));
 	}
-	list->push_back( new PropertyLength(_("width"), m_width, this, on_set_width));
-	list->push_back( new PropertyLength(_("length"), m_length, this, on_set_length));
-	list->push_back( new PropertyLength(_("empty_length"), m_empty_length, this, on_set_empty_length));
-#endif
+	list->push_back(new PropertyLengthWithKillGLLists(this, _("width"), &m_width ));
+	list->push_back(new PropertyLengthWithKillGLLists(this, _("length"), &m_length ));
+	list->push_back(new PropertyLengthWithKillGLLists(this, _("empty_length"), &m_empty_length ));
+
 	HeeksObj::GetProperties(list);
 }
 

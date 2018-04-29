@@ -7,7 +7,6 @@
 
 #include "stdafx.h"
 #include "OutputCanvas.h"
-#include "Program.h"
 #include "NCCode.h"
 
 BEGIN_EVENT_TABLE(COutputTextCtrl, wxTextCtrl)
@@ -20,9 +19,9 @@ void COutputTextCtrl::OnMouse( wxMouseEvent& event )
 	if(event.LeftUp())
 	{
 		wxTextPos pos = GetInsertionPoint();
-		if (wxGetApp().m_program && wxGetApp().m_program->NCCode())
+		if (wxGetApp().m_nc_code)
 		{
-			wxGetApp().m_program->NCCode()->HighlightBlock(pos);
+			wxGetApp().m_nc_code->HighlightBlock(pos);
 			wxGetApp().Repaint();
 		}
 	}
@@ -37,7 +36,7 @@ void COutputTextCtrl::OnPaint(wxPaintEvent& event)
 	// OnPaint doesn't seem to get called from Linux, though
 	wxPaintDC dc(this);
 
-	if (!painting && wxGetApp().m_program && wxGetApp().m_program->NCCode())
+	if (!painting && wxGetApp().m_nc_code)
 	{
 		painting = true;
 
@@ -52,7 +51,7 @@ void COutputTextCtrl::OnPaint(wxPaintEvent& event)
 		int pos0 = XYToPosition(0, row0);
 		int pos1 = XYToPosition(1, row1);
 
-		wxGetApp().m_program->NCCode()->FormatBlocks(this, pos0, pos1);
+		wxGetApp().m_nc_code->FormatBlocks(this, pos0, pos1);
 
 		SetScrollPos(wxVERTICAL, scrollpos);
 

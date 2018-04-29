@@ -64,7 +64,7 @@ void PropertyChangeLength::Run(bool redo)
 
 void PropertyChangeLength::RollBack()
 {
-	(*(m_callbackfunc))(m_old, m_object);
+	m_property->Set(m_old);
 	wxGetApp().WasModified(m_property->m_object);
 }
 
@@ -104,67 +104,21 @@ void PropertyChangeColor::RollBack()
 	wxGetApp().WasModified(m_property->m_object);
 }
 
-#if 0
-PropertyChangeVertex::PropertyChangeVertex(double x, double y, double z, PropertyVertex* property) :m_property(property)
-{
-	m_value[0] = x;
-	m_value[1] = y;
-	m_value[2] = z;
-	m_old[0] = property->GetX();
-	m_old[1] = property->GetY();
-	m_old[2] = property->GetZ();
-}
-
-void PropertyChangeVertex::Run(bool redo)
-{
-	m_property->SetX(m_value[0]);
-	m_property->SetY(m_value[1]);
-	m_property->SetZ(m_value[2]);
-	wxGetApp().WasModified(m_property->m_object);
-}
-
-void PropertyChangeVertex::RollBack()
-{
-	m_property->SetX(m_old[0]);
-	m_property->SetY(m_old[1]);
-	m_property->SetZ(m_old[2]);
-	wxGetApp().WasModified(m_property->m_object);
-}
-#endif
-
-PropertyChangeTrsf::PropertyChangeTrsf(const gp_Trsf &value, PropertyTrsf* property) :m_property(property)
+PropertyChangeChoice::PropertyChangeChoice(const int& value, PropertyChoice* property) :m_property(property)
 {
 	m_value = value;
-	m_old = m_property->GetTrsf();
+	m_old = m_property->GetInt();
 }
 
-void PropertyChangeTrsf::Run(bool redo)
+void PropertyChangeChoice::Run(bool redo)
 {
 	m_property->Set(m_value);
 	wxGetApp().WasModified(m_property->m_object);
 }
 
-void PropertyChangeTrsf::RollBack()
-{
-	m_property->Set(m_old);
-	wxGetApp().WasModified(m_property->m_object);
-}
-
-PropertyChangeChoice::PropertyChangeChoice(const int& value, PropertyChoice* property) :m_property(property)
-{
-	m_value = value;
-	m_old = m_property->GetIndex();
-}
-
-void PropertyChangeChoice::Run(bool redo)
-{
-	m_property->SetIndex(m_value);
-	wxGetApp().WasModified(m_property->m_object);
-}
-
 void PropertyChangeChoice::RollBack()
 {
-	m_property->SetIndex(m_old);
+	m_property->Set(m_old);
 	wxGetApp().WasModified(m_property->m_object);
 }
 

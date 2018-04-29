@@ -307,44 +307,24 @@ void HArc::GetGripperPositions(std::list<GripData> *list, bool just_for_endof){
 	list->push_back(GripData(GripperTypeStretch,C.X(),C.Y(),C.Z(),&C));
 }
 
-static void on_set_start(const double *vt, HeeksObj* object){
-	((HArc*)object)->A = make_point(vt);
-	wxGetApp().Repaint();
-}
-
-static void on_set_end(const double *vt, HeeksObj* object){
-	((HArc*)object)->B = make_point(vt);
-	wxGetApp().Repaint();
-}
-
-static void on_set_centre(const double *vt, HeeksObj* object){
-	((HArc*)object)->C = make_point(vt);
-	wxGetApp().Repaint();
-}
-
-static void on_set_axis(const double *vt, HeeksObj* object){
-	gp_Ax1 a = ((HArc*)object)->m_axis;
-	a.SetDirection(make_vector(vt));
-	((HArc*)object)->m_axis = a;
-	wxGetApp().Repaint();
-}
+static double length_for_properties = 0.0;
 
 void HArc::GetProperties(std::list<Property *> *list){
-#if 0 // to do
 	double a[3], b[3];
 	double c[3], ax[3];
 	extract(A, a);
 	extract(B, b);
 	extract(C, c);
 	extract(m_axis.Direction(), ax);
-	list->push_back(new PropertyVertex(_("start"), a, this, on_set_start));
-	list->push_back(new PropertyVertex(_("end"), b, this, on_set_end));
-	list->push_back(new PropertyVertex(_("centre"), c, this, on_set_centre));
-	list->push_back(new PropertyVector(_("axis"), ax, this, on_set_axis));
-	double length = A.Distance(B);
-	list->push_back(new PropertyLength(_("length"), length, NULL));
-	list->push_back(new PropertyLength(_("radius"), m_radius, this, NULL));
-#endif
+
+	list->push_back(PropertyPnt(this, _("start"), &A));
+	list->push_back(PropertyPnt(this, _("end"), &B));
+	list->push_back(PropertyPnt(this, _("centre"), &C));
+	list->push_back(PropertyAxisDir(this, _("axis"), &m_axis));
+	length_for_properties = A.Distance(B);
+	list->push_back(new PropertyLength(this, _("length"), (const double*)&length_for_properties));
+	list->push_back(new PropertyLength(this, _("radius"), &m_radius));
+
 	HeeksObj::GetProperties(list);
 }
 

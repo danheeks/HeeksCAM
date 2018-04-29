@@ -78,11 +78,9 @@ wxString CCylinder::StretchedName(){ return _("Stretched Cylinder");}
 
 void CCylinder::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
 	CoordinateSystem::GetAx2Properties(list, m_pos, this);
-	list->push_back(new PropertyLength(_("diameter"), m_radius*2, this, on_set_diameter));
-	list->push_back(new PropertyLength(_("height"), m_height, this, on_set_height));
-#endif
+	list->push_back(new PropertyLengthScaled(this, _("diameter"), &m_radius, 2.0));
+	list->push_back(new PropertyLength(this, _("height"), &m_height));
 	CSolid::GetProperties(list);
 }
 

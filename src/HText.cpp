@@ -264,21 +264,6 @@ void HText::GetGripperPositions(std::list<GripData> *list, bool just_for_endof)
 	}
 }
 
-static void on_set_trsf(const gp_Trsf &trsf, HeeksObj* object){
-	((HText*)object)->m_trsf = trsf;
-	wxGetApp().Repaint();
-}
-
-static void on_set_hj(int value, HeeksObj* object, bool from_undo_redo)
-{
-	((HText*)object)->m_h_justification = value;
-}
-
-static void on_set_vj(int value, HeeksObj* object, bool from_undo_redo)
-{
-	((HText*)object)->m_v_justification = value;
-}
-
 #ifndef WIN32
 static void on_set_font(int zero_based_choice, HeeksObj *obj, bool from_undo_redo)
 {
@@ -302,8 +287,7 @@ static void on_set_font(int zero_based_choice, HeeksObj *obj, bool from_undo_red
 
 void HText::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
-	list->push_back(new PropertyTrsf(_("orientation"), m_trsf, this, on_set_trsf));
+	list->push_back(PropertyTrsf( this, _("orientation"), &m_trsf));
 
 #ifndef WIN32
     if (wxGetApp().m_pVectorFonts.get() == NULL)
@@ -335,7 +319,7 @@ void HText::GetProperties(std::list<Property *> *list)
 		choices.push_back ( wxString ( _("left") ) );
 		choices.push_back ( wxString ( _("center") ) );
 		choices.push_back ( wxString ( _("right") ) );
-		list->push_back(new PropertyChoice(_("horizontal justification"),  choices, m_h_justification, this, on_set_hj ) );
+		list->push_back(new PropertyChoice(this, _("horizontal justification"),  choices, &m_h_justification ) );
 	}
 	{
 		std::list< wxString > choices;
@@ -343,9 +327,9 @@ void HText::GetProperties(std::list<Property *> *list)
 		choices.push_back ( wxString ( _("bottom") ) );
 		choices.push_back ( wxString ( _("middle") ) );
 		choices.push_back ( wxString ( _("top") ) );
-		list->push_back(new PropertyChoice(_("vertical justification"),  choices, m_v_justification, this, on_set_vj ) );
+		list->push_back(new PropertyChoice(this, _("vertical justification"),  choices, &m_v_justification ) );
 	}
-#endif
+
 	ObjList::GetProperties(list);
 }
 

@@ -57,16 +57,6 @@ bool CSphere::IsDifferent(HeeksObj *other)
 	return CShape::IsDifferent(other);
 }
 
-static void on_set_centre(const double *pos, HeeksObj* object){
-	((CSphere*)object)->m_pos = make_point(pos);
-	object->OnApplyProperties();
-}
-
-static void on_set_radius(double value, HeeksObj* object){
-	((CSphere*)object)->m_radius = value;
-	object->OnApplyProperties();
-}
-
 void CSphere::MakeTransformedShape(const gp_Trsf &mat)
 {
 	m_pos.Transform(mat);
@@ -79,12 +69,9 @@ wxString CSphere::StretchedName(){ return _("Ellipsoid");}
 
 void CSphere::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
-	double pos[3];
-	extract(m_pos, pos);
-	list->push_back(new PropertyVertex(_("centre"), pos, this, on_set_centre));
-	list->push_back(new PropertyLength(_("radius"), m_radius, this, on_set_radius));
-#endif
+	list->push_back(PropertyPnt(this, _("centre"), &m_pos));
+	list->push_back(new PropertyLength(this, _("radius"), &m_radius));
+
 	CSolid::GetProperties(list);
 }
 

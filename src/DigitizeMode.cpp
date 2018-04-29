@@ -423,22 +423,7 @@ static void set_offset(const wxChar *value, HeeksObj* object)
 }
 
 void DigitizeMode::GetProperties(std::list<Property *> *list){
-#if 0 // to do
-	list->push_back(new PropertyLength(_("X"), digitized_point.m_point.X(), NULL, set_x));
-	list->push_back(new PropertyLength(_("Y"), digitized_point.m_point.Y(), NULL, set_y));
-	list->push_back(new PropertyLength(_("Z"), digitized_point.m_point.Z(), NULL, set_z));
-
-	Drawing *pDrawingMode = dynamic_cast<Drawing *>(wxGetApp().input_mode_object);
-	if (pDrawingMode != NULL)
-	{
-		// The wxGetApp().m_digitizing->reference_point is only valid while in one of the
-		// Drawing input modes.  If we want to expand its role then we need to make sure
-		// its value is set in other circumstances as well.  At the moment, it's only set
-		// within the Drawing::AddPoint() method.
-
-		list->push_back(new PropertyString(_("Offset (from last point)"), _T("0,0,0"), NULL, set_offset));
-	}
-#endif
+	PropertyPnt(list, NULL, &digitized_point.m_point);
 }
 
 class EndPosPicking:public Tool{

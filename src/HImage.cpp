@@ -102,11 +102,14 @@ void HImage::glCommands(bool select, bool marked, bool no_color)
 	}
 
 	if(!no_color){
-		glColor4ub(255, 255, 255, 255);
+		glColor4ub(255, 255, 255, 128);
 		if(m_texture_number){
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, m_texture_number);
 		}
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE);
 	}
 	
 	if(m_rectangle_intialized){
@@ -141,6 +144,7 @@ void HImage::glCommands(bool select, bool marked, bool no_color)
 
 	if(!no_color){
 		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_BLEND);
 	}
 }
 

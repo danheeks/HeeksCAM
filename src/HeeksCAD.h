@@ -11,7 +11,6 @@
 #include "ObjList.h"
 #include "Plugin.h"
 #include "glfont2.h"
-#include "CNCPoint.h"
 #include "PythonString.h"
 #include <list>
 #include <wx/string.h>
@@ -46,12 +45,10 @@ class wxRibbonBar;
 class wxRibbonPage;
 #endif
 class Property;
-class CProgram;
-class CProgramCanvas;
 class COutputCanvas;
 class CPrintCanvas;
 class Tool;
-class CSurface;
+class CNCCode;
 
 
 #define HEEKSCAD_VERSION_MAIN "1"
@@ -92,6 +89,40 @@ enum SolidViewMode
 	SolidViewFacesOnly,
 };
 
+
+// class CMachine was in program. Now it's just for backplotting gcode, although it will have to go at some point...
+class PyParam
+{
+public:
+	std::string m_name;
+	std::string m_value;
+
+	PyParam(const char* name, const char* value) :m_name(name), m_value(value){}
+	bool operator==(const PyParam & rhs) const{ return (m_name == rhs.m_name) && (m_value == rhs.m_value); }
+};
+
+class CMachine
+{
+public:
+	CMachine();
+	CMachine(const CMachine & rhs);
+	CMachine & operator= (const CMachine & rhs);
+
+	wxString post;
+	wxString reader;
+	wxString suffix;
+	wxString description;
+	std::list<PyParam> py_params;
+
+	void GetProperties(std::list<Property *> *list);
+	void WriteBaseXML(TiXmlElement *element);
+	void ReadBaseXML(TiXmlElement* element);
+
+	bool operator==(const CMachine & rhs) const;
+	bool operator!=(const CMachine & rhs) const { return(!(*this == rhs)); }
+
+};
+
 class HeeksCADapp : public wxApp, public ObjList
 /*! \class The Application Class:
  *
@@ -112,6 +143,7 @@ private:
 	std::map< std::string, HeeksObj*(*)(TiXmlElement* pElem) > xml_read_fn_map;
 
 	void render_screen_text2(const wxChar* str, bool select);
+	float get_text_scale();
 	void RenderDatumOrCurrentCoordSys();
 
 protected:
@@ -456,46 +488,23 @@ public:
 #endif
 
 	// this code was in HeeksCNCApp
-		bool m_draw_cutter_radius; // applies to all operations
-		CProgram* m_program;
-		CProgramCanvas* m_program_canvas;
+	CMachine m_machine;
+	CNCCode* m_nc_code;
 		COutputCanvas* m_output_canvas;
 		CPrintCanvas* m_print_canvas;
-		bool m_run_program_on_new_line;
 #ifdef HAVE_TOOLBARS
 		wxToolBarBase* m_machiningBar;
 #endif
 		wxMenu *m_menuMachining;
-		bool m_machining_hidden;
 		std::list< void(*)() > m_OnRewritePython_list;
 		std::set<int> m_external_op_types;
-		bool m_use_Clipper_not_Boolean;
-		bool m_use_DOS_not_Unix;
-
-		CSurface* m_attached_to_surface;
-		int         m_tool_number;
-		Python SetTool(const int new_tool);
-		CNCPoint      m_location;
 
 		void OnCNCStartUp();
 		void OnCNCNewOrOpen(bool open, int res);
 		void OnFrameDelete();
 		wxString GetDllFolder() const;
 		wxString GetResourceFilename(const wxString resource, const bool writableOnly = false) const;
-		void RunPythonScript();
 		void BackplotGCode(const wxString& output_file);
-
-		typedef int SymbolType_t;
-		typedef unsigned int SymbolId_t;
-		typedef std::pair< SymbolType_t, SymbolId_t > Symbol_t;
-		typedef std::list< Symbol_t > Symbols_t;
-
-		std::list<wxString> GetFileNames(const char *p_szRoot) const;
-		static void GetNewToolTools(std::list<Tool*>* t_list);
-		static void GetNewPatternTools(std::list<Tool*>* t_list);
-		static void GetNewSurfaceTools(std::list<Tool*>* t_list);
-		static void GetNewOperationTools(std::list<Tool*>* t_list);
-		static void GetNewStockTools(std::list<Tool*>* t_list);
 
 #ifdef HAVE_TOOLBARS
 		void StartToolBarFlyout(const wxString& title_and_bitmap);

@@ -174,10 +174,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="CNCPoint.cpp" />
     <ClCompile Include="colorshaderclass.cpp" />
-    <ClCompile Include="CTool.cpp" />
-    <ClCompile Include="CToolDlg.cpp" />
     <ClCompile Include="Curve.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
@@ -186,10 +183,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="DepthOp.cpp" />
-    <ClCompile Include="DepthOpDlg.cpp" />
-    <ClCompile Include="Drilling.cpp" />
-    <ClCompile Include="DrillingDlg.cpp" />
     <ClCompile Include="ExtrudedObj.cpp" />
     <ClCompile Include="Finite.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
@@ -317,34 +310,21 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Op.cpp" />
-    <ClCompile Include="OpDlg.cpp" />
     <ClCompile Include="openglclass.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Operations.cpp" />
     <ClCompile Include="OptionsCanvas.cpp" />
     <ClCompile Include="OrientationModifier.cpp" />
     <ClCompile Include="OutputCanvas.cpp" />
-    <ClCompile Include="Pattern.cpp" />
-    <ClCompile Include="PatternDlg.cpp" />
-    <ClCompile Include="Patterns.cpp" />
     <ClCompile Include="Picking.cpp" />
     <ClCompile Include="PictureFrame.cpp" />
     <ClCompile Include="Plugins.cpp" />
-    <ClCompile Include="Pocket.cpp" />
-    <ClCompile Include="PocketDlg.cpp" />
     <ClCompile Include="Point.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PointDrawing.cpp" />
     <ClCompile Include="PointOrWindow.cpp" />
-    <ClCompile Include="Profile.cpp" />
-    <ClCompile Include="ProfileDlg.cpp" />
-    <ClCompile Include="Program.cpp" />
-    <ClCompile Include="ProgramCanvas.cpp" />
-    <ClCompile Include="ProgramDlg.cpp" />
     <ClCompile Include="PropertiesCanvas.cpp" />
     <ClCompile Include="Property.cpp" />
     <ClCompile Include="PropertyChange.cpp" />
@@ -370,11 +350,8 @@
     <ClCompile Include="PythonString.cpp" />
     <ClCompile Include="RegularShapesDrawing.cpp" />
     <ClCompile Include="RemoveOrAddTool.cpp" />
-    <ClCompile Include="Reselect.cpp" />
     <ClCompile Include="RuledSurface.cpp" />
     <ClCompile Include="Ruler.cpp" />
-    <ClCompile Include="ScriptOp.cpp" />
-    <ClCompile Include="ScriptOpDlg.cpp" />
     <ClCompile Include="Sectioning.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
       </PrecompiledHeader>
@@ -385,24 +362,15 @@
     <ClCompile Include="Shape.cpp" />
     <ClCompile Include="ShapeData.cpp" />
     <ClCompile Include="ShapeTools.cpp" />
-    <ClCompile Include="Simulate.cpp" />
     <ClCompile Include="Sketch.cpp" />
-    <ClCompile Include="SketchOp.cpp" />
-    <ClCompile Include="SketchOpDlg.cpp" />
     <ClCompile Include="Solid.cpp" />
-    <ClCompile Include="SolidsDlg.cpp" />
     <ClCompile Include="SolidTools.cpp" />
-    <ClCompile Include="SpeedOp.cpp" />
-    <ClCompile Include="SpeedOpDlg.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="StlSolid.cpp" />
-    <ClCompile Include="Stock.cpp" />
-    <ClCompile Include="StockDlg.cpp" />
-    <ClCompile Include="Stocks.cpp" />
     <ClCompile Include="strconv.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
       </PrecompiledHeader>
@@ -410,12 +378,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="StretchTool.cpp" />
-    <ClCompile Include="Surface.cpp" />
-    <ClCompile Include="SurfaceDlg.cpp" />
-    <ClCompile Include="Surfaces.cpp" />
     <ClCompile Include="svg.cpp" />
-    <ClCompile Include="Tag.cpp" />
-    <ClCompile Include="Tags.cpp" />
     <ClCompile Include="tinystr.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
       </PrecompiledHeader>
@@ -442,7 +405,6 @@
     </ClCompile>
     <ClCompile Include="ToolImage.cpp" />
     <ClCompile Include="ToolList.cpp" />
-    <ClCompile Include="Tools.cpp" />
     <ClCompile Include="TransformTool.cpp" />
     <ClCompile Include="TransformTools.cpp" />
     <ClCompile Include="TreeCanvas.cpp" />
@@ -462,15 +424,8 @@
     <ClInclude Include="AreaOrderer.h" />
     <ClInclude Include="Circle.h" />
     <ClInclude Include="clipper.hpp" />
-    <ClInclude Include="CNCPoint.h" />
     <ClInclude Include="colorshaderclass.h" />
-    <ClInclude Include="CTool.h" />
-    <ClInclude Include="CToolDlg.h" />
     <ClInclude Include="Curve.h" />
-    <ClInclude Include="DepthOp.h" />
-    <ClInclude Include="DepthOpDlg.h" />
-    <ClInclude Include="Drilling.h" />
-    <ClInclude Include="DrillingDlg.h" />
     <ClInclude Include="ExtrudedObj.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="GTri.h" />
@@ -480,17 +435,9 @@
     <ClInclude Include="Octree.h" />
     <ClInclude Include="OctSolid.h" />
     <ClInclude Include="OctSphere.h" />
-    <ClInclude Include="Op.h" />
-    <ClInclude Include="OpDlg.h" />
     <ClInclude Include="openglclass.h" />
-    <ClInclude Include="Operations.h" />
     <ClInclude Include="OutputCanvas.h" />
-    <ClInclude Include="Pattern.h" />
-    <ClInclude Include="PatternDlg.h" />
-    <ClInclude Include="Patterns.h" />
     <ClInclude Include="Picking.h" />
-    <ClInclude Include="Pocket.h" />
-    <ClInclude Include="PocketDlg.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Geom.h" />
     <ClInclude Include="AboutBox.h" />
@@ -571,11 +518,6 @@
     <ClInclude Include="Plugins.h" />
     <ClInclude Include="PointDrawing.h" />
     <ClInclude Include="PointOrWindow.h" />
-    <ClInclude Include="Profile.h" />
-    <ClInclude Include="ProfileDlg.h" />
-    <ClInclude Include="Program.h" />
-    <ClInclude Include="ProgramCanvas.h" />
-    <ClInclude Include="ProgramDlg.h" />
     <ClInclude Include="propdev.h" />
     <ClInclude Include="PropertiesCanvas.h" />
     <ClInclude Include="Property.h" />
@@ -596,45 +538,27 @@
     <ClInclude Include="PythonString.h" />
     <ClInclude Include="RegularShapesDrawing.h" />
     <ClInclude Include="RemoveOrAddTool.h" />
-    <ClInclude Include="Reselect.h" />
     <ClInclude Include="RuledSurface.h" />
     <ClInclude Include="Ruler.h" />
-    <ClInclude Include="ScriptOp.h" />
-    <ClInclude Include="ScriptOpDlg.h" />
     <ClInclude Include="Sectioning.h" />
     <ClInclude Include="SelectMode.h" />
     <ClInclude Include="Shape.h" />
     <ClInclude Include="ShapeData.h" />
     <ClInclude Include="ShapeTools.h" />
-    <ClInclude Include="Simulate.h" />
     <ClInclude Include="Sketch.h" />
-    <ClInclude Include="SketchOp.h" />
-    <ClInclude Include="SketchOpDlg.h" />
     <ClInclude Include="Solid.h" />
-    <ClInclude Include="SolidsDlg.h" />
     <ClInclude Include="SolidTools.h" />
-    <ClInclude Include="SpeedOp.h" />
-    <ClInclude Include="SpeedOpDlg.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StlSolid.h" />
-    <ClInclude Include="Stock.h" />
-    <ClInclude Include="StockDlg.h" />
-    <ClInclude Include="Stocks.h" />
     <ClInclude Include="strconv.h" />
     <ClInclude Include="StretchTool.h" />
-    <ClInclude Include="Surface.h" />
-    <ClInclude Include="SurfaceDlg.h" />
-    <ClInclude Include="Surfaces.h" />
     <ClInclude Include="svg.h" />
-    <ClInclude Include="Tag.h" />
-    <ClInclude Include="Tags.h" />
     <ClInclude Include="tinystr.h" />
     <ClInclude Include="tinyxml.h" />
     <ClInclude Include="Tool.h" />
     <ClInclude Include="ToolImage.h" />
     <ClInclude Include="ToolList.h" />
-    <ClInclude Include="Tools.h" />
     <ClInclude Include="TransformTool.h" />
     <ClInclude Include="TransformTools.h" />
     <ClInclude Include="TreeCanvas.h" />

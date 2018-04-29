@@ -76,7 +76,7 @@ public:
 	CShape* GetParentBody();
 	void MakeSureMarkingGLListExists();
 	void KillMarkingGLList();
-	void UpdateMarkingGLList(bool marked);
+	void UpdateMarkingGLList(bool marked, bool no_color);
 };
 
 class FaceToSketchTool:public Tool

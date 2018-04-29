@@ -17,7 +17,7 @@ protected:
 	CBox m_box;
 	TopoDS_Shape m_shape;
 	wxLongLong m_creation_time;
-	float m_opacity;
+	double m_opacity;
 	bool m_volume_found;
 	double m_volume;
 	gp_Pnt m_centre_of_mass;

@@ -90,26 +90,14 @@ void HILine::GetGripperPositions(std::list<GripData> *list, bool just_for_endof)
 	}
 }
 
-static void on_set_start(const double *vt, HeeksObj* object){
-	((HILine*)object)->A = make_point(vt);
-	wxGetApp().Repaint();
-}
-
-static void on_set_end(const double *vt, HeeksObj* object){
-	((HILine*)object)->B = make_point(vt);
-	wxGetApp().Repaint();
-}
+static double length_for_properties = 0.0;
 
 void HILine::GetProperties(std::list<Property *> *list){
-#if 0 // to do
-	double a[3], b[3];
-	extract(A, a);
-	extract(B, b);
-	list->push_back(new PropertyVertex(_("start"), a, this, on_set_start));
-	list->push_back(new PropertyVertex(_("end"), b, this, on_set_end));
-	double length = A.Distance(B);
-	list->push_back(new PropertyLength(_("Length"), length, this));
-#endif
+	list->push_back(PropertyPnt(this, _("start"), &A));
+	list->push_back(PropertyPnt(this, _("end"), &B));
+	length_for_properties = A.Distance(B);
+	list->push_back(new PropertyLength(NULL, _("Length"), (const double*)&length_for_properties));
+
 	HeeksObj::GetProperties(list);
 }
 

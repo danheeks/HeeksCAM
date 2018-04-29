@@ -205,14 +205,10 @@ static void on_set_radius(double value, HeeksObj* object){
 }
 
 void HCircle::GetProperties(std::list<Property *> *list){
-#if 0 // to do
-	double c[3], a[3];
-	extract(m_axis.Location(), c);
-	extract(m_axis.Direction(), a);
-	list->push_back(new PropertyVertex(_("centre"), c, this, on_set_centre));
-	list->push_back(new PropertyVector(_("axis"), a, this, on_set_axis));
-	list->push_back(new PropertyLength(_("radius"), m_radius, this, on_set_radius));
-#endif
+	list->push_back(PropertyAxisLoc(this, _("centre"), &m_axis));
+	list->push_back(PropertyAxisDir(this, _("axis"), &m_axis));
+	list->push_back(new PropertyLength(this, _("radius"), &m_radius));
+
 	ExtrudedObj<IdNamedObj>::GetProperties(list);
 }
 

@@ -518,43 +518,15 @@ void HGear::GetGripperPositions(std::list<GripData> *list, bool just_for_endof){
 	list->push_back(GripData(GripperTypeScale,pxyz.X(),pxyz.Y(),pxyz.Z(),NULL));
 }
 
-static void on_set_num_teeth(int value, HeeksObj* object){
-	((HGear*)object)->m_num_teeth = value;
-}
-
-static void on_set_module(double value, HeeksObj* object){
-	((HGear*)object)->m_module = value;
-}
-
-static void on_set_pressure_angle(double value, HeeksObj* object){
-	((HGear*)object)->m_pressure_angle = value * M_PI/180;
-}
-
-static void on_set_tip_relief(double value, HeeksObj* object){
-	((HGear*)object)->m_tip_relief = value;
-}
-
-static void on_set_depth(double value, HeeksObj* object){
-	((HGear*)object)->m_depth = value;
-}
-
-static void on_set_cone_half_angle(double value, HeeksObj* object){
-	((HGear*)object)->m_cone_half_angle = value * M_PI/180;
-}
-
-static void on_set_angle(double value, HeeksObj* object){
-	((HGear*)object)->m_angle = value;
-}
 void HGear::GetProperties(std::list<Property *> *list){
-#if 0 // to do
-	list->push_back(new PropertyInt(_("num teeth"), m_num_teeth, this, on_set_num_teeth));
-	list->push_back(new PropertyDouble(_("module"), m_module, this, on_set_module));
-	list->push_back(new PropertyDouble(_("pressure angle"), m_pressure_angle * 180/M_PI, this, on_set_pressure_angle));
-	list->push_back(new PropertyDouble(_("tip relief"), m_tip_relief, this, on_set_tip_relief));
-	list->push_back(new PropertyDouble(_("depth"), m_depth, this, on_set_depth));
-	list->push_back(new PropertyDouble(_("cone half angle"), m_cone_half_angle * 180/M_PI, this, on_set_cone_half_angle));
-	list->push_back(new PropertyDouble(_("drawn angle"), m_angle, this, on_set_angle));
-#endif
+	CoordinateSystem::GetAx2Properties(list, m_pos, this);
+	list->push_back(new PropertyInt(this, _("num teeth"), &m_num_teeth));
+	list->push_back(new PropertyDouble(this, _("module"), &m_module));
+	list->push_back(new PropertyDoubleScaled(this, _("pressure angle"), &m_pressure_angle, 180/M_PI));
+	list->push_back(new PropertyDouble(this, _("tip relief"), &m_tip_relief ));
+	list->push_back(new PropertyDouble(this, _("depth"), &m_depth));
+	list->push_back(new PropertyDoubleScaled(this, _("cone half angle"), &m_cone_half_angle, 180 / M_PI));
+
 	HeeksObj::GetProperties(list);
 }
 

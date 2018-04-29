@@ -467,14 +467,16 @@ void CSelectMode::OnMoving( wxMouseEvent& event )
 
 void CSelectMode::OnRender()
 {
-	for(std::list<HeeksObj*>::iterator It = m_highlighted_objects.begin(); It != m_highlighted_objects.end(); It++)
+	if (m_highlighted_objects.size() > 0)
+	{
+		wxGetApp().m_highlight_color.glColor();
+		Material(wxGetApp().m_highlight_color).glMaterial(1.0);
+	}
+
+	for (std::list<HeeksObj*>::iterator It = m_highlighted_objects.begin(); It != m_highlighted_objects.end(); It++)
 	{
 		HeeksObj* object = *It;
-		wxGetApp().m_highlight_color.glColor();
-		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-		glEnable(GL_COLOR_MATERIAL);
 		object->glCommands(false, true, true);
-		glDisable(GL_COLOR_MATERIAL);
 	}
 }
 

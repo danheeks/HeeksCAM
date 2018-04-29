@@ -14,7 +14,6 @@
 #include "HeeksObj.h"
 #include "HeeksColor.h"
 #include "HeeksCNCTypes.h"
-#include "CTool.h"
 
 #include <TopoDS_Shape.hxx>
 #include <gp_Pnt.hxx>
@@ -216,6 +215,4 @@ public:
 	void FormatBlocks(wxTextCtrl *textCtrl, int i0, int i1);
 	void HighlightBlock(long pos);
 	void SetHighlightedBlock(CNCCodeBlock* block);
-
-	std::list< std::pair<PathObject *, CTool *> > GetPaths() const;
 };

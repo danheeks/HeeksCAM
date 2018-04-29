@@ -267,6 +267,7 @@ void HArea::GetGripperPositions(std::list<GripData> *list, bool just_for_endof){
 	//list->push_back(GripData(GripperTypeStretch,C->m_p.X(),C->m_p.Y(),C->m_p.Z(),C));
 }
 
+#if 0
 class PropertyNumCurves :PropertyInt
 {
 public:
@@ -276,10 +277,13 @@ public:
 	int Get()const{ return ((HArea*)m_object)->m_area.m_curves.size(); }
 	Property *MakeACopy(void)const{ return new PropertyNumCurves(*this); }
 };
+#endif
 
 
 void HArea::GetProperties(std::list<Property *> *list){
+#if 0
 	list->push_back((Property*)(new PropertyNumCurves(this)));
+#endif
 	IdNamedObj::GetProperties(list);
 }
 

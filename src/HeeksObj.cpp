@@ -52,10 +52,28 @@ HeeksObj* HeeksObj::MakeACopyWithID()
 	return ret;
 }
 
-void on_edit_string(const wxChar* value, HeeksObj* object)
-{
-	object->OnEditString(value);
-}
+
+class PropertyObjectTitle :public Property{
+public:
+	PropertyObjectTitle(HeeksObj* object) :Property(object, _("object title")){ m_editable = object->CanEditString(); }
+	// Property's virtual functions
+	int get_property_type(){ return StringPropertyType; }
+	Property *MakeACopy(void)const{ return new PropertyObjectTitle(*this); }
+	const wxChar* GetString()const{ return m_object->GetShortString(); }
+	void Set(const wxChar* value){ m_object->OnEditString(value); }
+};
+
+class PropertyObjectColor :public Property{
+public:
+	PropertyObjectColor(HeeksObj* object) :Property(object, _("color")){}
+	// Property's virtual functions
+	int get_property_type(){ return ColorPropertyType; }
+	Property *MakeACopy(void)const{ return new PropertyObjectColor(*this); }
+	const HeeksColor &GetColor()const{ return *(m_object->GetColor()); }
+	void Set(const HeeksColor& value){ m_object->SetColor(value); }
+};
+
+
 
 static void on_set_color(HeeksColor value, HeeksObj* object)
 {
@@ -82,20 +100,18 @@ const wxBitmap &HeeksObj::GetIcon()
 	return *icon;
 }
 
+static bool test_bool = false;
+
 void HeeksObj::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
 	bool editable = CanEditString();
-	list->push_back(new PropertyString(_("object type"), GetTypeString(), NULL));
-	if(GetShortString())list->push_back(new PropertyString(_("object title"), GetShortString(), this, editable ? on_edit_string : NULL));
-	if(UsesID())list->push_back(new PropertyInt(_("ID"), m_id, this, on_set_id));
+	list->push_back(new PropertyStringReadOnly(_("object type"), GetTypeString()));
+
+	if (GetShortString())list->push_back(new PropertyObjectTitle(this));
+	if(UsesID())list->push_back(new PropertyInt(this, _("ID"), (int*)(&m_id)));
 	const HeeksColor* c = GetColor();
-	if(c)
-	{
-		list->push_back ( new PropertyColor ( _("color"),  *c, this, on_set_color ) );
-	}
-	list->push_back(new PropertyCheck(_("visible"), m_visible, this, on_set_visible));
-#endif
+	if(c)list->push_back ( new PropertyObjectColor(this) );
+	list->push_back(new PropertyCheck(this, _("visible"), &m_visible));
 }
 
 bool HeeksObj::GetScaleAboutMatrix(double *m)

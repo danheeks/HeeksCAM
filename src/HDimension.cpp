@@ -286,11 +286,6 @@ void HDimension::GetGripperPositions(std::list<GripData> *list, bool just_for_en
 	list->push_back(GripData(GripperTypeStretch, m_p2.X(), m_p2.Y(), m_p2.Z(), &m_p2));
 }
 
-static void on_set_trsf(const gp_Trsf &trsf, HeeksObj* object){
-	((HDimension*)object)->m_trsf = trsf;
-	wxGetApp().Repaint();
-}
-
 static void on_set_mode(int value, HeeksObj* object, bool from_undo_redo)
 {
 	HDimension* dimension = (HDimension*)object;
@@ -314,28 +309,27 @@ static void on_set_scale(double value, HeeksObj* object)
 
 void HDimension::GetProperties(std::list<Property *> *list)
 {
-#if 0 // to do
-	list->push_back(new PropertyTrsf(_("orientation"), m_trsf, this, on_set_trsf));
+	list->push_back(PropertyTrsf(this, _("orientation"), &m_trsf));
 
 	std::list< wxString > choices;
 	choices.push_back(wxString(_("between two points")));
 	choices.push_back(wxString(_("between two points, XY only")));
 	choices.push_back(wxString(_("orthogonal")));
-	list->push_back(new PropertyChoice(_("mode"), choices, m_mode, this, on_set_mode));
+	list->push_back(new PropertyChoice(this, _("mode"), choices, (int*)&m_mode));
 
-	list->push_back(new PropertyDouble(_("scale"), m_scale, this, on_set_scale));
+	list->push_back(new PropertyDouble(this, _("scale"), &m_scale));
 
 	{
 		std::list< wxString > choices;
 		choices.push_back(wxString(_("use view units")));
 		choices.push_back(wxString(_("inches")));
 		choices.push_back(wxString(_("mm")));
-		list->push_back(new PropertyChoice(_("units"), choices, m_units, this, on_set_units));
+		list->push_back(new PropertyChoice(this, _("units"), choices, (int*)&m_units));
 	}
 
 	wxString text = MakeText();
-	list->push_back(new PropertyString(_("dimension value"), text, this, NULL));
-#endif
+	list->push_back(new PropertyStringReadOnly(_("dimension value"), text.c_str()));
+
 	EndedObject::GetProperties(list);
 }
 

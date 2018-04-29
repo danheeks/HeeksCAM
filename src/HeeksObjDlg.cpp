@@ -6,7 +6,6 @@
 #include "HeeksObjDlg.h"
 #include "PictureFrame.h"
 #include "NiceTextCtrl.h"
-#include <CTool.h>
 
 BEGIN_EVENT_TABLE(HeeksObjDlg, HDialog)
     EVT_CHILD_FOCUS(HeeksObjDlg::OnChildFocus)
@@ -174,7 +173,6 @@ wxArrayString HTypeObjectDropDown::GetObjectArrayString(int object_type, HeeksOb
 		if (ob->GetIDGroupType() != object_type) continue;
 
 		int number = ob->GetID();
-		if (object_type == ToolType)number = ((CTool*)ob)->m_tool_number;
 
 		ids_for_combo.push_back(std::make_pair(number, ob->GetShortString()));
 		str_array.Add(ob->GetShortString());

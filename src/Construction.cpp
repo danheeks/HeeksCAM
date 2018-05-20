@@ -18,7 +18,7 @@ namespace geoff_geometry {
 	double RESOLUTION = 1.0e-06;
 
 	// dummy functions
-	const wchar_t* getMessage(const wchar_t* original, int messageGroup, int stringID){return original;}
+	const wchar_t* getMessage(const wchar_t* original, int /*messageGroup*/, int /*stringID*/){return original;}
 	const wchar_t* getMessage(const wchar_t* original){return original;}
 	void FAILURE(const wchar_t* str){throw(str);}
 	void FAILURE(const std::wstring& str){throw(str);}
@@ -358,7 +358,7 @@ namespace geoff_geometry {
 	// circle methods
 	// ***************************************************************************************************************************************
 
-	Circle::Circle(const Point& p, double rad, bool okay){
+	Circle::Circle(const Point& p, double rad, bool /*okay*/){
 		// Circle
 		pc = p;
 		radius = rad;
@@ -786,7 +786,8 @@ namespace geoff_geometry {
 	Plane::Plane(double dist, const Vector3d& n) {
 		normal = n;
 		double mag = normal.normalise();
-		if((ok = (normal != NULL_VECTOR))) d = dist / mag;
+		ok = (normal != NULL_VECTOR);
+		if(ok) d = dist / mag;
 	}
 
 	double Plane::Dist(const Point3d& p)const{

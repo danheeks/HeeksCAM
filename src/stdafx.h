@@ -45,7 +45,7 @@
 #include "windows.h"
 #endif
 
-#include <wx/wx.h>
+
 #if wxUSE_UNICODE
 	#ifndef _UNICODE
 		#define _UNICODE
@@ -212,6 +212,7 @@
 #endif
 #endif
 
+#include <wx/wx.h>
 #include <wx/aui/aui.h>
 #include "wx/brush.h"
 #include "wx/button.h"

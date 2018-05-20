@@ -42,13 +42,24 @@
 #include "HSpline.h"
 #include "Sketch.h"
 #include "tinyxml.h"
+#include "Area.h"
+#include "ConversionTools.h"
+#include "HArea.h" // remove this
 
 #include <GeomConvert_CompCurveToBSplineCurve.hxx>
 
 #include <sstream>
 
-CSvgRead::CSvgRead()
+CSvgRead::CSvgRead(const wxChar* filepath, bool usehspline, bool unite)
 {
+	m_fail = false;
+	m_stroke_width = 0.0;
+	m_fill_opacity = 0.0;
+	m_current_area = NULL;
+	m_usehspline = usehspline;
+	m_unite = unite;
+	m_sketch = 0;
+	Read(filepath);
 }
 
 void CSvgRead::Read(const wxChar* filepath)
@@ -93,6 +104,24 @@ void CSvgRead::Read(const wxChar* filepath)
 		ReadSVGElement(pElem);
 	}
 
+	// add the sketches
+	if (wxGetApp().m_svg_unite)
+	{
+		std::list<HeeksObj*> objects_to_delete;
+		CArea area;
+		ConvertToArea::ObjectsToArea(m_sketches_to_add, objects_to_delete, area);
+
+		area.Reorder(); // unite outsides which overlap and remove insides
+
+		CSketch* new_object = MakeNewSketchFromArea(area);
+		wxGetApp().AddUndoably(new_object, NULL, NULL);
+		wxGetApp().DeleteUndoably(objects_to_delete);
+	}
+	else
+	{
+		wxGetApp().AddUndoably(m_sketches_to_add, NULL);
+	}
+
 }
 
 CSvgRead::~CSvgRead()
@@ -109,6 +138,85 @@ std::string CSvgRead::RemoveCommas(std::string input)
 	return input;
 }
 
+void CSvgRead::ProcessArea()
+{
+	// convert the current area into output lines and arcs
+	for (std::list<CCurve>::iterator It = m_current_area->m_curves.begin(); It != m_current_area->m_curves.end(); It++)
+	{
+		CCurve& curve = *It;
+		std::list<Span> spans;
+		curve.GetSpans(spans);
+		for (std::list<Span>::iterator It2 = spans.begin(); It2 != spans.end(); It2++)
+		{
+			Span& span = *It2;
+			if (span.m_v.m_type == 0)
+			{
+				HLine *line = new HLine(gp_Pnt(span.m_p.x, span.m_p.y, 0.0), gp_Pnt(span.m_v.m_p.x, span.m_v.m_p.y, 0.0), &wxGetApp().current_color);
+				ModifyByMatrix(line);
+				AddSketchIfNeeded();
+				m_sketch->Add(line, NULL);
+			}
+			else
+			{
+				// add an arc
+				HArc *arc = new HArc(gp_Pnt(span.m_p.x, span.m_p.y, 0.0), gp_Pnt(span.m_v.m_p.x, span.m_v.m_p.y, 0.0), gp_Circ(gp_Ax2(gp_Pnt(span.m_v.m_c.x, span.m_v.m_c.y, 0.0), gp_Dir(0.0, 0.0, (span.m_v.m_type > 0)?1.0: -1.0)), span.m_p.dist(span.m_v.m_c)), &wxGetApp().current_color);
+				ModifyByMatrix(arc);
+				AddSketchIfNeeded();
+				m_sketch->Add(arc, NULL);
+			}
+		}
+	}
+}
+
+void CSvgRead::ReadStyle(TiXmlAttribute* a)
+{
+	const char* s = a->Value();
+	unsigned int len = strlen(s);
+	std::string name, value;
+	bool reading_name = true;
+	for (unsigned int i = 0; i < len; i++)
+	{
+		if (s[i] == ':')reading_name = false;
+		else if (s[i] == ';')
+		{
+			if (name == "stroke-width")sscanf(value.c_str(), "%lf", &m_stroke_width);
+			else if (name == "fill-opacity")sscanf(value.c_str(), "%lf", &m_fill_opacity);
+			reading_name = true;
+			name = "";
+			value = "";
+		}
+		else if (s[i] != ' ')
+		{
+			if (reading_name)name += s[i];
+			else value += s[i];
+		}
+	}
+//fill:#840000; fill - opacity:0.0;  stroke:#840000; stroke - width:629.921; stroke - opacity:1;  stroke - linecap:round; stroke - linejoin:round;
+}
+
+void CSvgRead::ReadG(TiXmlElement* pElem)
+{
+	m_current_area = new CArea;
+	m_sketch = NULL; // start a new sketch
+
+	// get the attributes
+	for (TiXmlAttribute* a = pElem->FirstAttribute(); a; a = a->Next())
+	{
+		std::string name(a->Name());
+		if (name == "style")ReadStyle(a);
+	}
+
+	// loop through all the child elements, looking for path
+	for (pElem = TiXmlHandle(pElem).FirstChildElement().Element(); pElem; pElem = pElem->NextSiblingElement())
+	{
+		ReadSVGElement(pElem);
+	}
+
+	ProcessArea();
+	delete m_current_area;
+	m_current_area = NULL;
+}
+
 void CSvgRead::ReadSVGElement(TiXmlElement* pElem)
 {
 	std::string name(pElem->Value());
@@ -118,11 +226,7 @@ void CSvgRead::ReadSVGElement(TiXmlElement* pElem)
 
 	if(name == "g")
 	{
-		// loop through all the child elements, looking for path
-		for(pElem = TiXmlHandle(pElem).FirstChildElement().Element(); pElem; pElem = pElem->NextSiblingElement())
-		{
-			ReadSVGElement(pElem);
-		}
+		ReadG(pElem);
 	}
 
 	if(name == "path")
@@ -760,27 +864,18 @@ void CSvgRead::ReadPath(TiXmlElement* pElem)
 	}
 }
 
-HeeksSvgRead::HeeksSvgRead(const wxChar* filepath, bool usehspline)
-{
-	m_usehspline=usehspline;
-	m_sketch = 0;
-	Read(filepath);
-}
-
-void HeeksSvgRead::ModifyByMatrix(HeeksObj* object)
+void CSvgRead::ModifyByMatrix(HeeksObj* object)
 {
 	double m[16];
 	extract(m_transform,m);
 	object->ModifyByMatrix(m);
 }
 
-void HeeksSvgRead::OnReadStart()
+void CSvgRead::OnReadStart()
 {
-		m_sketch = new CSketch();
-		wxGetApp().AddUndoably(m_sketch, NULL, NULL);
 }
 
-void HeeksSvgRead::OnReadCubic(gp_Pnt s, gp_Pnt c1, gp_Pnt c2, gp_Pnt e)
+void CSvgRead::OnReadCubic(gp_Pnt s, gp_Pnt c1, gp_Pnt c2, gp_Pnt e)
 {
 	TColgp_Array1OfPnt poles(1,4);
 	poles.SetValue(1,s); poles.SetValue(2,c1); poles.SetValue(3,c2); poles.SetValue(4,e);
@@ -798,13 +893,13 @@ void HeeksSvgRead::OnReadCubic(gp_Pnt s, gp_Pnt c1, gp_Pnt c2, gp_Pnt e)
 	HSpline* new_object = new HSpline(spline, &wxGetApp().current_color);
 	ModifyByMatrix(new_object);
 	AddSketchIfNeeded();
-	wxGetApp().AddUndoably(new_object, m_sketch, NULL);
+	m_sketch->Add(new_object, NULL);
 }
 
-void HeeksSvgRead::OnReadQuadratic(gp_Pnt s, gp_Pnt c, gp_Pnt e)
+void CSvgRead::OnReadQuadratic(gp_Pnt s, gp_Pnt c, gp_Pnt e)
 {
-	TColgp_Array1OfPnt poles(1,3);
-	poles.SetValue(1,s); poles.SetValue(2,c); poles.SetValue(3,e);
+	TColgp_Array1OfPnt poles(1, 3);
+	poles.SetValue(1, s); poles.SetValue(2, c); poles.SetValue(3, e);
 #ifdef _DEBUG
 #undef new
 #endif
@@ -815,21 +910,36 @@ void HeeksSvgRead::OnReadQuadratic(gp_Pnt s, gp_Pnt c, gp_Pnt e)
 	GeomConvert_CompCurveToBSplineCurve convert(curve);
 
 	Handle_Geom_BSplineCurve spline = convert.BSplineCurve();
-//	Geom_BSplineCurve pspline = *((Geom_BSplineCurve*)spline.Access());
+	//	Geom_BSplineCurve pspline = *((Geom_BSplineCurve*)spline.Access());
 	HSpline* new_object = new HSpline(spline, &wxGetApp().current_color);
 	ModifyByMatrix(new_object);
 	AddSketchIfNeeded();
-	wxGetApp().AddUndoably(new_object, m_sketch, NULL);}
-
-void HeeksSvgRead::OnReadLine(gp_Pnt p1, gp_Pnt p2)
-{
-	HLine *line = new HLine(p1,p2,&wxGetApp().current_color);
-	ModifyByMatrix(line);
-	AddSketchIfNeeded();
-	m_sketch->Add(line, NULL);
+	m_sketch->Add(new_object, NULL);
 }
 
-void HeeksSvgRead::OnReadEllipse(gp_Pnt c, double maj_r, double min_r, double rot, double start, double end)
+void CSvgRead::OnReadLine(gp_Pnt p1, gp_Pnt p2)
+{
+	if (m_current_area != NULL && m_stroke_width > 0.00001)
+	{
+		// add an obround to the current area
+		CCurve curve;
+		curve.append(CVertex(Point(p1.X(), p1.Y())));
+		curve.append(CVertex(Point(p2.X(), p2.Y())));
+		CArea area;
+		area.append(curve);
+		area.Thicken(m_stroke_width * 0.5);
+		m_current_area->Union(area);
+	}
+	else
+	{
+		HLine *line = new HLine(p1, p2, &wxGetApp().current_color);
+		ModifyByMatrix(line);
+		AddSketchIfNeeded();
+		m_sketch->Add(line, NULL);
+	}
+}
+
+void CSvgRead::OnReadEllipse(gp_Pnt c, double maj_r, double min_r, double rot, double start, double end)
 {
 	gp_Dir up(0,0,1);
 	gp_Elips elip(gp_Ax2(c,gp_Dir(0,0,1)),maj_r,min_r);
@@ -837,24 +947,24 @@ void HeeksSvgRead::OnReadEllipse(gp_Pnt c, double maj_r, double min_r, double ro
 	HEllipse *new_object = new HEllipse(elip,start,end,&wxGetApp().current_color);
 	ModifyByMatrix(new_object);
 	AddSketchIfNeeded();
-	wxGetApp().AddUndoably(new_object, m_sketch, NULL);
+	m_sketch->Add(new_object, NULL);
 }
 
-void HeeksSvgRead::OnReadCircle(gp_Pnt c, double r)
+void CSvgRead::OnReadCircle(gp_Pnt c, double r)
 {
 	gp_Dir up(0,0,1);
 	gp_Circ cir(gp_Ax2(c,up),r);
 	HCircle *new_object = new HCircle(cir,&wxGetApp().current_color);
 	ModifyByMatrix(new_object);
 	AddSketchIfNeeded();
-	wxGetApp().AddUndoably(new_object, m_sketch, NULL);
+	m_sketch->Add(new_object, NULL);
 }
 
-void HeeksSvgRead::AddSketchIfNeeded()
+void CSvgRead::AddSketchIfNeeded()
 {
 	if(m_sketch == NULL)
 	{
 		m_sketch = new CSketch();
-		wxGetApp().AddUndoably(m_sketch, NULL, NULL);
+		m_sketches_to_add.push_back(m_sketch);
 	}
 }

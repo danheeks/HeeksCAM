@@ -957,19 +957,25 @@ static void AddObjectToArea(HeeksObj* object)
 	}
 }
 
+void ConvertToArea::ObjectsToArea(const std::list<HeeksObj*> &objects, std::list<HeeksObj*> objects_to_delete, CArea& area)
+{
+	area_to_add_to = &area;
+	curve_to_add_to = NULL;
+
+	for (std::list<HeeksObj*>::const_iterator It = objects.begin(); It != objects.end(); It++){
+		HeeksObj* object = *It;
+		AddObjectToArea(object);
+		objects_to_delete.push_back(object);
+	}
+}
+
 void ConvertToArea::Run(){
 	std::list<HeeksObj*> copy_of_marked_list = wxGetApp().m_marked_list->list();
 	std::list<HeeksObj*> objects_to_delete;
 
 	CArea area;
-	area_to_add_to = &area;
-	curve_to_add_to = NULL;
 
-	for(std::list<HeeksObj*>::const_iterator It = copy_of_marked_list.begin(); It != copy_of_marked_list.end(); It++){
-		HeeksObj* object = *It;
-		AddObjectToArea(object);
-		objects_to_delete.push_back(object);
-	}
+	ObjectsToArea(copy_of_marked_list, objects_to_delete, area);
 
 	HArea* new_object = new HArea(area);
 	wxGetApp().AddUndoably(new_object, NULL, NULL);

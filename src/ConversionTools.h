@@ -43,6 +43,7 @@ public:
 	void Run();
 	const wxChar* GetTitle(){return _("Convert to Area");}
 	wxString BitmapPath(){return _T("area");}
+	static void ObjectsToArea(const std::list<HeeksObj*> &objects, std::list<HeeksObj*> objects_to_delete, CArea& area);
 };
 
 class AreaUnion: public Tool

@@ -99,6 +99,7 @@
 #include "NCCode.h"
 #include "strconv.h"
 #include "Picking.h"
+#include "PythonInterface.h"
 
 #include <sstream>
 
@@ -223,6 +224,7 @@ HeeksCADapp::HeeksCADapp(): ObjList()
 	m_no_creation_mode = false;
 	m_stl_solid_random_colors = false;
 	m_iges_sewing_tolerance = 0.001;
+	m_svg_unite = false;
 
 #ifndef WIN32
 	m_font_paths = _T("/usr/share/qcad/fonts");
@@ -437,6 +439,7 @@ bool HeeksCADapp::OnInit()
 	config.Read(_T("SketchReorderTolerance"), &m_sketch_reorder_tol, 0.01);
 	config.Read(_T("StlSolidRandomColors"), &m_stl_solid_random_colors, false);
 	config.Read(_T("IgesSewingTolerance"), &m_iges_sewing_tolerance, 0.001);
+	config.Read(_T("SvgUnite"), &m_svg_unite, true);
 	
 	HDimension::ReadFromConfig(config);
 
@@ -619,7 +622,8 @@ void HeeksCADapp::WriteConfig()
 	config.Write(_T("StlSolidRandomColors"), m_stl_solid_random_colors);
 
 	config.Write(_T("IgesSewingTolerance"), m_iges_sewing_tolerance);
-
+	config.Write(_T("SvgUnite"), m_svg_unite);
+	
 	HDimension::WriteToConfig(config);
 
 	m_ruler->WriteToConfig(config);
@@ -855,6 +859,8 @@ static HeeksObj* ReadSTEPFileFromXMLElement(TiXmlElement* pElem)
 	return NULL;
 }
 
+HeeksObj* ReadPyObjectFromXMLElement(TiXmlElement* pElem){ return NULL; } // dummy function
+
 void HeeksCADapp::InitializeXMLFunctions()
 {
 	// set up function map
@@ -877,7 +883,7 @@ void HeeksCADapp::InitializeXMLFunctions()
 		xml_read_fn_map.insert( std::pair< std::string, HeeksObj*(*)(TiXmlElement* pElem) > ( "Group", CGroup::ReadFromXMLElement ) );
 		xml_read_fn_map.insert( std::pair< std::string, HeeksObj*(*)(TiXmlElement* pElem) > ( "OrientationModifier", COrientationModifier::ReadFromXMLElement ) );
 		xml_read_fn_map.insert( std::pair< std::string, HeeksObj*(*)(TiXmlElement* pElem) > ( "Gear", HGear::ReadFromXMLElement ) );
-		xml_read_fn_map.insert( std::pair< std::string, HeeksObj*(*)(TiXmlElement* pElem) > ( "Area", HArea::ReadFromXMLElement ) );
+		xml_read_fn_map.insert(std::pair< std::string, HeeksObj*(*)(TiXmlElement* pElem) >("Area", HArea::ReadFromXMLElement));
 	}
 }
 
@@ -898,7 +904,15 @@ HeeksObj* HeeksCADapp::ReadXMLElement(TiXmlElement* pElem)
 	HeeksObj* object = NULL;
 	if(FindIt != xml_read_fn_map.end())
 	{
-		object = (*(FindIt->second))(pElem);
+		HeeksObj*(*callback)(TiXmlElement* pElem) = FindIt->second;
+		if (callback == ReadPyObjectFromXMLElement)
+		{
+			object = ReadPyObjectFromXMLElementWithName(name, pElem);
+		}
+		else
+		{
+			object = (*(callback))(pElem);
+		}
 	}
 	else
 	{
@@ -1054,7 +1068,7 @@ void HeeksCADapp::OpenXMLFile(const wxChar *filepath, HeeksObj* paste_into, Heek
 	char oldlocale[1000];
 	strcpy(oldlocale, setlocale(LC_NUMERIC, "C"));
 
-	HeeksSvgRead svgread(filepath,true);
+	CSvgRead svgread(filepath, true, wxGetApp().m_svg_unite);
 	setlocale(LC_NUMERIC, oldlocale);
 }
 
@@ -3295,6 +3309,10 @@ void HeeksCADapp::GetOptions(std::list<Property *> *list)
 	PropertyList* iges_options = new PropertyList(_("IGES"));
 	iges_options->m_list.push_back(new PropertyLengthWithConfig(NULL, _("face sewing tolerance"), &m_iges_sewing_tolerance, _T("IgesSewingTolerance")));
 	file_options->m_list.push_back(iges_options);
+
+	PropertyList* svg_options = new PropertyList(_("SVG"));
+	svg_options->m_list.push_back(new PropertyCheckWithConfig(NULL, _("unite areas into one sketch"), &m_svg_unite, _T("SvgUnite")));
+	file_options->m_list.push_back(svg_options);
 
 	file_options->m_list.push_back(new PropertyAutoSaveInterval());
 	list->push_back(file_options);

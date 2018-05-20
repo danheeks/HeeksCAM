@@ -199,4 +199,5 @@ public:
 	virtual void OnChangeViewUnits(const double units){}
 	virtual void WriteDefaultValues(){}
 	virtual void ReadDefaultValues(){}
+	virtual bool NeverDelete(){ return false; }
 };

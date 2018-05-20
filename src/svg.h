@@ -8,14 +8,25 @@ struct TwoPoints
 	gp_Pnt pcpnt;
 };
 
+class CArea;
+
 // derive a class from this and implement it's virtual functions
 class CSvgRead{
 private:
 	std::list<gp_Trsf> m_transform_stack;
 	bool m_fail;
+	double m_stroke_width;
+	double m_fill_opacity;
+	CArea* m_current_area;
+	bool m_usehspline;
+	std::list<HeeksObj*> m_sketches_to_add;
+	CSketch* m_sketch;
+	bool m_unite;
 
 	std::string RemoveCommas(std::string input);
 	void ReadSVGElement(TiXmlElement* pElem);
+	void ReadStyle(TiXmlAttribute* a);
+	void ReadG(TiXmlElement* pElem);
 	void ReadTransform(TiXmlElement* pElem);
 	void ReadPath(TiXmlElement* pElem);
 	void ReadRect(TiXmlElement* pElem);
@@ -34,31 +45,14 @@ private:
 	struct TwoPoints ReadQuadratic(const char *text,gp_Pnt ppnt,gp_Pnt pcpnt,bool isupper);
 	gp_Pnt ReadEllipse(const char *text,gp_Pnt ppnt,bool isupper);
 	int JumpValues(const char *text, int number);
+	void ProcessArea();
 public:
-	CSvgRead(); // this opens the file
+	CSvgRead(const wxChar* filepath, bool usehspline, bool unite); // this opens the file
 	~CSvgRead(); // this closes the file
 
 	gp_Trsf m_transform;
 
 	void Read(const wxChar* filepath);
-
-	virtual void OnReadStart(){}
-	virtual void OnReadLine(gp_Pnt p1, gp_Pnt p2){}
-	virtual void OnReadCubic(gp_Pnt s, gp_Pnt c1, gp_Pnt c2, gp_Pnt e){}
-	virtual void OnReadQuadratic(gp_Pnt s, gp_Pnt c, gp_Pnt e){}
-	virtual void OnReadEllipse(gp_Pnt c, double maj_r, double min_r, double rot, double start, double end){}
-	virtual void OnReadCircle(gp_Pnt c, double r){}
-
-	bool Failed(){return m_fail;}
-};
-
-class CSketch;
-
-class HeeksSvgRead : public CSvgRead{
-	bool m_usehspline;
-	CSketch* m_sketch;
-public:
-	HeeksSvgRead(const wxChar* filepath, bool usehspline);
 
 	void AddSketchIfNeeded();
 	void ModifyByMatrix(HeeksObj* object);
@@ -68,4 +62,8 @@ public:
 	void OnReadQuadratic(gp_Pnt s, gp_Pnt c, gp_Pnt e);
 	void OnReadEllipse(gp_Pnt c, double maj_r, double min_r, double rot, double start, double end);
 	void OnReadCircle(gp_Pnt c, double r);
+
+	bool Failed(){return m_fail;}
 };
+
+class CSketch;

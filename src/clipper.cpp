@@ -2734,7 +2734,7 @@ void Clipper::DisposeIntersectNodes()
 }
 //------------------------------------------------------------------------------
 
-void Clipper::BuildIntersectList(const cInt botY, const cInt topY)
+void Clipper::BuildIntersectList(const cInt /*botY*/, const cInt topY)
 {
   if ( !m_ActiveEdges ) return;
 

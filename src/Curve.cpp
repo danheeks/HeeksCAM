@@ -678,11 +678,6 @@ static geoff_geometry::Span MakeSpan(const Span& span)
 	return geoff_geometry::Span(span.m_v.m_type, geoff_geometry::Point(span.m_p.x, span.m_p.y), geoff_geometry::Point(span.m_v.m_p.x, span.m_v.m_p.y), geoff_geometry::Point(span.m_v.m_c.x, span.m_v.m_c.y));
 }
 
-static Span MakeCSpan(const geoff_geometry::Span &sp)
-{
-	return Span(Point(sp.p0.x, sp.p0.y), CVertex(sp.dir, Point(sp.p1.x, sp.p1.y), Point(sp.pc.x, sp.pc.y)));
-}
-
 bool CCurve::Offset(double leftwards_value)
 {
 	// use the kurve code donated by Geoff Hawkesford, to offset the curve as an open curve

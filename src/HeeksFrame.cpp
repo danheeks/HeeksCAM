@@ -1071,7 +1071,7 @@ void CHeeksFrame::OnRecentFile( wxCommandEvent& event )
 	for(std::list< wxString >::iterator It = wxGetApp().m_recent_files.begin(); It != wxGetApp().m_recent_files.end() && recent_id < ID_RECENT_FIRST + MAX_RECENT_FILES; It++, recent_id++)
 	{
 		if(recent_id != id)continue;
-		wxString& filepath = *It;
+		wxString filepath = *It;
 
 		int res = wxGetApp().CheckForModifiedDoc();
 		if(res != wxCANCEL)

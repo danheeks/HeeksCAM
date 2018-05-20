@@ -799,7 +799,7 @@ bool CNCCode::CanAdd(HeeksObj* object)
 
 bool CNCCode::CanAddTo(HeeksObj* owner)
 {
-	return ((owner != NULL) && (owner->GetType() == ProgramType));
+	return ((owner != NULL) && (owner->GetType() == DocumentType));
 }
 
 void CNCCode::SetClickMarkPoint(MarkedObject* marked_object, const double* ray_start, const double* ray_direction)

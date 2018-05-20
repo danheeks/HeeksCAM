@@ -17,6 +17,7 @@
 #include "HArc.h"
 #include "StlSolid.h"
 #include "Property.h"
+#include "HXml.h"
 #include <set>
 
 #ifdef _DEBUG
@@ -393,6 +394,14 @@ void StlSolidWriteSTL(CStlSolid& solid, double tolerance, std::wstring filepath)
 	wxGetApp().SaveSTLFileAscii(list, filepath.c_str(), tolerance);
 }
 
+std::string ElementGetValue(TiXmlElement* pElem, const std::string& name)
+{
+	const char* value = pElem->Attribute(name.c_str());
+	if (value == NULL)
+		return "";
+	return value;
+}
+
 int HeeksTypeToObjectType(long type)
 {
 	switch (type)
@@ -410,6 +419,25 @@ int HeeksTypeToObjectType(long type)
 		return OBJECT_TYPE_SKETCH;
 	default:
 		return OBJECT_TYPE_UNKNOWN;
+	}
+}
+
+int ObjectTypeToHeeksType(long type)
+{
+	switch (type)
+	{
+	case OBJECT_TYPE_EDGE:
+		return EdgeType;
+	case OBJECT_TYPE_FACE:
+		return FaceType;
+	case OBJECT_TYPE_VERTEX:
+		return VertexType;
+	case OBJECT_TYPE_SOLID:
+		return SolidType;
+	case OBJECT_TYPE_SKETCH:
+		return SketchType;
+	default:
+		return UnknownType;
 	}
 }
 
@@ -451,7 +479,7 @@ boost::python::list GetObjects() {
 	boost::python::list olist;
 	for (HeeksObj *object = wxGetApp().GetFirstChild(); object; object = wxGetApp().GetNextChild())
 	{
-		olist.append(boost::python::pointer_wrapper<HeeksObj*>(object));
+		//olist.append(boost::python::pointer_wrapper<HeeksObj*>(object));
 		AddObjectToPythonList(object, olist);
 	}
 	return olist;
@@ -553,6 +581,11 @@ void PyIncRef(PyObject* object)
 	Py_INCREF(object);
 }
 
+void PyDecRef(PyObject* object)
+{
+	Py_DECREF(object);
+}
+
 HeeksObj* NewPoint(double x, double y, double z)
 {
 	HeeksObj* new_object = new HPoint(gp_Pnt(x, y, z), &wxGetApp().current_color);
@@ -582,7 +615,7 @@ class HBitmap : public wxBitmap
 public:
 	HBitmap() :wxBitmap(0, 0){}
 	HBitmap(const wxBitmap& b) :wxBitmap(b){}
-	HBitmap(const std::wstring &str) :wxBitmap(wxImage(wxGetApp().GetResFolder() + str.c_str())){}
+	HBitmap(const std::wstring &str) :wxBitmap(wxImage(str.c_str())){}
 };
 
 std::wstring str_for_base_object;
@@ -630,12 +663,14 @@ bp::detail::method_result Call_Override(bp::override &f)
 	PyLockGIL lock;
 	try
 	{
-		return f();
+		bp::detail::method_result result = f();
+		AfterPythonCall(main_module);
+		return result;
 	}
 	catch (const bp::error_already_set&)
 	{
-		AfterPythonCall(main_module);
 	}
+	AfterPythonCall(main_module);
 }
 
 
@@ -652,9 +687,8 @@ bp::detail::method_result Call_Override(bp::override &f, int value)
 	}
 	catch (const bp::error_already_set&)
 	{
-		AfterPythonCall(main_module);
 	}
-
+	AfterPythonCall(main_module);
 }
 
 
@@ -671,13 +705,10 @@ bp::detail::method_result Call_Override(bp::override &f, double value)
 	}
 	catch (const bp::error_already_set&)
 	{
-		AfterPythonCall(main_module);
 	}
+	AfterPythonCall(main_module);
 
 }
-
-
-
 
 class BaseObject : public HeeksObj, public bp::wrapper<HeeksObj>
 {
@@ -685,7 +716,9 @@ public:
 	bool m_uses_display_list;
 	int m_display_list;
 
-	BaseObject() :HeeksObj(), m_uses_display_list(false), m_display_list(0){}
+	BaseObject() :HeeksObj(), m_uses_display_list(false), m_display_list(0){
+	}
+	bool NeverDelete(){ return true; }
 	int GetType()const override
 	{
 		if (bp::override f = this->get_override("GetType"))
@@ -738,9 +771,18 @@ public:
 		return HeeksObj::GetColor();
 	}
 
+	void SetColor(const HeeksColor &col) override
+	{
+		if (bp::override f = this->get_override("SetColor"))
+		{
+			f(col);
+		}
+	}
+
 	static bool in_glCommands;
 	static bool triangles_begun;
 	static bool lines_begun;
+	static TiXmlElement* m_cur_element;
 
 	void glCommands(bool select, bool marked, bool no_color) override
 	{
@@ -808,6 +850,7 @@ public:
 			property_list = list;
 			Property* p = Call_Override(f);
 		}
+		HeeksObj::GetProperties(list);
 	}
 
 	void GetBox(CBox &box) override
@@ -841,12 +884,47 @@ public:
 			m_display_list = 0;
 		}
 	}
+
+	void WriteXML(TiXmlNode *root)override
+	{
+		BaseObject::m_cur_element = new TiXmlElement(Ttc(this->GetTypeString()));
+		root->LinkEndChild(BaseObject::m_cur_element);
+
+		if (bp::override f = this->get_override("WriteXML"))
+		{
+			Call_Override(f);
+		}
+		WriteBaseXML(BaseObject::m_cur_element);
+	}
+
+	static HeeksObj* ReadFromXMLElement(TiXmlElement* pElem)
+	{
+		gp_Pnt p;
+		HeeksColor c;
+
+		// get the attributes
+		for (TiXmlAttribute* a = pElem->FirstAttribute(); a; a = a->Next())
+		{
+			std::string name(a->Name());
+			if (name == "col"){ c = HeeksColor((long)(a->IntValue())); }
+			else if (name == "x"){ p.SetX(a->DoubleValue()); }
+			else if (name == "y"){ p.SetY(a->DoubleValue()); }
+			else if (name == "z"){ p.SetZ(a->DoubleValue()); }
+		}
+
+		HPoint* new_object = new HPoint(p, &c);
+		new_object->ReadBaseXML(pElem);
+
+		return new_object;
+	}
 };
+
 
 // static definitions
 bool BaseObject::in_glCommands = false;
 bool BaseObject::triangles_begun = false;
 bool BaseObject::lines_begun = false;
+TiXmlElement* BaseObject::m_cur_element = NULL;
 
 
 int BaseObjectGetType(const HeeksObj& object)
@@ -939,6 +1017,133 @@ void AddProperty(Property* property)
 	property_list->push_back(property);
 }
 
+class PyProperty : public Property
+{
+	PyObject* m_py_object;
+public:
+	PyProperty(const std::wstring& title, PyObject* py_object, HeeksObj* object) :Property(object, title.c_str()), m_py_object(py_object){}
+	int get_property_type(){
+		if (PyObject_TypeCheck(m_py_object, &PyLong_Type))return IntPropertyType;
+		return InvalidPropertyType;
+	}
+	void Set(int value)
+	{
+		PyObject* o = PyLong_FromLong(value);
+		//bp::object mo(m_py_object);
+		//bp::object oo(o);
+		//mo = oo;
+		
+		int v = PyLong_AsLong(m_py_object);
+		if (PyErr_Occurred())
+			MessageBoxPythonError();
+		int a = v;
+	}
+	int GetInt()const
+	{
+		int value = PyLong_AsLong(m_py_object);
+		return value;
+	}
+};
+
+void AddPyProperty(const std::wstring& title, PyObject* py_object, HeeksObj* object)
+{
+	property_list->push_back(new PyProperty(title, py_object, object));
+}
+
+std::wstring GetFileFullPath()
+{
+	const wxChar* fp = wxGetApp().GetFileFullPath();
+	if (fp)return (fp);
+	else return _T("");
+}
+
+bp::object GetObjectFromId(int type, int id) {
+	// to do
+	// this returns a list with the object in, because that works
+	// but it should just return an object
+	boost::python::list olist;
+	HeeksObj* object = wxGetApp().GetIDObject(ObjectTypeToHeeksType(type), id);
+	if (object != NULL)
+	{
+		AddObjectToPythonList(object, olist);
+		if (bp::len(olist) > 0)
+		{
+			return olist[0];
+		}
+	}
+
+	return boost::python::object(); // None
+}
+
+static std::map<std::string, PyObject*> xml_read_callbacks;
+
+HeeksObj* ReadPyObjectFromXMLElement(TiXmlElement* pElem);
+
+HeeksObj* ReadPyObjectFromXMLElementWithName(const std::string& name, TiXmlElement* pElem)
+{
+	std::map< std::string, PyObject* >::iterator FindIt = xml_read_callbacks.find(name);
+	HeeksObj* object = NULL;
+	if (FindIt != xml_read_callbacks.end())
+	{
+		PyObject* python_callback = FindIt->second;
+
+		BaseObject::m_cur_element = pElem;
+
+		//PyObject *main_module, *globals;
+		BeforePythonCall(&main_module, &globals);
+
+		// Execute the python function
+		PyObject* result = PyObject_CallFunction(python_callback, 0);
+		if (result)
+		{
+			object = bp::extract<HeeksObj*>(result);
+			object->ReadBaseXML(pElem);
+		}
+
+		AfterPythonCall(main_module);
+	}
+	else
+	{
+		object = HXml::ReadFromXMLElement(pElem);
+	}
+
+	return object;
+}
+
+void RegisterXMLRead(std::wstring name, PyObject *callback)
+{
+	if (!PyCallable_Check(callback))
+	{
+		PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+		return;
+	}
+
+	const char* name_c = Ttc(name.c_str());
+
+	// add an entry in map from name to 
+	xml_read_callbacks.insert(std::make_pair(name_c, callback));
+
+	// tell HeeksCAD that it's a python object callback by registering it's dummy callback.
+	// HeeksCAD will spot this and call ReadPyObjectFromXMLElementWithName
+	wxGetApp().RegisterReadXMLfunction(name_c, ReadPyObjectFromXMLElement);
+}
+
+void SetXmlValue(const std::wstring &name, const std::wstring &value)
+{
+	std::string svalue(Ttc(value.c_str()));
+	BaseObject::m_cur_element->SetAttribute(Ttc(name.c_str()), svalue.c_str());
+}
+
+std::wstring GetXmlValue(const std::wstring &name)
+{
+	if (BaseObject::m_cur_element != NULL)
+	{
+		const char* value = BaseObject::m_cur_element->Attribute(Ttc(name.c_str()));
+		if (value != NULL)
+			return std::wstring(Ctt(value));
+	}
+	return _T("");
+}
 
 class PropertyWrap : public Property, public bp::wrapper<Property>
 {
@@ -988,9 +1193,11 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::class_<HeeksColor>("Color")
 		.def(bp::init<HeeksColor>())
 		.def(bp::init<unsigned char, unsigned char, unsigned char>())
+		.def(bp::init<long>())
 		.def_readwrite("red", &HeeksColor::red)
 		.def_readwrite("green", &HeeksColor::green)
 		.def_readwrite("blue", &HeeksColor::blue)
+		.def("ref", &HeeksColor::COLORREF_color)
 		;
 
 	bp::class_<PropertyWrap, boost::noncopyable >("Property")
@@ -999,6 +1206,10 @@ BOOST_PYTHON_MODULE(cad) {
 		.def_readwrite("editable", &PropertyWrap::m_editable)
 		.def_readwrite("object", &PropertyWrap::m_object)
 		;
+
+	//bp::class_<PyProperty, bp::bases<Property> >("PyProperty", boost::python::no_init)
+	//	.def(bp::init<const std::wstring&, PyObject*, HeeksObj*>())
+	//	;
 
 	bp::class_<HCircle, bp::bases<HeeksObj> >("Circle")
 		.def(bp::init<HCircle>())
@@ -1025,7 +1236,7 @@ BOOST_PYTHON_MODULE(cad) {
 		.def("Split", &SketchSplit)
 		.def("GetCircleDiameter", &SketchGetCircleDiameter)
 		.def("GetCircleCentre", &SketchGetCircleCentre)
-		.def("WriteDXF", &SketchWriteDXF)
+		.def("WriteDxf", &SketchWriteDXF)
 		;
 
 	bp::class_<CShape, bp::bases<IdNamedObjList>>("Shape")
@@ -1054,6 +1265,7 @@ BOOST_PYTHON_MODULE(cad) {
 		.def(bp::init<HBitmap>())
 		.def(bp::init<std::wstring>())
 		;
+	
 
 	bp::def("AddMenu", AddMenu);///function AddMenu///params str title///adds a menu to the CAD software
 	bp::def("AddMenuItem", AddMenuItem);///function AddMenuItem///params str title, function callback///adds a menu item to the last added menu
@@ -1063,6 +1275,7 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::def("GetObjects", GetObjects);
 	bp::def("AddObject", CadAddObject);
 	bp::def("PyIncRef", PyIncRef);
+	bp::def("PyDecRef", PyDecRef);
 	bp::def("NewPoint", NewPoint, bp::return_value_policy<bp::reference_existing_object>());
 	bp::def("AddHideableWindow", AddHideableWindow, "adds a window to the CAD software");///function AddHideableWindow///params str title///adds a window to the CAD software
 	bp::def("ShowHideableWindow", ShowHideableWindow);
@@ -1074,6 +1287,13 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::def("DrawTriangle", &DrawTriangle);
 	bp::def("DrawLine", &DrawLine);
 	bp::def("AddProperty", AddProperty);
+	bp::def("AddPyProperty", AddPyProperty);
+	bp::def("GetFileFullPath", GetFileFullPath);
+	bp::def("GetObjectFromId", &GetObjectFromId);
+	bp::def("RegisterXMLRead", RegisterXMLRead);
+	bp::def("SetXmlValue", SetXmlValue);
+	bp::def("GetXmlValue", GetXmlValue);
+
 
 
 	bp::scope().attr("OBJECT_TYPE_UNKNOWN") = (int)OBJECT_TYPE_UNKNOWN;

@@ -16,8 +16,9 @@ void ObjList::Clear()
 	std::list<HeeksObj*>::iterator It;
 	for(It=m_objects.begin(); It!=m_objects.end() ;It++)
 	{
+		HeeksObj* object = *It;
 		(*It)->m_owner = NULL;
-		delete *It;
+		if(!object->NeverDelete())delete *It;
 	}
 	m_objects.clear();
 	m_index_list.clear();

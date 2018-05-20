@@ -4,4 +4,5 @@ extern void Message(const char*);
 
 void PythonInit();
 void PythonFinish();
+HeeksObj* ReadPyObjectFromXMLElementWithName(const std::string& name, TiXmlElement* pElem);
 

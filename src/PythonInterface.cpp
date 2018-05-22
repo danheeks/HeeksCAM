@@ -621,10 +621,8 @@ public:
 std::wstring str_for_base_object;
 HBitmap hbitmap_for_base_object;
 HeeksColor color_for_base_object;
-
 std::list<Property *> *property_list = NULL;
-
-
+HeeksObj* object_for_get_properties = NULL;
 
 
 /*
@@ -683,7 +681,9 @@ bp::detail::method_result Call_Override(bp::override &f, int value)
 	PyLockGIL lock;
 	try
 	{
-		return f(value);
+		bp::detail::method_result result = f(value);
+		AfterPythonCall(main_module);
+		return result;
 	}
 	catch (const bp::error_already_set&)
 	{
@@ -691,6 +691,24 @@ bp::detail::method_result Call_Override(bp::override &f, int value)
 	AfterPythonCall(main_module);
 }
 
+bp::detail::method_result Call_Override(bp::override &f, bool value)
+{
+	//PyObject *main_module, *globals;
+	BeforePythonCall(&main_module, &globals);
+
+	// Execute the python function
+	PyLockGIL lock;
+	try
+	{
+		bp::detail::method_result result = f(value);
+		AfterPythonCall(main_module);
+		return result;
+	}
+	catch (const bp::error_already_set&)
+	{
+	}
+	AfterPythonCall(main_module);
+}
 
 bp::detail::method_result Call_Override(bp::override &f, double value)
 {
@@ -701,7 +719,29 @@ bp::detail::method_result Call_Override(bp::override &f, double value)
 	PyLockGIL lock;
 	try
 	{
-		return f(value);
+		bp::detail::method_result result = f(value);
+		AfterPythonCall(main_module);
+		return result;
+	}
+	catch (const bp::error_already_set&)
+	{
+	}
+	AfterPythonCall(main_module);
+
+}
+
+bp::detail::method_result Call_Override(bp::override &f, const std::wstring& value)
+{
+	//PyObject *main_module, *globals;
+	BeforePythonCall(&main_module, &globals);
+
+	// Execute the python function
+	PyLockGIL lock;
+	try
+	{
+		bp::detail::method_result result = f(value);
+		AfterPythonCall(main_module);
+		return result;
 	}
 	catch (const bp::error_already_set&)
 	{
@@ -848,6 +888,7 @@ public:
 		if (bp::override f = this->get_override("GetProperties"))
 		{
 			property_list = list;
+			object_for_get_properties = this;
 			Property* p = Call_Override(f);
 		}
 		HeeksObj::GetProperties(list);
@@ -1017,39 +1058,6 @@ void AddProperty(Property* property)
 	property_list->push_back(property);
 }
 
-class PyProperty : public Property
-{
-	PyObject* m_py_object;
-public:
-	PyProperty(const std::wstring& title, PyObject* py_object, HeeksObj* object) :Property(object, title.c_str()), m_py_object(py_object){}
-	int get_property_type(){
-		if (PyObject_TypeCheck(m_py_object, &PyLong_Type))return IntPropertyType;
-		return InvalidPropertyType;
-	}
-	void Set(int value)
-	{
-		PyObject* o = PyLong_FromLong(value);
-		//bp::object mo(m_py_object);
-		//bp::object oo(o);
-		//mo = oo;
-		
-		int v = PyLong_AsLong(m_py_object);
-		if (PyErr_Occurred())
-			MessageBoxPythonError();
-		int a = v;
-	}
-	int GetInt()const
-	{
-		int value = PyLong_AsLong(m_py_object);
-		return value;
-	}
-};
-
-void AddPyProperty(const std::wstring& title, PyObject* py_object, HeeksObj* object)
-{
-	property_list->push_back(new PyProperty(title, py_object, object));
-}
-
 std::wstring GetFileFullPath()
 {
 	const wxChar* fp = wxGetApp().GetFileFullPath();
@@ -1157,10 +1165,25 @@ public:
 		if (bp::override f = this->get_override("GetInt"))return Call_Override(f);
 		return Property::GetInt();
 	}
+	bool GetBool()const override
+	{
+		if (bp::override f = this->get_override("GetBool"))return Call_Override(f);
+		return Property::GetBool();
+	}
 	double GetDouble()const override
 	{
 		if (bp::override f = this->get_override("GetFloat"))return Call_Override(f);
 		return Property::GetDouble();
+	}
+	const wxChar* GetString()const override
+	{
+		if (bp::override f = this->get_override("GetStr"))return Call_Override(f);
+		return Property::GetString();
+	}
+	void Set(bool value)override
+	{
+		if (bp::override f = this->get_override("SetBool"))Call_Override(f, value);
+
 	}
 	void Set(int value)override
 	{
@@ -1169,6 +1192,10 @@ public:
 	void Set(double value)override
 	{
 		if (bp::override f = this->get_override("SetFloat"))Call_Override(f, value);
+	}
+	void Set(const wxChar* value)override
+	{
+		if (bp::override f = this->get_override("SetStr"))Call_Override(f, value);
 	}
 	Property *MakeACopy(void)const{ return new PropertyWrap(*this); }
 };
@@ -1202,7 +1229,6 @@ BOOST_PYTHON_MODULE(cad) {
 
 	bp::class_<PropertyWrap, boost::noncopyable >("Property")
 		.def(bp::init<int, std::wstring, HeeksObj*>())
-		.def("GetInt", &PropertyWrapGetInt)
 		.def_readwrite("editable", &PropertyWrap::m_editable)
 		.def_readwrite("object", &PropertyWrap::m_object)
 		;
@@ -1287,7 +1313,6 @@ BOOST_PYTHON_MODULE(cad) {
 	bp::def("DrawTriangle", &DrawTriangle);
 	bp::def("DrawLine", &DrawLine);
 	bp::def("AddProperty", AddProperty);
-	bp::def("AddPyProperty", AddPyProperty);
 	bp::def("GetFileFullPath", GetFileFullPath);
 	bp::def("GetObjectFromId", &GetObjectFromId);
 	bp::def("RegisterXMLRead", RegisterXMLRead);

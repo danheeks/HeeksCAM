@@ -747,8 +747,32 @@ bp::detail::method_result Call_Override(bp::override &f, const std::wstring& val
 	{
 	}
 	AfterPythonCall(main_module);
-
 }
+
+
+
+class BaseObjectTool : public Tool
+{
+	std::wstring m_title;
+	PyObject* m_callback;
+public:
+	BaseObjectTool(const std::wstring& title, PyObject *callback):m_title(title), m_callback(callback){}
+	void Run()
+	{
+		//PyObject *main_module, *globals;
+		BeforePythonCall(&main_module, &globals);
+
+		// Execute the python function
+		PyObject* result = PyObject_CallFunction(m_callback, 0);
+
+		AfterPythonCall(main_module);
+	}
+	const wxChar* GetTitle(){ return m_title.c_str(); }
+};
+
+static std::list<BaseObjectTool*> base_object_tools;
+
+
 
 class BaseObject : public HeeksObj, public bp::wrapper<HeeksObj>
 {
@@ -832,7 +856,11 @@ public:
 		if (!select)
 		{
 			glEnable(GL_LIGHTING);
-			if (!no_color)Material(*this->GetColor()).glMaterial(1.0);
+			if (!no_color)
+			{
+				const HeeksColor* c = this->GetColor();
+				if (c)Material(*c).glMaterial(1.0);
+			}
 		}
 
 		bool display_list_started = false;
@@ -957,6 +985,37 @@ public:
 		new_object->ReadBaseXML(pElem);
 
 		return new_object;
+	}
+
+	void GetTools(std::list<Tool*>* t_list, const wxPoint* p)
+	{
+		for (std::list<BaseObjectTool*>::iterator It = base_object_tools.begin(); It != base_object_tools.end(); It++)
+		{
+			BaseObjectTool* tool = *It;
+			delete tool;
+		}
+		base_object_tools.clear();
+		if (bp::override f = this->get_override("GetTools"))
+		{
+			object_for_get_properties = this;
+			Call_Override(f);
+		}
+		for (std::list<BaseObjectTool*>::iterator It = base_object_tools.begin(); It != base_object_tools.end(); It++)
+		{
+			BaseObjectTool* tool = *It;
+			t_list->push_back(tool);
+		}
+	}
+
+	void AddTool(const std::wstring& title, PyObject *callback)
+	{
+		if (!PyCallable_Check(callback))
+		{
+			PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+			return;
+		}
+
+		base_object_tools.push_back(new BaseObjectTool(title, callback));
 	}
 };
 
@@ -1206,6 +1265,13 @@ int PropertyWrapGetInt(PropertyWrap& property)
 	return property.GetInt();
 }
 
+
+
+static boost::shared_ptr<CStlSolid> initStlSolid(const std::wstring& title, const HeeksColor* color)
+{
+	return boost::shared_ptr<CStlSolid>(new CStlSolid(title.c_str(), color));
+}
+
 BOOST_PYTHON_MODULE(cad) {
 	bp::class_<BaseObject, boost::noncopyable >("Object")
 		.def("GetType", &BaseObjectGetType)
@@ -1215,6 +1281,7 @@ BOOST_PYTHON_MODULE(cad) {
 		.def("KillGLLists", &BaseObject::KillGLLists)
 		.def("SetUsesGLList", &BaseObjectSetUsesGLList)
 		.def("GetColor", &BaseObjectGetColor)
+		.def("AddTool", &BaseObject::AddTool)
 		;
 
 	bp::class_<HeeksColor>("Color")
@@ -1276,6 +1343,11 @@ BOOST_PYTHON_MODULE(cad) {
 
 	bp::class_<CStlSolid, bp::bases<HeeksObj>>("StlSolid")
 		.def(bp::init<CStlSolid>())
+
+		.def("__init__", bp::make_constructor(&initStlSolid))
+
+
+		.def(bp::init<const std::wstring&>())// load a stl solid from a filepath
 		.def("WriteSTL", &StlSolidWriteSTL) ///function WriteSTL///params float tolerance, string filepath///writes an STL file for the body to the given tolerance
 		;
 

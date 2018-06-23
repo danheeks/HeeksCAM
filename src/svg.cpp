@@ -198,6 +198,7 @@ void CSvgRead::ReadG(TiXmlElement* pElem)
 {
 	m_current_area = new CArea;
 	m_sketch = NULL; // start a new sketch
+	//CArea::m_fit_arcs = false;
 
 	// get the attributes
 	for (TiXmlAttribute* a = pElem->FirstAttribute(); a; a = a->Next())
@@ -212,6 +213,7 @@ void CSvgRead::ReadG(TiXmlElement* pElem)
 		ReadSVGElement(pElem);
 	}
 
+	//m_current_area->Reorder();
 	ProcessArea();
 	delete m_current_area;
 	m_current_area = NULL;
@@ -928,7 +930,12 @@ void CSvgRead::OnReadLine(gp_Pnt p1, gp_Pnt p2)
 		CArea area;
 		area.append(curve);
 		area.Thicken(m_stroke_width * 0.5);
-		m_current_area->Union(area);
+		//m_current_area->Union(area);
+		for (std::list<CCurve>::iterator It = area.m_curves.begin(); It != area.m_curves.end(); It++)
+		{
+			CCurve& c = *It;
+			m_current_area->append(c);
+		}
 	}
 	else
 	{

@@ -20,25 +20,25 @@ def RenderGrid2(cad, view_point, max_number_across, in_between_spaces, miss_main
     unit_forward = view_point.forwards_vector().Normalized()
     plane_dp = math.fabs(geom.Point3D(0, 0, 1).Transformed(orimat) * unit_forward)
     if plane_dp < 0.3: return
-    plane = OCC.gp.gp_Pln(geom.Point3D(0, 0, 0).Transformed(orimat), OCC.gp.gp_Dir(0, 0, 1).Transformed(orimat))
+    plane = geom.Plane(geom.Point3D(0, 0, 0).Transformed(orimat), geom.Point3D(0, 0, 1).Transformed(orimat))
 
     for i in range(0, 4):
         p1 = view_point.glUnproject(sp[i])
-        sp[i].SetZ(0)
+        sp[i].z = 0.0
         p2 = view_point.glUnproject(sp[i])
-        if p1.Distance(p2) < 0.00000000001: return
+        if p1.Dist(p2) < 0.00000000001: return
 
-        line = make_line_pp(p1, p2);
+        line = geom.Line(p1, p2)
 
-        pnt = intersect_line_plane(line, plane)
+        pnt = line.IntersectPlane(plane)
         if pnt != None:
-            sp[i].SetX((geom.Point3D(pnt.XYZ()) * vx) - (geom.Point3D(datum.XYZ()) * vx))
-            sp[i].SetY((geom.Point3D(pnt.XYZ()) * vy) - (geom.Point3D(datum.XYZ()) * vy))
-            sp[i].SetZ(0)
+            sp[i].x = (pnt * vx) - (datum * vx)
+            sp[i].y = (pnt * vy) - (datum * vy)
+            sp[i].z = 0.0
 
-    b = Box()
+    b = geom.Box3D()
     for i in range(0, 4):
-        b.InsertPoint(sp[i].X(), sp[i].Y(), sp[i].Z())
+        b.InsertPoint(sp[i].x, sp[i].y, sp[i].z)
 
     width = b.Width()
     height = b.Height()
@@ -111,10 +111,10 @@ def RenderGrid2(cad, view_point, max_number_across, in_between_spaces, miss_main
             if math.fabs(  xr - temp ) < 0.1:
                 x += spacing
                 continue
-        temp = geom.Point3D(datum.XYZ() + (vx.XYZ() * x) + (vy.XYZ() * ext2d[1]))
-        glVertex3d(temp.X(), temp.Y(), temp.Z())
-        temp = geom.Point3D(datum.XYZ() + (vx.XYZ() * x) + (vy.XYZ() * ext2d[3]))
-        glVertex3d(temp.X(), temp.Y(), temp.Z())
+        temp = datum + (vx * x) + (vy * ext2d[1])
+        glVertex3d(temp.x, temp.y, temp.z)
+        temp = datum + (vx * x) + (vy * ext2d[3])
+        glVertex3d(temp.x, temp.y, temp.z)
         x += spacing
 
     y = ext2d[1] - extra
@@ -127,10 +127,10 @@ def RenderGrid2(cad, view_point, max_number_across, in_between_spaces, miss_main
             temp = int(temp)
             temp = float(temp)
             if math.fabs(  yr - temp ) < 0.1: y += spacing; continue
-        temp = geom.Point3D(datum.XYZ() + (vx.XYZ() * ext2d[0]) + (vy.XYZ() * y))
-        glVertex3d(temp.X(), temp.Y(), temp.Z())
-        temp = geom.Point3D(datum.XYZ() + (vx.XYZ() * ext2d[2]) + (vy.XYZ() * y))
-        glVertex3d(temp.X(), temp.Y(), temp.Z())
+        temp = datum + (vx * ext2d[0]) + (vy * y)
+        glVertex3d(temp.x, temp.y, temp.z)
+        temp = datum + (vx * ext2d[2]) + (vy * y)
+        glVertex3d(temp.x, temp.y, temp.z)
         y += spacing
 
     glEnd()
@@ -148,16 +148,16 @@ def GetGridBox(cad, view_point, ext):
     orimat = cad.GetDrawMatrix(False)
     datum.Transform(orimat)
     orimat = make_matrix(datum, vx, vy)
-    plane = OCC.gp.gp_Pln(datum, geom.Point3D(0, 0, 1).Transformed(orimat))
+    plane = geom.Plane(datum, geom.Point3D(0, 0, 1).Transformed(orimat))
 
     for i in range(0, 4):
         p1 = view_point.glUnproject(sp[i])
-        sp[i].SetZ(0)
+        sp[i].z = 0.0
         p2 = view_point.glUnproject(sp[i])
         line = make_line_pp(p1, p2)
         pnt = intersect_line_plane(line, plane)
         if pnt != None:
-            ext.InsertPoint(pnt.X(), pnt.Y(), pnt.Z())
+            ext.InsertPoint(pnt.x, pnt.y, pnt.z)
 
 def RenderGrid(cad, view_point, plane = 0):
     if cad.grid_mode == 1:
@@ -189,11 +189,11 @@ def RenderGrid(cad, view_point, plane = 0):
         v_gc2 = v_bg + unit_contrast * l2
         v_gc3 = v_bg + unit_contrast * l3
 
-        glColor3ub(v_gc3.X(), v_gc3.Y(), v_gc3.Z())
+        glColor3ub(v_gc3.x, v_gc3.y, v_gc3.z)
         RenderGrid2(cad, view_point, 200, False, True, None, None, 0, plane)
-        glColor3ub(v_gc2.X(), v_gc2.Y(), v_gc2.Z())
+        glColor3ub(v_gc2.x, v_gc2.y, v_gc2.z)
         RenderGrid2(cad, view_point, 20, True, False, None, None, 0, plane)
-        glColor3ub(v_gc1.X(), v_gc1.Y(), v_gc1.Z())
+        glColor3ub(v_gc1.x, v_gc1.y, v_gc1.z)
         RenderGrid2(cad, view_point, 20, False, False, None, None, 0, plane)
 
     elif cad.grid_mode == 2 or cad.grid_mode == 3:

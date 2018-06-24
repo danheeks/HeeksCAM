@@ -4,7 +4,7 @@ import sys
 import math
 
 class Point3D:
-    def __init__(self, x, y, z):
+    def __init__(self, x, y, z = None):
         """ make a 3D point ( or vector ) from x, y, z coordinates or as a vector between two points """
         if isinstance(x, self.__class__) and isinstance(y, self.__class__):
             p0 = x
@@ -31,7 +31,7 @@ class Point3D:
         return p
         
     def Dist(self, p):
-        return Point3D(self, p).Length()
+        return geom.Point3D(self, p).Length()
         
     def DistSq(self, p):
         return (self.x - p.x) * (self.x - p.x) + (self.y - p.y) * (self.y - p.y) + (self.z - p.z) * (self.z - p.z)
@@ -94,7 +94,7 @@ class Point3D:
         return Point3D(self.y * other.z - self.z * other.y, self.z * other.x - self.x * other.z, self.x * other.y - self.y * other.x)
             
     def Normalize(self):
-        m = self.magnitude()
+        m = self.Length()
         if m < 1.0e-09:
             self.x = 0.0
             self.y = 0.0
@@ -106,13 +106,13 @@ class Point3D:
         return m
 
     def Normalized(self):
-        m = self.magnitude()
+        m = self.Length()
         if m < 1.0e-09:
             return Point3D(0.0, 0.0, 0.0)
         return Point3D(self.x / m, self.y / m, self.z / m)
         
-    def magnitude(self):
+    def Length(self):
         return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z) # magnitude
     
-    def magnitudeSq(self):
+    def LengthSq(self):
         return self.x * self.x + self.y * self.y + self.z * self.z # magnitude squared

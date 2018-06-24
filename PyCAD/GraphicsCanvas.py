@@ -11,17 +11,16 @@ res_folder = full_path_here
 if slash != -1:
     res_folder = full_path_here[0:slash]
 
-class myGLCanvas(glcanvas.GLCanvas):
-   def __init__(self, parent, cad):
+class GraphicsCanvas(glcanvas.GLCanvas):
+   def __init__(self, parent):
       glcanvas.GLCanvas.__init__(self, parent,-1, attribList=[glcanvas.WX_GL_RGBA, glcanvas.WX_GL_DOUBLEBUFFER, glcanvas.WX_GL_DEPTH_SIZE, 24])
       self.context = glcanvas.GLContext(self)
-      self.cad = cad
       self.Bind(wx.EVT_PAINT, self.OnPaint)
       self.Bind(wx.EVT_SIZE, self.OnSize)
       self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouse)
       self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
       self.Bind(wx.EVT_MENU, self.OnMenu, None, 10000, 12000)
-      self.viewport= cad.Viewport()
+      self.viewport= wx.GetApp().Viewport()
       self.Resize()
       self.paint_callbacks = []
       self.context_menu_enabled = True
@@ -60,7 +59,7 @@ class myGLCanvas(glcanvas.GLCanvas):
    def OnMouse(self, event):
       if event.RightUp():
          if self.context_menu_enabled:
-             tools = HeeksCAD.GetDropDownTools(event.GetX(), event.GetY(), False, event.m_controlDown)
+             tools = wx.GetApp().GetDropDownTools(event.GetX(), event.GetY(), False, event.m_controlDown)
              if len(tools) > 0:
                 self.next_tool_id = 0
                 self.tools = []
@@ -68,7 +67,7 @@ class myGLCanvas(glcanvas.GLCanvas):
                 self.AppendToolsToMenu(menu, tools)
                 self.PopupMenu(menu)
       else:
-         self.cad.OnMouseEvent(self.viewport, event)
+         wx.GetApp().OnMouseEvent(self.viewport, event)
 
       if self.viewport.need_update: self.Update()
       if self.viewport.need_refresh: self.Refresh()
@@ -85,7 +84,7 @@ class myGLCanvas(glcanvas.GLCanvas):
    def OnPaint(self, event):
       dc = wx.PaintDC(self)
       self.SetCurrent(self.context)
-      self.cad.glCommands(self.viewport)
+      wx.GetApp().glCommands(self.viewport)
       for callback in self.paint_callbacks:
           callback()
       self.SwapBuffers()

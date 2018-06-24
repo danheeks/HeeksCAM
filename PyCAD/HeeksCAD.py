@@ -1,5 +1,5 @@
 # a class for all the global variables for the CAD system, to replace HeeksCAD
-
+import wx
 from SelectMode import SelectMode
 from Color import HeeksColor
 from Material import Material
@@ -8,15 +8,16 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from Grid import RenderGrid
 import sys
-sys.path.append('C:/Users/Dan/heeks/heekscad')
+from CadFrame import CadFrame
 
 BackgroundModeOneColor = 0
 BackgroundModeTwoColors = 1
 BackgroundModeTwoColorsLeftToRight = 2
 BackgroundModeFourColors = 3
 
-class QuickCad:
+class HeeksCADApp(wx.App):
     def __init__(self):
+        wx.App.__init__(self)
         self.input_mode = SelectMode(self)
         self.current_viewport = None
         self.mouse_wheel_forward_away = False
@@ -30,6 +31,11 @@ class QuickCad:
         self.current_coordinate_system = None
         self.draw_to_grid = True
         self.digitizing_grid = 1.0
+        
+    def OnInit(self):
+        self.frame= CadFrame()
+        self.frame.Show()
+        return True
 
     def Viewport(self):
         from Viewport import Viewport
@@ -195,8 +201,8 @@ class QuickCad:
         local_viewer = [ 0.0 ]
 
         if self.light_push_matrix:
-    		glPushMatrix()
-    		glLoadIdentity()
+            glPushMatrix()
+            glLoadIdentity()
 
         glLightfv(GL_LIGHT0, GL_AMBIENT, amb)
         glLightfv(GL_LIGHT0, GL_DIFFUSE, dif)
@@ -230,10 +236,21 @@ class QuickCad:
         if get_the_appropriate_orthogonal:
             # choose from the three orthoganal possibilities, the one where it's z-axis closest to the camera direction
             vx, vy = self.current_viewport.view_point.GetTwoAxes(False, 0)
-            o = OCC.gp.gp_Pnt(0, 0, 0)
+            o = geom.Point3D(0, 0, 0)
             if self.current_coordinate_system: o.Transform(self.current_coordinate_system.GetMatrix())
-            return make_matrix(o, vx, vy)
+            return geom.Matrix(o, vx, vy)
         mat = geom.Matrix()
         if self.current_coordinate_system: mat = self.current_coordinate_system.GetMatrix()
         return mat
+
+if __name__ == "__main__":
+    save_out = sys.stdout
+    save_err = sys.stderr
+
+    app = HeeksCADApp()
+
+    sys.stdout = save_out
+    sys.stderr = save_err
+
+    app.MainLoop()
 

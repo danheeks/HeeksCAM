@@ -15,7 +15,9 @@ from Box3D import Box3D
 from Circle import Circle
 from Curve import Curve
 from Line import Line
+from Line3D import Line3D
 from Matrix import Matrix
+from Plane import Plane
 from Point import Point
 from Point3D import Point3D
 from Span import Span

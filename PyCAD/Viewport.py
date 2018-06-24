@@ -33,7 +33,7 @@ class Viewpoint:
 
     def TurnAngles(self, ang_x, ang_y):
         f = self.target_point - self.lens_point
-        fl = f.Magnitude()
+        fl = f.Length()
         uu = self.vertical.Normalized()
         r = (f ^ uu).Normalized()
         self.lens_point= self.lens_point - r * math.sin(ang_x)*fl
